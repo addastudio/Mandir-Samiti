@@ -61,7 +61,7 @@ export function HeroSection() {
               size="lg"
               variant="outline"
               className={cn(
-                "border-white text-white hover:bg-white/10 text-lg",
+                "border-white border-2 text-white bg-transparent hover:bg-white/10 text-lg",
                 language === "hi" ? "font-hindi" : ""
               )}
             >
