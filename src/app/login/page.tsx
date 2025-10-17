@@ -51,9 +51,14 @@ export default function LoginPage() {
     useState<ConfirmationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (auth && !window.recaptchaVerifier) {
+    setIsClient(true);
+  }, []);
+  
+  useEffect(() => {
+    if (isClient && auth && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
         auth,
         "recaptcha-container",
@@ -65,7 +70,7 @@ export default function LoginPage() {
         }
       );
     }
-  }, [auth]);
+  }, [isClient, auth]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,7 +255,7 @@ export default function LoginPage() {
               </form>
             </TabsContent>
             <TabsContent value="phone">
-               {!confirmationResult ? (
+              <div style={{ display: !isClient || confirmationResult ? 'none' : 'block' }}>
                  <form onSubmit={handlePhoneLogin} className="space-y-4 pt-4">
                     <div className="space-y-2">
                        <Label htmlFor="phone" className={cn(language === 'hi' ? 'font-hindi' : '')}>
@@ -270,7 +275,8 @@ export default function LoginPage() {
                        {isLoading ? (language === 'hi' ? "OTP भेजा जा रहा है..." : "Sending OTP...") : (language === 'hi' ? "OTP भेजें" : "Send OTP")}
                      </Button>
                  </form>
-               ) : (
+              </div>
+              <div style={{ display: !isClient || !confirmationResult ? 'none' : 'block' }}>
                 <form onSubmit={handleOtpVerify} className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label htmlFor="otp" className={cn(language === 'hi' ? 'font-hindi' : '')}>
@@ -290,7 +296,7 @@ export default function LoginPage() {
                     {isLoading ? (language === 'hi' ? "सत्यापित हो रहा है..." : "Verifying...") : (language === 'hi' ? "OTP सत्यापित करें" : "Verify OTP")}
                   </Button>
                 </form>
-               )}
+              </div>
             </TabsContent>
           </Tabs>
 
