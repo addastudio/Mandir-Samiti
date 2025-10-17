@@ -4,19 +4,19 @@
       "id": "hero-background",
       "description": "Serene background image of a temple in morning light.",
       "imageUrl": "https://picsum.photos/seed/101/1920/1080",
-      "imageHint": "temple morning light"
+      "imageHint": "serene temple saffron"
     },
     {
       "id": "event-navratri",
       "description": "Devotees celebrating Navratri with traditional dance.",
       "imageUrl": "https://picsum.photos/seed/102/400/300",
-      "imageHint": "navratri garba dance"
+      "imageHint": "navratri celebration garba"
     },
     {
       "id": "event-janmashtami",
       "description": "A festive scene of Janmashtami with Dahi Handi.",
       "imageUrl": "https://picsum.photos/seed/103/400/300",
-      "imageHint": "janmashtami celebration"
+      "imageHint": "janmashtami festival"
     },
     {
       "id": "event-shivratri",
@@ -28,7 +28,7 @@
       "id": "event-diwali",
       "description": "A beautiful arrangement of illuminated diyas for Diwali.",
       "imageUrl": "https://picsum.photos/seed/105/400/300",
-      "imageHint": "diwali lamps"
+      "imageHint": "diwali diya"
     },
     {
       "id": "seva-bhandara",
@@ -46,7 +46,7 @@
       "id": "donation-qr",
       "description": "QR code for UPI donations.",
       "imageUrl": "https://picsum.photos/seed/108/200/200",
-      "imageHint": "qr code"
+      "imageHint": "mandala pattern"
     },
     {
       "id": "gallery-1",
@@ -58,13 +58,13 @@
       "id": "gallery-2",
       "description": "Devotees lighting diyas during an evening prayer.",
       "imageUrl": "https://picsum.photos/seed/110/600/400",
-      "imageHint": "devotees praying"
+      "imageHint": "devotees diyas"
     },
     {
       "id": "gallery-3",
       "description": "Close-up of intricate carvings on the temple wall.",
       "imageUrl": "https://picsum.photos/seed/111/600/400",
-      "imageHint": "temple carving"
+      "imageHint": "temple carvings"
     },
     {
       "id": "gallery-4",
@@ -76,19 +76,19 @@
       "id": "gallery-5",
       "description": "Children in traditional attire at a temple festival.",
       "imageUrl": "https://picsum.photos/seed/113/600/400",
-      "imageHint": "cultural festival"
+      "imageHint": "festival children"
     },
     {
       "id": "gallery-6",
       "description": "A panoramic view of the temple complex.",
       "imageUrl": "https://picsum.photos/seed/114/600/400",
-      "imageHint": "temple complex"
+      "imageHint": "temple bells"
     },
     {
       "id": "testimonial-1",
       "description": "Portrait of a happy devotee.",
       "imageUrl": "https://picsum.photos/seed/115/100/100",
-      "imageHint": "smiling woman"
+      "imageHint": "devotee portrait"
     },
     {
       "id": "testimonial-2",
