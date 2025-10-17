@@ -88,11 +88,11 @@ export function DonateSection() {
                         alt={qrImage.description}
                         width={180}
                         height={180}
-                        className="rounded-lg shadow-md"
+                        className="rounded-lg shadow-md flex-shrink-0"
                         data-ai-hint={qrImage.imageHint}
                         />
                     )}
-                    <div className={cn("flex flex-col items-center gap-2", language === "hi" ? "font-hindi" : "")}>
+                    <div className={cn("flex flex-col items-center sm:items-start gap-2", language === "hi" ? "font-hindi" : "")}>
                         <p className="text-muted-foreground">{language === 'hi' ? 'स्कैन करें और भुगतान करें' : 'Scan & Pay'}</p>
                         <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-secondary">
                           <p className="font-semibold text-lg text-primary">{upiId}</p>
