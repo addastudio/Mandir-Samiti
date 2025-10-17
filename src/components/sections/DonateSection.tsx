@@ -92,8 +92,8 @@ export function DonateSection() {
                         data-ai-hint={qrImage.imageHint}
                         />
                     )}
-                    <div className={cn("text-center", language === "hi" ? "font-hindi" : "")}>
-                        <p className="text-muted-foreground mb-2">{language === 'hi' ? 'स्कैन करें और भुगतान करें' : 'Scan & Pay'}</p>
+                    <div className={cn("flex flex-col items-center gap-2", language === "hi" ? "font-hindi" : "")}>
+                        <p className="text-muted-foreground">{language === 'hi' ? 'स्कैन करें और भुगतान करें' : 'Scan & Pay'}</p>
                         <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-secondary">
                         <p className="font-semibold text-lg text-primary">{upiId}</p>
                         <Button variant="ghost" size="icon" onClick={copyToClipboard}>
