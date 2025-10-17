@@ -80,8 +80,8 @@ export function DonateSection() {
                 <QrCode className="h-6 w-6 text-primary" /> {t.donateUpi}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center text-center gap-6">
-                <div className="flex flex-col sm:flex-row items-center gap-6">
+            <CardContent className="flex flex-col items-center justify-center gap-6">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-center w-full">
                     {qrImage && (
                         <Image
                         src={qrImage.imageUrl}
@@ -95,10 +95,10 @@ export function DonateSection() {
                     <div className={cn("flex flex-col items-center gap-2", language === "hi" ? "font-hindi" : "")}>
                         <p className="text-muted-foreground">{language === 'hi' ? 'स्कैन करें और भुगतान करें' : 'Scan & Pay'}</p>
                         <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-secondary">
-                        <p className="font-semibold text-lg text-primary">{upiId}</p>
-                        <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-                            <Copy className="h-5 w-5" />
-                        </Button>
+                          <p className="font-semibold text-lg text-primary">{upiId}</p>
+                          <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+                              <Copy className="h-5 w-5" />
+                          </Button>
                         </div>
                     </div>
                 </div>
