@@ -1,0 +1,139 @@
+/**
+ * @file Firestore Security Rules for Mandir Samiti Bahpura Web Application
+ *
+ * @corePhilosophy This ruleset enforces a strict user-ownership model for user profiles and donations,
+ *                 public read access for events and gallery, and admin-only management for sensitive data.
+ *                 It uses a separate collection (`/roles_admin/{userId}`) to manage admin privileges.
+ *
+ * @dataStructure The data is organized hierarchically with user-specific data nested under `/users/{userId}`.
+ *                Events and gallery images are stored in top-level collections.
+ *
+ * @keySecurityDecisions
+ *   - User listing is disallowed to prevent unauthorized access to user data.
+ *   - Admin privileges are granted by the presence of a document in `/roles_admin/{userId}`, avoiding the need to read user documents for role checks.
+ *   - Public read access is granted to the `events` and `gallery` collections, assuming all documents are intended to be publicly visible.
+ *   - Data shapes are not strictly validated, focusing on authorization checks to ensure secure access.
+ *
+ * @denormalizationForAuthorization
+ *   - Admin status is checked via the `/roles_admin/{userId}` collection. This avoids the need to read user documents for role checks.
+ *   - Donation documents include the `userId` of the donating user. This allows direct access to donation history without extra queries.
+ *
+ * @structuralSegregation
+ *   - User-specific data (profiles, donations) is stored under `/users/{userId}`, while public data (events, gallery) is stored in top-level collections.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Secures user profile data.  Only the authenticated user can read or write their own profile.
+     * @path /users/{userId}
+     * @allow (get, create, update, delete) if the authenticated user's ID matches the userId path segment.
+     *   Example: An authenticated user with UID "user123" can read/write the document at /users/user123.
+     * @deny (get, create, update, delete) if the authenticated user's ID does not match the userId path segment.
+     *   Example: An authenticated user with UID "user456" cannot read/write the document at /users/user123.
+     * @principle Enforces document ownership for writes.
+     */
+    match /users/{userId} {
+      // Helper function to check if the authenticated user is the owner of the document
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // Helper function to check if the authenticated user is the existing owner of the document
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if false; // User listing is disallowed
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Secures donation records for each user. Only the authenticated user can read or write their own donation records.
+     * @path /users/{userId}/donations/{donationId}
+     * @allow (create) if the authenticated user's ID matches the userId path segment and the donation.userId field.
+     *   Example: An authenticated user with UID "user123" can create a donation record under /users/user123/donations/donation456,
+     *   but only if the donation record's userId field is also "user123".
+     * @deny (create) if the authenticated user's ID does not match the userId path segment or the donation.userId field.
+     *   Example: An authenticated user with UID "user456" cannot create a donation record under /users/user123/donations/donation789.
+     * @allow (get, update, delete) if the authenticated user's ID matches the userId path segment.
+     *   Example: An authenticated user with UID "user123" can get, update, or delete the donation record under /users/user123/donations/donation456.
+     * @deny (get, update, delete) if the authenticated user's ID does not match the userId path segment.
+     *   Example: An authenticated user with UID "user456" cannot get, update, or delete the donation record under /users/user123/donations/donation789.
+     * @principle Enforces document ownership and relational integrity.
+     */
+    match /users/{userId}/donations/{donationId} {
+      // Helper function to check if the authenticated user is the owner of the donation record
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // Helper function to check if the authenticated user is the existing owner of the donation record
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows public read access to events and restricts write access to admins only.
+     * @path /events/{eventId}
+     * @allow (get, list) to all users (public read access).
+     *   Example: Any user, authenticated or not, can view the event at /events/event123.
+     * @allow (create, update, delete) to admins only.
+     *   Example: Only an admin can create, update, or delete the event at /events/event123.
+     * @deny (create, update, delete) to non-admins.
+     *   Example: A regular user cannot create, update, or delete the event at /events/event123.
+     * @principle Public read, admin-only write.
+     */
+    match /events/{eventId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Allows public read access to the gallery and restricts write access to admins only.
+     * @path /gallery/{galleryId}
+     * @allow (get, list) to all users (public read access).
+     *   Example: Any user, authenticated or not, can view the image at /gallery/image123.
+     * @allow (create, update, delete) to admins only.
+     *   Example: Only an admin can create, update, or delete the image at /gallery/image123.
+     * @deny (create, update, delete) to non-admins.
+     *   Example: A regular user cannot create, update, or delete the image at /gallery/image123.
+     * @principle Public read, admin-only write.
+     */
+    match /gallery/{galleryId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Manages admin privileges. The existence of a document with a user's ID in this collection grants admin status.
+     * @path /roles_admin/{userId}
+     * @allow (get) if the user is an admin.  This allows checking for admin status.
+     * @allow (create) if the user is an admin.  This allows promoting a user to admin.
+     * @allow (delete) if the user is an admin.  This allows demoting a user from admin.
+     * @deny (get, create, delete) to non-admins.
+     * @principle Role-based access control using a dedicated collection.
+     */
+    match /roles_admin/{userId} {
+      // Helper function to check if the authenticated user is an admin
+      function isAdmin() {
+          return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      }
+      allow get: if isAdmin();
+      allow list: if false; // Admin listing is disallowed
+      allow create: if isAdmin();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+  }
+}
