@@ -19,18 +19,18 @@ export function HeroSection() {
       {heroImage && (
         <Image
           src={heroImage.imageUrl}
-          alt={heroImage.description}
+          alt={language === 'hi' ? 'भोर में मंदिर की शांत पृष्ठभूमि छवि।' : heroImage.description}
           fill
           className="object-cover"
           priority
           data-ai-hint={heroImage.imageHint}
         />
       )}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/60" />
       <div className="relative z-10 flex flex-col items-center p-4">
         <h1
           className={cn(
-            "text-4xl font-bold tracking-tight text-white drop-shadow-md sm:text-5xl md:text-6xl",
+            "text-5xl font-bold tracking-tight text-white drop-shadow-md sm:text-6xl md:text-7xl",
             language === "hi" ? "font-hindi" : "font-headline"
           )}
         >
@@ -38,7 +38,7 @@ export function HeroSection() {
         </h1>
         <p
           className={cn(
-            "mt-6 max-w-2xl text-lg text-gray-200 drop-shadow-sm md:text-xl",
+            "mt-6 max-w-2xl text-xl text-gray-200 drop-shadow-sm md:text-2xl",
             language === "hi" ? "font-hindi" : ""
           )}
         >
@@ -49,7 +49,7 @@ export function HeroSection() {
             <Button
               size="lg"
               className={cn(
-                "bg-primary text-primary-foreground hover:bg-primary/90",
+                "bg-accent text-accent-foreground hover:bg-accent/90 text-lg",
                 language === "hi" ? "font-hindi" : ""
               )}
             >
@@ -61,7 +61,7 @@ export function HeroSection() {
               size="lg"
               variant="outline"
               className={cn(
-                "border-white text-white hover:bg-white/10",
+                "border-white text-white hover:bg-white/10 text-lg",
                 language === "hi" ? "font-hindi" : ""
               )}
             >

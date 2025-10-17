@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   Carousel,
   CarouselContent,
@@ -21,9 +20,11 @@ import {
   UtensilsCrossed,
   HeartHandshake,
   Gift,
+  BookOpenCheck,
 } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React from "react";
 
 export function SevaSection() {
   const { t, language } = useLanguage();
@@ -42,7 +43,7 @@ export function SevaSection() {
     {
       title: t.sevaCharity,
       description: t.sevaCharityDesc,
-      icon: Gift,
+      icon: BookOpenCheck,
     },
   ];
 
@@ -65,12 +66,12 @@ export function SevaSection() {
   ];
 
   return (
-    <section id="seva" className="bg-secondary py-16 sm:py-24">
+    <section id="seva" className="bg-secondary py-20 md:py-28">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-3xl font-bold tracking-tight sm:text-4xl",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
@@ -78,22 +79,22 @@ export function SevaSection() {
           </h2>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
           {sevaPrograms.map((program, index) => (
-            <Card key={index} className="text-center">
+            <Card key={index} className="text-center shadow-lg">
               <CardHeader>
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <program.icon className="h-6 w-6 text-primary" />
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <program.icon className="h-8 w-8 text-primary" />
                 </div>
                 <CardTitle
-                  className={cn("pt-4", language === "hi" ? "font-hindi" : "")}
+                  className={cn("pt-4 text-2xl", language === "hi" ? "font-hindi" : "")}
                 >
                   {program.title}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription
-                  className={cn(language === "hi" ? "font-hindi" : "")}
+                  className={cn("text-base", language === "hi" ? "font-hindi" : "")}
                 >
                   {program.description}
                 </CardDescription>
@@ -102,10 +103,10 @@ export function SevaSection() {
           ))}
         </div>
 
-        <div className="mt-16">
+        <div className="mt-20">
           <h3
             className={cn(
-              "mb-8 text-center text-2xl font-bold",
+              "mb-8 text-center text-3xl font-bold",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
@@ -128,18 +129,18 @@ export function SevaSection() {
                     key={index}
                     className="md:basis-1/2 lg:basis-1/3"
                   >
-                    <div className="p-1">
-                      <Card className="h-full">
-                        <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                    <div className="p-1 h-full">
+                      <Card className="h-full flex flex-col shadow-lg">
+                        <CardContent className="flex flex-col items-center justify-center p-6 text-center flex-grow">
                           <p
                             className={cn(
-                              "italic text-muted-foreground mb-4",
+                              "italic text-muted-foreground mb-4 flex-grow",
                               language === "hi" ? "font-hindi" : ""
                             )}
                           >
                             &ldquo;{testimonial.quote}&rdquo;
                           </p>
-                           <div className="flex items-center gap-3">
+                           <div className="flex items-center gap-3 mt-auto">
                              <Avatar>
                                 {image && <AvatarImage src={image.imageUrl} alt={testimonial.name} data-ai-hint={image.imageHint}/>}
                                <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>

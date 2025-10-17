@@ -14,6 +14,7 @@ export function Header() {
   const { t, language } = useLanguage();
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [activeSection, setActiveSection] = React.useState('home');
 
   const navItems = [
     { href: "#home", label: t.navHome },
@@ -27,10 +28,24 @@ export function Header() {
   React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
+      
+      const sections = navItems.map(item => document.querySelector(item.href));
+      let currentSection = 'home';
+      
+      sections.forEach(section => {
+        if (section) {
+          const sectionTop = (section as HTMLElement).offsetTop;
+          if (window.scrollY >= sectionTop - 100) {
+            currentSection = section.id;
+          }
+        }
+      });
+      setActiveSection(currentSection);
     };
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [navItems]);
 
   const NavLinks = ({
     className,
@@ -45,8 +60,9 @@ export function Header() {
           key={item.label}
           href={item.href}
           onClick={() => setIsMobileMenuOpen(false)}
+          data-active={activeSection === item.href.substring(1)}
           className={cn(
-            "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
+            "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary data-[active=true]:text-primary data-[active=true]:font-semibold",
             itemClassName,
             language === "hi" ? "font-hindi" : ""
           )}
@@ -58,7 +74,7 @@ export function Header() {
         href="#donate"
         onClick={() => setIsMobileMenuOpen(false)}
         className={cn(
-          "ml-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90",
+          "ml-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90",
           itemClassName,
           language === "hi" ? "font-hindi" : ""
         )}

@@ -10,9 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Poppins', 'sans-serif'],
-        headline: ['Poppins', 'sans-serif'],
-        hindi: ['Mukta', 'sans-serif'],
+        body: ['var(--font-poppins)', 'sans-serif'],
+        headline: ['var(--font-poppins)', 'sans-serif'],
+        hindi: ['var(--font-mukta)', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -49,6 +49,7 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        'text-accent': 'hsl(var(--text-accent))',
         chart: {
           '1': 'hsl(var(--chart-1))',
           '2': 'hsl(var(--chart-2))',

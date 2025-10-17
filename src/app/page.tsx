@@ -13,6 +13,7 @@ import { ContactSection } from "@/components/sections/ContactSection";
 import { Footer } from "@/components/layout/Footer";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 
 export default function Home() {
   const { isLangLoading, language } = useLanguage();
@@ -30,10 +31,15 @@ export default function Home() {
       <main className="animate-in fade-in duration-500">
         <HeroSection />
         <AboutSection />
+        <Separator />
         <EventsSection />
+        <Separator />
         <SevaSection />
+        <Separator />
         <DonateSection />
+        <Separator />
         <GallerySection />
+        <Separator />
         <ContactSection />
       </main>
       <Footer />

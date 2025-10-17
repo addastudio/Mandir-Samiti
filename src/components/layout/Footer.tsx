@@ -9,18 +9,16 @@ export function Footer() {
   const { t, language } = useLanguage();
 
   const navItems = [
+    { href: "#home", label: t.navHome },
     { href: "#about", label: t.navAbout },
-    { href: "#events", label: t.navEvents },
-    { href: "#seva", label: t.navSeva },
     { href: "#donate", label: t.navDonate },
-    { href: "#gallery", label: t.navGallery },
+    { href: "#contact", label: t.navContact },
   ];
 
   const socialIcons = [
-    { icon: Facebook, href: "#" },
-    { icon: Instagram, href: "#" },
-    { icon: Youtube, href: "#" },
-    { icon: Twitter, href: "#" },
+    { icon: Facebook, href: "#", name: "Facebook" },
+    { icon: Instagram, href: "#", name: "Instagram" },
+    { icon: Youtube, href: "#", name: "Youtube" },
   ];
 
   return (
@@ -85,7 +83,7 @@ export function Footer() {
                   key={index}
                   href={social.href}
                   className="text-muted-foreground transition-colors hover:text-primary"
-                  aria-label={`Follow us on ${social.icon.displayName}`}
+                  aria-label={`Follow us on ${social.name}`}
                 >
                   <social.icon className="h-6 w-6" />
                 </a>

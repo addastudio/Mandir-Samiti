@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useActionState } from "react";
+import { useEffect, useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   Card,
@@ -30,7 +30,7 @@ function SubmitButton() {
   const { t, language } = useLanguage();
 
   return (
-    <Button type="submit" disabled={pending} className={cn(language === 'hi' ? 'font-hindi' : '')}>
+    <Button type="submit" disabled={pending} className={cn('w-full md:w-auto', language === 'hi' ? 'font-hindi' : '')}>
       {pending ? (language === 'hi' ? "भेज रहा है..." : "Sending...") : t.contactFormSend}
     </Button>
   );
@@ -41,6 +41,7 @@ export function ContactSection() {
   const { toast } = useToast();
   const initialState = { message: "", success: false, errors: {} };
   const [state, formAction] = useActionState(submitContactForm, initialState);
+  const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
     if(state.message) {
@@ -49,7 +50,11 @@ export function ContactSection() {
           title: language === 'hi' ? "सफलता" : "Success",
           description: t.contactFormSuccess,
         });
-      } else if (state.message && !state.success) {
+        setFormKey(prev => prev + 1); // Reset form
+      } else if (state.message && !state.success && Object.keys(state.errors || {}).length > 0) {
+        // Don't show toast for validation errors, they are shown inline
+      }
+       else if (state.message && !state.success) {
         toast({
           variant: "destructive",
           title: language === 'hi' ? "त्रुटि" : "Error",
@@ -66,12 +71,12 @@ export function ContactSection() {
   ];
 
   return (
-    <section id="contact" className="py-16 sm:py-24">
+    <section id="contact" className="py-20 md:py-28">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-3xl font-bold tracking-tight sm:text-4xl",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
@@ -79,35 +84,35 @@ export function ContactSection() {
           </h2>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="space-y-6">
+        <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="space-y-8">
             <div className="flex items-start gap-4">
-              <MapPin className="h-6 w-6 text-primary mt-1" />
+              <MapPin className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold">Address</h3>
-                <p className={cn("text-muted-foreground", language === 'hi' ? 'font-hindi' : '')}>{t.contactAddress}</p>
+                <h3 className="font-semibold text-lg">{t.contactAddress.split(':')[0]}</h3>
+                <p className={cn("text-muted-foreground", language === 'hi' ? 'font-hindi' : '')}>{t.contactAddress.split(':')[1]}</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <Phone className="h-6 w-6 text-primary mt-1" />
+              <Phone className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold">Phone</h3>
-                <p className="text-muted-foreground">{t.contactPhone}</p>
+                <h3 className="font-semibold text-lg">{t.contactPhone.split(':')[0]}</h3>
+                <p className="text-muted-foreground">{t.contactPhone.split(':')[1]}</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <Mail className="h-6 w-6 text-primary mt-1" />
+              <Mail className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold">Email</h3>
-                <p className="text-muted-foreground">{t.contactEmail}</p>
+                <h3 className="font-semibold text-lg">{t.contactEmail.split(':')[0]}</h3>
+                <p className="text-muted-foreground">{t.contactEmail.split(':')[1]}</p>
               </div>
             </div>
             <div className="pt-4">
-               <h3 className={cn("font-semibold mb-2", language === 'hi' ? 'font-hindi' : '')}>{t.contactFollow}</h3>
+               <h3 className={cn("font-semibold text-lg mb-3", language === 'hi' ? 'font-hindi' : '')}>{t.contactFollow}</h3>
                <div className="flex space-x-4">
                  {socialLinks.map(link => (
-                   <a key={link.name} href={link.href} aria-label={link.name} className="text-muted-foreground hover:text-primary">
-                     <link.icon className="h-6 w-6"/>
+                   <a key={link.name} href={link.href} aria-label={link.name} className="text-muted-foreground hover:text-primary transition-colors">
+                     <link.icon className="h-7 w-7"/>
                    </a>
                  ))}
                </div>
@@ -115,15 +120,15 @@ export function ContactSection() {
           </div>
 
           <div className="lg:col-span-2">
-            <Card>
+            <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.contactFormMessage}</CardTitle>
+                <CardTitle className={cn("text-2xl", language === 'hi' ? 'font-hindi' : '')}>{t.contactFormMessage}</CardTitle>
                 <CardDescription className={cn(language === 'hi' ? 'font-hindi' : '')}>
                   {language === 'hi' ? 'आपका कोई प्रश्न या प्रतिक्रिया है? हमें आपसे सुनना अच्छा लगेगा।' : 'Have a question or feedback? We\'d love to hear from you.'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form action={formAction} className="space-y-4">
+                <form key={formKey} action={formAction} className="space-y-4">
                   <div>
                     <Input name="name" placeholder={t.contactFormName} className={cn(language === 'hi' ? 'font-hindi' : '')} />
                     {state.errors?.name && <p className="text-sm font-medium text-destructive mt-1">{state.errors.name[0]}</p>}
@@ -143,9 +148,18 @@ export function ContactSection() {
           </div>
         </div>
         
-        <div className="mt-12">
-            <div className="aspect-video w-full rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
-                <p>Google Map Placeholder</p>
+        <div className="mt-16">
+            <div className="aspect-video w-full rounded-lg overflow-hidden shadow-lg">
+              <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3549.442755910103!2d78.008074!3d27.175144!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39747121d702ff6d%3A0xdd2ae4803f767dde!2sTaj%20Mahal!5e0!3m2!1sen!2sin!4v1628610423093!5m2!1sen!2sin"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen={true}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Google Map of Bahpura"
+                ></iframe>
             </div>
         </div>
       </div>

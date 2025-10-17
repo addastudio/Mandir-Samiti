@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
 
 export function EventsSection() {
@@ -18,12 +18,12 @@ export function EventsSection() {
   ];
 
   return (
-    <section id="events" className="py-16 sm:py-24">
+    <section id="events" className="py-20 md:py-28">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-3xl font-bold tracking-tight sm:text-4xl",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
@@ -31,20 +31,22 @@ export function EventsSection() {
           </h2>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
-          <Card>
-            <CardContent className="p-6">
-              <h3
+        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2">
+          <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle
                 className={cn(
-                  "mb-4 flex items-center gap-2 text-xl font-semibold",
-                  language === "hi" ? "font-hindi" : "font-headline"
+                    "mb-4 flex items-center gap-2 text-2xl font-semibold",
+                    language === "hi" ? "font-hindi" : "font-headline"
                 )}
-              >
+                >
                 <Clock className="h-6 w-6 text-primary" /> {t.eventsDailyPuja}
-              </h3>
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
               <ul
                 className={cn(
-                  "space-y-2 text-muted-foreground",
+                  "space-y-2 text-muted-foreground text-lg",
                   language === "hi" ? "font-hindi" : ""
                 )}
               >
@@ -53,19 +55,21 @@ export function EventsSection() {
               </ul>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-6">
-              <h3
+          <Card className="shadow-lg">
+             <CardHeader>
+                <CardTitle
                 className={cn(
-                  "mb-4 flex items-center gap-2 text-xl font-semibold",
-                  language === "hi" ? "font-hindi" : "font-headline"
+                    "mb-4 flex items-center gap-2 text-2xl font-semibold",
+                    language === "hi" ? "font-hindi" : "font-headline"
                 )}
-              >
+                >
                 <Calendar className="h-6 w-6 text-primary" /> {t.eventsAnnual}
-              </h3>
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
               <ul
                 className={cn(
-                  "grid grid-cols-2 gap-2 text-muted-foreground",
+                  "grid grid-cols-2 gap-x-8 gap-y-2 text-muted-foreground text-lg",
                   language === "hi" ? "font-hindi" : ""
                 )}
               >
@@ -77,18 +81,18 @@ export function EventsSection() {
           </Card>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {festivals.map((festival) => {
             const image = PlaceHolderImages.find(
               (img) => img.id === festival.imageId
             );
             return (
-              <Card key={festival.name} className="overflow-hidden group">
+              <Card key={festival.name} className="overflow-hidden group shadow-lg">
                 <div className="relative aspect-w-4 aspect-h-3">
                   {image && (
                     <Image
                       src={image.imageUrl}
-                      alt={festival.name}
+                      alt={language === 'hi' ? `${festival.name} उत्सव` : `${festival.name} festival`}
                       width={400}
                       height={300}
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -96,10 +100,10 @@ export function EventsSection() {
                     />
                   )}
                 </div>
-                <div className="p-4">
+                <div className="p-4 bg-card">
                   <h4
                     className={cn(
-                      "text-center font-medium",
+                      "text-center font-semibold text-lg",
                       language === "hi" ? "font-hindi" : ""
                     )}
                   >

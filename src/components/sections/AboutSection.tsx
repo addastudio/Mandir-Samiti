@@ -1,12 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export function AboutSection() {
   const { t, language } = useLanguage();
+  const galleryImage = PlaceHolderImages.find((img) => img.id === "gallery-1");
 
   const members = [
     { name: t.member1Name, role: t.member1Role },
@@ -15,12 +18,12 @@ export function AboutSection() {
   ];
 
   return (
-    <section id="about" className="bg-secondary py-16 sm:py-24">
+    <section id="about" className="py-20 md:py-28">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-3xl font-bold tracking-tight sm:text-4xl",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
@@ -28,51 +31,65 @@ export function AboutSection() {
           </h2>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-12 md:grid-cols-2">
-          <div className="space-y-6">
-            <h3
-              className={cn(
-                "text-2xl font-semibold",
-                language === "hi" ? "font-hindi" : "font-headline"
-              )}
-            >
-              {t.aboutHistory}
-            </h3>
-            <p
-              className={cn(
-                "text-muted-foreground",
-                language === "hi" ? "font-hindi" : ""
-              )}
-            >
-              {t.aboutHistoryP1}
-            </p>
+        <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-2 md:items-center">
+          <div className="space-y-8">
+            <div>
+                <h3
+                className={cn(
+                    "text-2xl font-semibold",
+                    language === "hi" ? "font-hindi" : "font-headline"
+                )}
+                >
+                {t.aboutHistory}
+                </h3>
+                <p
+                className={cn(
+                    "mt-4 text-muted-foreground",
+                    language === "hi" ? "font-hindi" : ""
+                )}
+                >
+                {t.aboutHistoryP1}
+                </p>
+            </div>
+            <div>
+                <h3
+                className={cn(
+                    "text-2xl font-semibold",
+                    language === "hi" ? "font-hindi" : "font-headline"
+                )}
+                >
+                {t.aboutMission}
+                </h3>
+                <p
+                className={cn(
+                    "mt-4 text-muted-foreground",
+                    language === "hi" ? "font-hindi" : ""
+                )}
+                >
+                {t.aboutMissionP1}
+                </p>
+            </div>
           </div>
-          <div className="space-y-6">
-            <h3
-              className={cn(
-                "text-2xl font-semibold",
-                language === "hi" ? "font-hindi" : "font-headline"
-              )}
-            >
-              {t.aboutMission}
-            </h3>
-            <p
-              className={cn(
-                "text-muted-foreground",
-                language === "hi" ? "font-hindi" : ""
-              )}
-            >
-              {t.aboutMissionP1}
-            </p>
+          <div className="flex justify-center">
+            {galleryImage && (
+                <Image 
+                    src={galleryImage.imageUrl}
+                    alt={galleryImage.description}
+                    width={500}
+                    height={350}
+                    className="rounded-lg shadow-lg"
+                    data-ai-hint={galleryImage.imageHint}
+                />
+            )}
           </div>
         </div>
 
-        <div className="mt-16">
-          <Card>
+        <div className="mt-20">
+          <Card className="shadow-lg">
             <CardHeader>
               <CardTitle
                 className={cn(
-                  "flex items-center gap-2 text-2xl",
+                  "flex items-center justify-center gap-2 text-2xl",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
@@ -85,7 +102,7 @@ export function AboutSection() {
                   <div key={index} className="text-center">
                     <p
                       className={cn(
-                        "font-semibold",
+                        "font-semibold text-lg",
                         language === "hi" ? "font-hindi" : ""
                       )}
                     >
