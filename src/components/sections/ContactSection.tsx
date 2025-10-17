@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   Card,
@@ -23,6 +23,7 @@ import {
   Facebook,
   Instagram,
   Youtube,
+  MessageCircle,
 } from "lucide-react";
 
 function SubmitButton() {
@@ -76,10 +77,11 @@ export function ContactSection() {
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-3",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
+            <Phone className="h-8 w-8" />
             {t.contactTitle}
           </h2>
         </div>

@@ -26,7 +26,7 @@ export function HeroSection() {
           data-ai-hint={heroImage.imageHint}
         />
       )}
-      <div className="absolute inset-0 bg-black/60" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-amber-900/40" />
       <div className="relative z-10 flex flex-col items-center p-4">
         <h1
           className={cn(
@@ -49,7 +49,7 @@ export function HeroSection() {
             <Button
               size="lg"
               className={cn(
-                "bg-accent text-accent-foreground hover:bg-accent/90 text-lg",
+                "bg-accent text-accent-foreground hover:bg-accent/90 text-lg transition-transform hover:scale-105",
                 language === "hi" ? "font-hindi" : ""
               )}
             >
@@ -61,7 +61,7 @@ export function HeroSection() {
               size="lg"
               variant="outline"
               className={cn(
-                "border-white border-2 text-white bg-transparent hover:bg-white/10 text-lg",
+                "border-white border-2 text-white bg-transparent hover:bg-white/10 text-lg transition-transform hover:scale-105",
                 language === "hi" ? "font-hindi" : ""
               )}
             >

@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent } from "@/components/ui/card";
-import { Video } from "lucide-react";
+import { Video, Camera } from "lucide-react";
 import React from "react";
 import {
   Dialog,
@@ -32,10 +32,11 @@ export function GallerySection() {
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-3",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
+            <Camera className="h-8 w-8" />
             {t.galleryTitle}
           </h2>
         </div>

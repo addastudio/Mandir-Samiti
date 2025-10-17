@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 import {
   UtensilsCrossed,
   HeartHandshake,
-  Gift,
   BookOpenCheck,
 } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -71,10 +70,11 @@ export function SevaSection() {
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-3",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
+            <UtensilsCrossed className="h-8 w-8" />
             {t.sevaTitle}
           </h2>
         </div>

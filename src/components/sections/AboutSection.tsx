@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import TempleIcon from "@/components/icons/TempleIcon";
 
 export function AboutSection() {
   const { t, language } = useLanguage();
@@ -23,10 +24,11 @@ export function AboutSection() {
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-3",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-gem"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M12 22V9"/><path d="m3.29 9 8.71 13 8.71-13L12 3z"/></svg>
             {t.aboutTitle}
           </h2>
         </div>

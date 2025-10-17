@@ -23,10 +23,11 @@ export function EventsSection() {
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-3",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
+            <Calendar className="h-8 w-8" />
             {t.eventsTitle}
           </h2>
         </div>

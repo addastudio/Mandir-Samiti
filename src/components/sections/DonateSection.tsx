@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Banknote, QrCode } from "lucide-react";
+import { Banknote, QrCode, Heart } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export function DonateSection() {
@@ -18,10 +18,11 @@ export function DonateSection() {
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent",
+              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-3",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
+            <Heart className="h-8 w-8" />
             {t.donateTitle}
           </h2>
           <p
