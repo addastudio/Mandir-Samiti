@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import {
   Card,
   CardContent,
@@ -40,7 +40,7 @@ export function ContactSection() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const initialState = { message: "", success: false, errors: {} };
-  const [state, formAction] = useFormState(submitContactForm, initialState);
+  const [state, formAction] = useActionState(submitContactForm, initialState);
 
   useEffect(() => {
     if(state.message) {
