@@ -5,12 +5,24 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Banknote, QrCode, Heart } from "lucide-react";
+import { Banknote, QrCode, Heart, Copy } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useToast } from "@/hooks/use-toast";
 
 export function DonateSection() {
   const { t, language } = useLanguage();
+  const { toast } = useToast();
   const qrImage = PlaceHolderImages.find((img) => img.id === "donation-qr");
+  const upiId = t.donateUpiId;
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(upiId);
+    toast({
+      title: language === 'hi' ? "कॉपी किया गया" : "Copied to clipboard",
+      description: language === 'hi' ? `UPI ID: ${upiId}`: `UPI ID: ${upiId}`,
+    });
+  };
+
 
   return (
     <section id="donate" className="py-20 md:py-28 bg-white">
@@ -68,29 +80,37 @@ export function DonateSection() {
                 <QrCode className="h-6 w-6 text-primary" /> {t.donateUpi}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center gap-6 sm:flex-row">
-              {qrImage && (
-                <Image
-                  src={qrImage.imageUrl}
-                  alt={qrImage.description}
-                  width={180}
-                  height={180}
-                  className="rounded-lg shadow-md"
-                  data-ai-hint={qrImage.imageHint}
-                />
-              )}
-              <div className={cn("text-center sm:text-left", language === "hi" ? "font-hindi" : "")}>
-                <p className="font-semibold text-lg">{t.donateUpiId}</p>
-                <Button
-                  size="lg"
-                  className={cn(
-                    "mt-6 bg-accent text-accent-foreground hover:bg-accent/90",
+            <CardContent className="flex flex-col items-center justify-center text-center gap-6">
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                    {qrImage && (
+                        <Image
+                        src={qrImage.imageUrl}
+                        alt={qrImage.description}
+                        width={180}
+                        height={180}
+                        className="rounded-lg shadow-md"
+                        data-ai-hint={qrImage.imageHint}
+                        />
+                    )}
+                    <div className={cn("text-center", language === "hi" ? "font-hindi" : "")}>
+                        <p className="text-muted-foreground mb-2">{language === 'hi' ? 'स्कैन करें और भुगतान करें' : 'Scan & Pay'}</p>
+                        <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-secondary">
+                        <p className="font-semibold text-lg text-primary">{upiId}</p>
+                        <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+                            <Copy className="h-5 w-5" />
+                        </Button>
+                        </div>
+                    </div>
+                </div>
+                 <Button
+                    size="lg"
+                    className={cn(
+                    "mt-4 w-full max-w-xs bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg transition-transform hover:scale-105",
                     language === "hi" ? "font-hindi" : ""
-                  )}
+                    )}
                 >
-                  {t.donateBtn}
+                    {t.donateBtn}
                 </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
