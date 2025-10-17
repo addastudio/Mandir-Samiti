@@ -80,7 +80,7 @@ export function DonateSection() {
                 <QrCode className="h-6 w-6 text-primary" /> {t.donateUpi}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center gap-6">
+            <CardContent className="flex flex-col items-center justify-center gap-6 text-center">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-center w-full">
                     {qrImage && (
                         <Image
