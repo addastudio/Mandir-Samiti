@@ -57,16 +57,16 @@ export default function SignupPage() {
 
   useEffect(() => {
     // This effect should only run on the client side.
-    if (typeof window !== "undefined") {
+    if (auth && !window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
         "recaptcha-container",
         {
           size: "invisible",
           callback: (response: any) => {
             // reCAPTCHA solved, allow signInWithPhoneNumber.
           },
-        },
-        auth
+        }
       );
     }
   }, [auth]);
@@ -360,5 +360,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
-    

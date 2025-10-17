@@ -30,6 +30,13 @@ import Image from "next/image";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Extend window type to include recaptchaVerifier
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier;
+  }
+}
+
 export default function LoginPage() {
   const { t, language } = useLanguage();
   const auth = useAuth();
@@ -46,16 +53,18 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        },
-      },
-      auth
-    );
+    if (auth && !window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        {
+          size: "invisible",
+          callback: (response: any) => {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+          },
+        }
+      );
+    }
   }, [auth]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -318,5 +327,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
