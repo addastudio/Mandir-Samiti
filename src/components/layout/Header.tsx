@@ -2,16 +2,18 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn, LayoutDashboard } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import TempleIcon from "@/components/icons/TempleIcon";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useUser } from "@/firebase";
 
 export function Header() {
   const { t, language } = useLanguage();
+  const { user, isUserLoading } = useUser();
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState('home');
@@ -46,6 +48,30 @@ export function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [navItems]);
+
+  const AuthButton = () => {
+    if (isUserLoading) {
+      return null;
+    }
+    if (user) {
+      return (
+        <Link href="/dashboard">
+          <Button variant="outline" size="sm">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+        </Link>
+      );
+    }
+    return (
+      <Link href="/login">
+        <Button variant="outline" size="sm">
+          <LogIn className="mr-2 h-4 w-4" />
+          Login
+        </Button>
+      </Link>
+    );
+  };
 
   const NavLinks = ({
     className,
@@ -94,7 +120,7 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <Link href="#home" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <TempleIcon className="h-8 w-8 text-primary" />
           <span
             className={cn(
@@ -109,12 +135,14 @@ export function Header() {
         <div className="hidden items-center gap-4 md:flex">
           <NavLinks />
           <LanguageSwitcher />
+          <AuthButton />
         </div>
 
         <div className="flex items-center md:hidden">
+           <AuthButton />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="ml-2">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Open menu</span>
               </Button>
@@ -122,7 +150,7 @@ export function Header() {
             <SheetContent side="right" className="w-full bg-background">
               <div className="flex h-full flex-col p-6">
                 <div className="mb-8 flex items-center justify-between">
-                   <Link href="#home" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                   <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                       <TempleIcon className="h-8 w-8 text-primary" />
                       <span className={cn("text-xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                         {language === 'hi' ? 'बहपुरा मंदिर' : 'Bahpura Mandir'}
@@ -150,3 +178,4 @@ export function Header() {
     </header>
   );
 }
+    

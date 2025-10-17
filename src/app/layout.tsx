@@ -4,6 +4,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { Poppins, Mukta } from 'next/font/google';
+import { FirebaseClientProvider } from '@/firebase';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -38,11 +39,15 @@ export default function RootLayout({
         )}
         suppressHydrationWarning={true}
       >
-        <LanguageProvider>
-          {children}
-          <Toaster />
-        </LanguageProvider>
+        <FirebaseClientProvider>
+          <LanguageProvider>
+            {children}
+            <Toaster />
+          </LanguageProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );
 }
+
+    

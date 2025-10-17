@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -147,7 +148,8 @@
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "google.com",
+      "phone"
     ]
   },
   "firestore": {
@@ -240,3 +242,5 @@
     "reasoning": "The Firestore structure is designed to support a secure and scalable Mandir Samiti Bahpura web application with user authentication, profiles, dashboards, and admin management. It prioritizes authorization independence by denormalizing authorization data, ensuring that security rules can be evaluated without relying on `get()` calls, which can break atomic operations.  The structure also supports QAPs by segregating data based on access requirements and using membership maps where collaborative access is needed.  \n\nSpecifically:\n\n*   **User Data:** User profiles are stored under `/users/{userId}`. This path-based ownership ensures that users can only access their own data.\n*   **Donations:** Donations are stored under `/users/{userId}/donations/{donationId}`. The `donation.userId` field is used to associate donations with users, enabling individual donation history tracking and admin-level overview.\n*   **Events:** Events are stored under `/events/{eventId}`.  No user-specific data is directly linked, so it will be publicly available but manageable by admins.\n*   **Gallery:** Gallery images are stored under `/gallery/{galleryId}`.  The `gallery.uploadedBy` field tracks the user who uploaded the image, but admin privileges are required to manage the gallery.\n*   **Admin Roles:** The presence of a document in the `/roles_admin/{userId}` collection grants admin privileges.  This existence-based check is more efficient and secure than storing roles within the user document itself.\n\nThis structure facilitates clear and robust security rules by:\n\n*   **Authorization Independence:**  No `get()` calls are needed in security rules because authorization context is denormalized.\n*   **Clarity of Intent:**  The path structure explicitly reflects the ownership and access relationships between data.\n*   **DBAC:** Roles are managed within the database itself, relying solely on `request.auth.uid`.\n*   **QAPs:** Secure `list` operations are possible by segregating data with different access requirements into separate collections and leveraging path-based ownership.\n*   **Invariants:** Ownership, timestamps, and denormalized data can be consistently enforced through security rules."
   }
 }
+
+    
