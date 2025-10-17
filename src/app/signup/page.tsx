@@ -16,45 +16,68 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
 import {
-  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  updateProfile,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { useFirestore } from "@/firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const { t, language } = useLanguage();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Logged in successfully" });
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Update user profile with name
+      await updateProfile(user, { displayName: name });
+      
+      // Create user document in Firestore
+      await setDoc(doc(firestore, "users", user.uid), {
+        id: user.uid,
+        name: name,
+        email: user.email,
+        role: "user",
+        language: language,
+      });
+
+      toast({ title: "Account created successfully" });
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
-      toast({ variant: "destructive", title: "Login failed", description: err.message });
+      toast({
+        variant: "destructive",
+        title: "Signup failed",
+        description: err.message,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -62,12 +85,11 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Check if user exists in Firestore
+      // Check if user exists in Firestore, if not create a new profile
       const userDocRef = doc(firestore, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        // Create a new user profile in Firestore
         await setDoc(userDocRef, {
           id: user.uid,
           name: user.displayName,
@@ -76,12 +98,16 @@ export default function LoginPage() {
           language: language,
         });
       }
-      
-      toast({ title: "Logged in successfully with Google" });
+
+      toast({ title: "Signed up successfully with Google" });
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
-      toast({ variant: "destructive", title: "Login failed", description: err.message });
+      toast({
+        variant: "destructive",
+        title: "Signup failed",
+        description: err.message,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -97,16 +123,29 @@ export default function LoginPage() {
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
-            {language === "hi" ? "लॉग इन करें" : "Login"}
+            {language === "hi" ? "खाता बनाएं" : "Create an Account"}
           </CardTitle>
           <CardDescription>
             {language === "hi"
-              ? "अपने खाते तक पहुंचने के लिए"
-              : "to access your account"}
+              ? "शुरू करने के लिए नीचे दिए गए फॉर्म को भरें"
+              : "Fill out the form below to get started"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          <form onSubmit={handleEmailSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className={cn(language === 'hi' ? 'font-hindi' : '')}>
+                {language === 'hi' ? 'पूरा नाम' : 'Full Name'}
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder={language === 'hi' ? 'आपका नाम' : 'Your Name'}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email" className={cn(language === 'hi' ? 'font-hindi' : '')}>
                 {t.contactFormEmail}
@@ -134,7 +173,7 @@ export default function LoginPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (language === 'hi' ? "लॉग इन हो रहा है..." : "Logging in...") : (language === 'hi' ? "लॉग इन करें" : "Login")}
+              {isLoading ? (language === 'hi' ? "साइन अप हो रहा है..." : "Signing up...") : (language === 'hi' ? "साइन अप करें" : "Sign up")}
             </Button>
           </form>
           <div className="my-4 flex items-center">
@@ -145,16 +184,16 @@ export default function LoginPage() {
           <Button
             variant="outline"
             className="w-full"
-            onClick={handleGoogleLogin}
+            onClick={handleGoogleSignup}
             disabled={isLoading}
           >
              <Image src="/google.svg" width={20} height={20} alt="Google logo" className="mr-2" />
-            {language === 'hi' ? 'Google के साथ जारी रखें' : 'Continue with Google'}
+            {language === 'hi' ? 'Google के साथ साइन अप करें' : 'Sign up with Google'}
           </Button>
           <div className="mt-4 text-center text-sm">
-            {language === 'hi' ? 'खाता नहीं है?' : "Don't have an account?"}{" "}
-            <Link href="/signup" className="underline">
-              {language === 'hi' ? 'साइन अप करें' : 'Sign up'}
+            {language === 'hi' ? 'पहले से ही एक खाता है?' : "Already have an account?"}{" "}
+            <Link href="/login" className="underline">
+              {language === 'hi' ? 'लॉग इन करें' : 'Login'}
             </Link>
           </div>
         </CardContent>
