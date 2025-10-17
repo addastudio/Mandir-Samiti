@@ -25,7 +25,7 @@ export function DonateSection() {
 
 
   return (
-    <section id="donate" className="py-20 md:py-28 bg-white">
+    <section id="donate" className="py-20 md:py-28 bg-gradient-to-br from-yellow-50/50 via-amber-100/30 to-background">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-4xl text-center">
           <h2
@@ -47,8 +47,8 @@ export function DonateSection() {
           </p>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="lg:col-span-1 shadow-lg">
+        <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <Card className="shadow-lg lg:col-span-1">
             <CardHeader>
               <CardTitle
                 className={cn(
@@ -69,7 +69,7 @@ export function DonateSection() {
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-2 shadow-lg">
+          <Card className="shadow-lg lg:col-span-2">
             <CardHeader>
               <CardTitle
                 className={cn(
@@ -80,37 +80,37 @@ export function DonateSection() {
                 <QrCode className="h-6 w-6 text-primary" /> {t.donateUpi}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center gap-6 text-center">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-center w-full">
-                    {qrImage && (
-                        <Image
-                        src={qrImage.imageUrl}
-                        alt={qrImage.description}
-                        width={180}
-                        height={180}
-                        className="rounded-lg shadow-md flex-shrink-0"
-                        data-ai-hint={qrImage.imageHint}
-                        />
-                    )}
-                    <div className={cn("flex flex-col items-center sm:items-start gap-2", language === "hi" ? "font-hindi" : "")}>
-                        <p className="text-muted-foreground">{language === 'hi' ? 'स्कैन करें और भुगतान करें' : 'Scan & Pay'}</p>
-                        <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-secondary">
-                          <p className="font-semibold text-lg text-primary">{upiId}</p>
-                          <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-                              <Copy className="h-5 w-5" />
-                          </Button>
-                        </div>
-                    </div>
+            <CardContent className="flex flex-col items-center justify-center gap-8">
+              <div className="flex w-full flex-col items-center justify-center gap-6 sm:flex-row sm:gap-8">
+                {qrImage && (
+                  <Image
+                    src={qrImage.imageUrl}
+                    alt={qrImage.description}
+                    width={180}
+                    height={180}
+                    className="rounded-lg shadow-md flex-shrink-0"
+                    data-ai-hint={qrImage.imageHint}
+                  />
+                )}
+                <div className={cn("flex flex-col items-center gap-3 text-center sm:items-start sm:text-left", language === "hi" ? "font-hindi" : "")}>
+                  <p className="text-muted-foreground">{language === 'hi' ? 'स्कैन करें और भुगतान करें' : 'Scan & Pay'}</p>
+                  <div className="flex items-center justify-center gap-2 rounded-lg bg-secondary p-2">
+                    <p className="font-semibold text-lg text-primary">{upiId}</p>
+                    <Button variant="ghost" size="icon" onClick={copyToClipboard} aria-label={language === 'hi' ? "UPI ID कॉपी करें" : "Copy UPI ID"}>
+                      <Copy className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
-                 <Button
-                    size="lg"
-                    className={cn(
-                    "mt-4 w-full max-w-xs bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg transition-transform hover:scale-105",
-                    language === "hi" ? "font-hindi" : ""
-                    )}
-                >
-                    {t.donateBtn}
-                </Button>
+              </div>
+              <Button
+                size="lg"
+                className={cn(
+                  "w-full max-w-xs bg-gradient-to-r from-accent to-primary text-white shadow-lg transition-transform hover:scale-105",
+                  language === "hi" ? "font-hindi" : ""
+                )}
+              >
+                {t.donateBtn}
+              </Button>
             </CardContent>
           </Card>
         </div>
