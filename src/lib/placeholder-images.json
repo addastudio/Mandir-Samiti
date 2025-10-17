@@ -1,3 +1,106 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-background",
+      "description": "Serene background image of a temple at dawn.",
+      "imageUrl": "https://picsum.photos/seed/101/1920/1080",
+      "imageHint": "temple dawn"
+    },
+    {
+      "id": "event-navratri",
+      "description": "Photo of Navratri festival celebration.",
+      "imageUrl": "https://picsum.photos/seed/102/400/300",
+      "imageHint": "festival celebration"
+    },
+    {
+      "id": "event-janmashtami",
+      "description": "Photo of Janmashtami festival celebration.",
+      "imageUrl": "https://picsum.photos/seed/103/400/300",
+      "imageHint": "religious festival"
+    },
+    {
+      "id": "event-shivratri",
+      "description": "Photo of Shivratri festival celebration.",
+      "imageUrl": "https://picsum.photos/seed/104/400/300",
+      "imageHint": "hindu ritual"
+    },
+    {
+      "id": "event-diwali",
+      "description": "Photo of Diwali celebration with diyas.",
+      "imageUrl": "https://picsum.photos/seed/105/400/300",
+      "imageHint": "diya lamps"
+    },
+    {
+      "id": "seva-bhandara",
+      "description": "Photo of food distribution (Bhandara).",
+      "imageUrl": "https://picsum.photos/seed/106/400/300",
+      "imageHint": "food distribution"
+    },
+    {
+      "id": "seva-health",
+      "description": "Photo of a community health camp.",
+      "imageUrl": "https://picsum.photos/seed/107/400/300",
+      "imageHint": "health camp"
+    },
+    {
+      "id": "donation-qr",
+      "description": "QR code for UPI donations.",
+      "imageUrl": "https://picsum.photos/seed/108/200/200",
+      "imageHint": "qr code"
+    },
+    {
+      "id": "gallery-1",
+      "description": "A beautiful shot of the temple exterior.",
+      "imageUrl": "https://picsum.photos/seed/109/600/400",
+      "imageHint": "temple architecture"
+    },
+    {
+      "id": "gallery-2",
+      "description": "Devotees during a morning prayer.",
+      "imageUrl": "https://picsum.photos/seed/110/600/400",
+      "imageHint": "people praying"
+    },
+    {
+      "id": "gallery-3",
+      "description": "Close-up of a decorative element in the temple.",
+      "imageUrl": "https://picsum.photos/seed/111/600/400",
+      "imageHint": "traditional carving"
+    },
+    {
+      "id": "gallery-4",
+      "description": "Aarti ceremony with lamps.",
+      "imageUrl": "https://picsum.photos/seed/112/600/400",
+      "imageHint": "fire ceremony"
+    },
+    {
+      "id": "gallery-5",
+      "description": "Children participating in a cultural event.",
+      "imageUrl": "https://picsum.photos/seed/113/600/400",
+      "imageHint": "children dancing"
+    },
+    {
+      "id": "gallery-6",
+      "description": "View of the temple from a distance.",
+      "imageUrl": "https://picsum.photos/seed/114/600/400",
+      "imageHint": "temple landscape"
+    },
+    {
+      "id": "testimonial-1",
+      "description": "Portrait of a happy community member.",
+      "imageUrl": "https://picsum.photos/seed/115/100/100",
+      "imageHint": "smiling person"
+    },
+    {
+      "id": "testimonial-2",
+      "description": "Portrait of a grateful family.",
+      "imageUrl": "https://picsum.photos/seed/116/100/100",
+      "imageHint": "happy family"
+    },
+    {
+      "id": "testimonial-3",
+      "description": "Portrait of a volunteer.",
+      "imageUrl": "https://picsum.photos/seed/117/100/100",
+      "imageHint": "volunteer portrait"
+    }
+  ]
 }
