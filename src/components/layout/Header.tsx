@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -8,7 +9,7 @@ import { cn } from "@/lib/utils";
 import TempleIcon from "@/components/icons/TempleIcon";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useUser } from "@/firebase";
 
 export function Header() {
@@ -148,6 +149,10 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full bg-background">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Menu</SheetTitle>
+                  <SheetDescription>Main navigation menu for the website.</SheetDescription>
+                </SheetHeader>
               <div className="flex h-full flex-col p-6">
                 <div className="mb-8 flex items-center justify-between">
                    <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
