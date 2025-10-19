@@ -22,6 +22,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  Auth,
+  Firestore,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -29,8 +31,6 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function SignupPage() {
   const { t, language } = useLanguage();
-  const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState("");
@@ -39,11 +39,22 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [auth, setAuth] = useState<Auth | null>(null);
+  const [firestore, setFirestore] = useState<Firestore | null>(null);
+  
+  const firebaseAuth = useAuth();
+  const firebaseFirestore = useFirestore();
+
+  useEffect(() => {
+    setAuth(firebaseAuth);
+    setFirestore(firebaseFirestore);
+  }, [firebaseAuth, firebaseFirestore]);
+
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth || !firestore) return;
     setIsLoading(true);
     setError(null);
-    if (!auth || !firestore) return;
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -77,9 +88,9 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignup = async () => {
+    if (!auth || !firestore) return;
     setIsLoading(true);
     setError(null);
-    if (!auth || !firestore) return;
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -100,7 +111,7 @@ export default function SignupPage() {
 
       toast({ title: "Signed up successfully with Google" });
       router.push("/dashboard");
-    } catch (err: any) => {
+    } catch (err: any) {
       setError(err.message);
       toast({
         variant: "destructive",

@@ -21,6 +21,8 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  Auth,
+  Firestore,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -28,20 +30,29 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
-  const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [auth, setAuth] = useState<Auth | null>(null);
+  const [firestore, setFirestore] = useState<Firestore | null>(null);
+  
+  const firebaseAuth = useAuth();
+  const firebaseFirestore = useFirestore();
+
+  useEffect(() => {
+    setAuth(firebaseAuth);
+    setFirestore(firebaseFirestore);
+  }, [firebaseAuth, firebaseFirestore]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
     setIsLoading(true);
     setError(null);
-    if (!auth) return;
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: "Logged in successfully" });
@@ -59,9 +70,9 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
+    if (!auth || !firestore) return;
     setIsLoading(true);
     setError(null);
-    if (!auth || !firestore) return;
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
