@@ -190,6 +190,10 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  
+  if (!isClient) {
+    return null; // Render nothing on the server
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -262,7 +266,7 @@ export default function LoginPage() {
               </form>
             </TabsContent>
             <TabsContent value="phone">
-              <div style={{ display: !isClient || confirmationResult ? 'none' : 'block' }}>
+              {!confirmationResult ? (
                  <form onSubmit={handlePhoneLogin} className="space-y-4 pt-4">
                     <div className="space-y-2">
                        <Label htmlFor="phone" className={cn(language === 'hi' ? 'font-hindi' : '')}>
@@ -282,8 +286,7 @@ export default function LoginPage() {
                        {isLoading ? (language === 'hi' ? "OTP भेजा जा रहा है..." : "Sending OTP...") : (language === 'hi' ? "OTP भेजें" : "Send OTP")}
                      </Button>
                  </form>
-              </div>
-              <div style={{ display: isClient && confirmationResult ? 'block' : 'none' }}>
+              ) : (
                 <form onSubmit={handleOtpVerify} className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label htmlFor="otp" className={cn(language === 'hi' ? 'font-hindi' : '')}>
@@ -303,7 +306,7 @@ export default function LoginPage() {
                     {isLoading ? (language === 'hi' ? "सत्यापित हो रहा है..." : "Verifying...") : (language === 'hi' ? "OTP सत्यापित करें" : "Verify OTP")}
                   </Button>
                 </form>
-              </div>
+              )}
             </TabsContent>
           </Tabs>
 

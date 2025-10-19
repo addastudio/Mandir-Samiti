@@ -207,6 +207,10 @@ export default function SignupPage() {
       setIsLoading(false);
     }
   };
+  
+  if (!isClient) {
+    return null; // Render nothing on the server
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -280,7 +284,7 @@ export default function SignupPage() {
               </form>
             </TabsContent>
             <TabsContent value="phone">
-               <div style={{ display: !isClient || confirmationResult ? 'none' : 'block' }}>
+               {!confirmationResult ? (
                  <form onSubmit={handlePhoneSignup} className="space-y-4 pt-4">
                    <div className="space-y-2">
                     <Label htmlFor="name-phone" className={cn(language === 'hi' ? 'font-hindi' : '')}>
@@ -313,8 +317,7 @@ export default function SignupPage() {
                      {isLoading ? (language === 'hi' ? "OTP भेजा जा रहा है..." : "Sending OTP...") : (language === 'hi' ? "OTP भेजें" : "Send OTP")}
                    </Button>
                  </form>
-                </div>
-               <div style={{ display: isClient && confirmationResult ? 'block' : 'none' }}>
+                ) : (
                 <form onSubmit={handleOtpVerify} className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label htmlFor="otp" className={cn(language === 'hi' ? 'font-hindi' : '')}>
@@ -334,7 +337,7 @@ export default function SignupPage() {
                     {isLoading ? (language === 'hi' ? "सत्यापित हो रहा है..." : "Verifying...") : (language === 'hi' ? "खाता बनाएं" : "Create Account")}
                   </Button>
                 </form>
-               </div>
+               )}
             </TabsContent>
           </Tabs>
           
