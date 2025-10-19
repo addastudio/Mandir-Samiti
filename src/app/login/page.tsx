@@ -76,6 +76,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    if (!auth) return;
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: "Logged in successfully" });
@@ -95,6 +96,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
+    if (!auth || !firestore) return;
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -131,6 +133,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    if (!auth) return;
     try {
       const verifier = window.recaptchaVerifier;
       // Make sure to add country code
@@ -152,7 +155,7 @@ export default function LoginPage() {
 
   const handleOtpVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!confirmationResult) return;
+    if (!confirmationResult || !firestore) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -204,7 +207,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="email" className="w-full">
+          <Tabs defaultValue="phone" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="email">{language === 'hi' ? 'ईमेल' : 'Email'}</TabsTrigger>
               <TabsTrigger value="phone">{language === 'hi' ? 'फ़ोन' : 'Phone'}</TabsTrigger>

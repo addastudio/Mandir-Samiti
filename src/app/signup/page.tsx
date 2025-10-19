@@ -81,6 +81,7 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    if (!auth || !firestore) return;
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -116,6 +117,7 @@ export default function SignupPage() {
   const handleGoogleSignup = async () => {
     setIsLoading(true);
     setError(null);
+    if (!auth || !firestore) return;
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -152,6 +154,7 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    if (!auth) return;
     try {
       const verifier = window.recaptchaVerifier;
       // Add country code, assuming Indian numbers
@@ -173,7 +176,7 @@ export default function SignupPage() {
 
   const handleOtpVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!confirmationResult) return;
+    if (!confirmationResult || !firestore) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -221,7 +224,7 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="email" className="w-full">
+          <Tabs defaultValue="phone" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="email">{language === 'hi' ? 'ईमेल' : 'Email'}</TabsTrigger>
               <TabsTrigger value="phone">{language === 'hi' ? 'फ़ोन' : 'Phone'}</TabsTrigger>
