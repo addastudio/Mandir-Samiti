@@ -207,7 +207,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="phone" className="w-full">
+          <Tabs defaultValue="email" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="email">{language === 'hi' ? 'ईमेल' : 'Email'}</TabsTrigger>
               <TabsTrigger value="phone">{language === 'hi' ? 'फ़ोन' : 'Phone'}</TabsTrigger>
