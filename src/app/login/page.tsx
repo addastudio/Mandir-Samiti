@@ -59,16 +59,20 @@ export default function LoginPage() {
   
   useEffect(() => {
     if (isClient && auth && !window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        {
-          size: "invisible",
-          callback: (response: any) => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-          },
-        }
-      );
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(
+          auth,
+          "recaptcha-container",
+          {
+            size: "invisible",
+            callback: (response: any) => {
+              // reCAPTCHA solved, allow signInWithPhoneNumber.
+            },
+          }
+        );
+      } catch (e) {
+        console.error("RecaptchaVerifier error:", e);
+      }
     }
   }, [isClient, auth]);
 
@@ -279,7 +283,7 @@ export default function LoginPage() {
                      </Button>
                  </form>
               </div>
-              <div style={{ display: !isClient || !confirmationResult ? 'none' : 'block' }}>
+              <div style={{ display: isClient && confirmationResult ? 'block' : 'none' }}>
                 <form onSubmit={handleOtpVerify} className="space-y-4 pt-4">
                   <div className="space-y-2">
                     <Label htmlFor="otp" className={cn(language === 'hi' ? 'font-hindi' : '')}>
