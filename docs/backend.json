@@ -179,8 +179,7 @@
   "auth": {
     "providers": [
       "password",
-      "google.com",
-      "phone"
+      "google.com"
     ]
   },
   "firestore": {
@@ -274,18 +273,21 @@
         "definition": {
           "entityName": "User",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "type": "object",
+            "properties": {
+              "assignedAt": { "type": "string" }
+            }
           },
-          "description": "Collection used to grant admin privileges.",
+          "description": "Collection used to grant admin privileges. A document here with a user's UID as the ID grants admin rights.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user who is an admin."
+              "description": "The UID of the user."
             }
           ]
         }
       }
     ],
-    "reasoning": "Standard structure with the addition of a 'notices' collection for public announcements."
+    "reasoning": "Standard structure with admin roles and public content managed by admins."
   }
 }

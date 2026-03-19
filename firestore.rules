@@ -46,7 +46,9 @@ service cloud.firestore {
     }
 
     match /roles_admin/{userId} {
+      // Allow any logged-in user to check if they (or others) are admin for UI purposes
       allow get: if request.auth != null;
+      // Listing admins and managing roles is strictly for existing admins
       allow list: if isAdmin();
       allow create, delete: if isAdmin();
       allow update: if false;
