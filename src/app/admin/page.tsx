@@ -241,7 +241,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-secondary/20 pb-20 pt-28">
+    <div className="min-h-screen bg-background pb-20 pt-28">
       <div className="container mx-auto px-4 md:px-8 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
@@ -252,10 +252,10 @@ export default function AdminPage() {
               <h1 className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                 {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
               </h1>
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                 <Badge variant="outline" className="text-[10px] py-0 h-4">{currentUserProfile?.role || 'devotee'}</Badge>
                 {language === 'hi' ? 'ग्रेड स्तर' : 'Grade Level'}: {ROLE_HIERARCHY[currentUserProfile?.role || 'devotee'] || 0}
-              </p>
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
