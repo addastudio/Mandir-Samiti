@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -20,6 +20,17 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Define the hierarchy weight for roles
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -117,13 +128,19 @@ export default function AdminPage() {
 
   if (!adminDoc) return null;
 
+  const currentRole = currentUserProfile?.role || 'devotee';
+  const isPresident = currentRole === 'president';
+
   // Helper to check if current user can manage target user
   const canManageUser = (targetUserId: string, targetRole: string) => {
     if (user?.uid === targetUserId) return false; // Cannot manage self
-    const myPower = ROLE_HIERARCHY[currentUserProfile?.role || 'devotee'] || 0;
+    const myPower = ROLE_HIERARCHY[currentRole] || 0;
     const targetPower = ROLE_HIERARCHY[targetRole || 'devotee'] || 0;
     
-    // Only higher grade can manage lower grade
+    // President can manage everyone (except maybe other presidents if they existed)
+    if (isPresident && targetRole !== 'president') return true;
+    
+    // Only strictly higher grade can manage lower grade
     return myPower > targetPower;
   };
 
@@ -216,10 +233,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleUpdateUserRole = (userId: string, currentRole: string, newRole: string) => {
+  const handleUpdateUserRole = (userId: string, targetCurrentRole: string, newRole: string) => {
     if (!firestore) return;
     
-    if (!canManageUser(userId, currentRole)) {
+    if (!canManageUser(userId, targetCurrentRole)) {
       toast({ 
         variant: "destructive", 
         title: language === 'hi' ? "अनुमति अस्वीकृत" : "Permission Denied", 
@@ -233,6 +250,45 @@ export default function AdminPage() {
     toast({ 
       title: language === 'hi' ? "भूमिका अपडेट की गई" : "Role Updated",
       description: language === 'hi' ? `उपयोगकर्ता को '${newRole}' के रूप में सेट किया गया है।` : `User set as '${newRole}'.`
+    });
+  };
+
+  const handleResign = async () => {
+    if (!firestore || !user) return;
+    const userRef = doc(firestore, "users", user.uid);
+    const adminRef = doc(firestore, "roles_admin", user.uid);
+    
+    updateDocumentNonBlocking(userRef, { role: "devotee" });
+    deleteDoc(adminRef);
+    
+    toast({ 
+      title: language === 'hi' ? "इस्तीफा स्वीकार किया गया" : "Resignation Accepted",
+      description: language === 'hi' ? "अब आप एक भक्त के रूप में लॉग इन हैं।" : "You have successfully resigned from your committee post."
+    });
+    router.push("/dashboard");
+  };
+
+  const handleRemoveMember = (targetUserId: string, targetRole: string) => {
+    if (!firestore) return;
+    
+    if (!isPresident) {
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "त्रुटि" : "Error", 
+        description: language === 'hi' ? "केवल अध्यक्ष सदस्यों को हटा सकते हैं।" : "Only the President can remove committee members." 
+      });
+      return;
+    }
+
+    const userRef = doc(firestore, "users", targetUserId);
+    const adminRef = doc(firestore, "roles_admin", targetUserId);
+    
+    updateDocumentNonBlocking(userRef, { role: "devotee" });
+    deleteDoc(adminRef);
+    
+    toast({ 
+      title: language === 'hi' ? "सदस्य हटाया गया" : "Member Removed",
+      description: language === 'hi' ? "उपयोगकर्ता को समिति से हटा दिया गया है।" : "The user has been removed from the committee."
     });
   };
 
@@ -252,9 +308,12 @@ export default function AdminPage() {
               <h1 className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                 {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
               </h1>
-              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                <Badge variant="outline" className="text-[10px] py-0 h-4">{currentUserProfile?.role || 'devotee'}</Badge>
-                {language === 'hi' ? 'ग्रेड स्तर' : 'Grade Level'}: {ROLE_HIERARCHY[currentUserProfile?.role || 'devotee'] || 0}
+              <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-primary/5">{currentRole}</Badge>
+                <div className="flex items-center gap-1">
+                  <span className="opacity-60">{language === 'hi' ? 'ग्रेड स्तर' : 'Grade Level'}:</span>
+                  <span className="font-bold text-primary">{ROLE_HIERARCHY[currentRole] || 0}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -271,6 +330,32 @@ export default function AdminPage() {
                 {language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}
               </Button>
             </Link>
+            {currentRole !== 'devotee' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="gap-2">
+                    <LogOut className="h-4 w-4" />
+                    {language === 'hi' ? 'पद त्यागें' : 'Resign Post'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {language === 'hi' 
+                        ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप अभी भी एक भक्त के रूप में लॉग इन रहेंगे।' 
+                        : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground">
+                      {language === 'hi' ? 'पुष्टि करें' : 'Confirm Resignation'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
 
@@ -502,7 +587,7 @@ export default function AdminPage() {
                 <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>
                   {language === 'hi' ? 'उपयोगकर्ता एवं पद प्रबंधन' : 'User & Position Management'}
                 </CardTitle>
-                <CardDescription>Manage administrative privileges based on hierarchical grades. Only higher positions can manage lower ones.</CardDescription>
+                <CardDescription>Manage administrative privileges based on hierarchical grades.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
                 <Alert className="bg-amber-50 border-amber-200">
@@ -510,8 +595,8 @@ export default function AdminPage() {
                   <AlertTitle className="text-amber-800 font-bold">Hierarchical Rules</AlertTitle>
                   <AlertDescription className="text-amber-700">
                     - Each grade has a numeric weight. You can only manage users with a <strong>strictly lower</strong> grade than yours.<br/>
-                    - No one can demote the <strong>President</strong> or remove their admin access.<br/>
-                    - You cannot manage your own grade or admin status from this panel.
+                    - {isPresident ? <strong>You are the President. You have full oversight of all committee members.</strong> : "Only the President can remove members from the committee."}<br/>
+                    - No one can demote the <strong>President</strong> or remove their admin access.
                   </AlertDescription>
                 </Alert>
 
@@ -519,14 +604,16 @@ export default function AdminPage() {
                   {allUsers?.map((u) => {
                     const isUserAdmin = isAdminUser(u.id);
                     const canIManage = canManageUser(u.id, u.role);
+                    const isTargetMe = u.id === user?.uid;
+                    const isTargetPresident = u.role === 'president';
                     
                     return (
-                      <Card key={u.id} className={cn("overflow-hidden border shadow-sm hover:shadow-md transition-shadow", !canIManage && u.id !== user?.uid && "bg-muted/30")}>
+                      <Card key={u.id} className={cn("overflow-hidden border shadow-sm hover:shadow-md transition-shadow", !canIManage && !isTargetMe && "bg-muted/30")}>
                         <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                           <div className="flex items-center gap-4">
                             <div className="h-14 w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-xl text-primary border shadow-inner relative">
                               {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
-                              {!canIManage && u.id !== user?.uid && (
+                              {!canIManage && !isTargetMe && (
                                 <div className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow-sm border">
                                   <Lock className="h-3 w-3 text-muted-foreground" />
                                 </div>
@@ -535,7 +622,7 @@ export default function AdminPage() {
                             <div className="flex flex-col">
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-lg">{u.name || 'Anonymous User'}</span>
-                                {u.id === user?.uid && <Badge variant="outline" className="text-[10px]">{language === 'hi' ? 'आप' : 'You'}</Badge>}
+                                {isTargetMe && <Badge variant="outline" className="text-[10px]">{language === 'hi' ? 'आप' : 'You'}</Badge>}
                               </div>
                               <span className="text-xs font-mono text-muted-foreground mb-1">UID: {u.id}</span>
                               <div className="flex flex-wrap gap-2 mt-1">
@@ -566,7 +653,7 @@ export default function AdminPage() {
                                   <SelectItem value="devotee">{language === 'hi' ? 'भक्त' : 'Devotee'}</SelectItem>
                                   <SelectItem value="member">{language === 'hi' ? 'सदस्य' : 'Member'}</SelectItem>
                                   <SelectItem value="committee_member">{language === 'hi' ? 'समिति सदस्य' : 'Committee Member'}</SelectItem>
-                                  <SelectItem value="official">{language === 'hi' ? 'अधिकारी / Official' : 'Official'}</SelectItem>
+                                  <SelectItem value="official">{language === 'hi' ? 'अधिकारी' : 'Official'}</SelectItem>
                                   <SelectItem value="president">{language === 'hi' ? 'अध्यक्ष' : 'President'}</SelectItem>
                                   <SelectItem value="secretary">{language === 'hi' ? 'सचिव' : 'Secretary'}</SelectItem>
                                   <SelectItem value="treasurer">{language === 'hi' ? 'कोषाध्यक्ष' : 'Treasurer'}</SelectItem>
@@ -575,26 +662,54 @@ export default function AdminPage() {
                             </div>
 
                             <div className="flex flex-col gap-2 w-full sm:w-auto">
-                               <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'प्रबंधन पहुँच' : 'Management Access'}</Label>
-                               <Button 
-                                disabled={!canIManage}
-                                variant={isUserAdmin ? "outline" : "default"} 
-                                size="sm" 
-                                onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role)}
-                                className={cn("gap-2 shadow-sm h-9", isUserAdmin ? "border-destructive text-destructive hover:bg-destructive/10" : "bg-primary text-primary-foreground")}
-                              >
-                                {isUserAdmin ? (
-                                  <>
-                                    <UserMinus className="h-4 w-4" />
-                                    {language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin'}
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserPlus className="h-4 w-4" />
-                                    {language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin'}
-                                  </>
-                                )}
-                              </Button>
+                               <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'प्रबंधन पहुँच' : 'Management'}</Label>
+                               <div className="flex gap-2">
+                                  <Button 
+                                    disabled={!canIManage}
+                                    variant={isUserAdmin ? "outline" : "default"} 
+                                    size="sm" 
+                                    onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role)}
+                                    className={cn("gap-2 shadow-sm h-9", isUserAdmin ? "border-destructive text-destructive hover:bg-destructive/10" : "bg-primary text-primary-foreground")}
+                                  >
+                                    {isUserAdmin ? (
+                                      <>
+                                        <UserMinus className="h-4 w-4" />
+                                        {language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin'}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <UserPlus className="h-4 w-4" />
+                                        {language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin'}
+                                      </>
+                                    )}
+                                  </Button>
+                                  
+                                  {isPresident && !isTargetMe && !isTargetPresident && (
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10">
+                                          <RemoveUserIcon className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>{language === 'hi' ? 'क्या आप इस सदस्य को हटाना चाहते हैं?' : 'Remove Member?'}</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            {language === 'hi' 
+                                              ? `यह ${u.name || 'उपयोगकर्ता'} के सभी पदों और प्रशासनिक पहुँच को हटा देगा। वे एक भक्त के रूप में रहेंगे।` 
+                                              : `This will revoke all committee roles and administrative access for ${u.name || 'this user'}. They will return to 'Devotee' status.`}
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleRemoveMember(u.id, u.role)} className="bg-destructive text-destructive-foreground">
+                                            {language === 'hi' ? 'हटाएं' : 'Remove Member'}
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  )}
+                               </div>
                             </div>
                           </div>
                         </CardContent>
@@ -610,3 +725,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
