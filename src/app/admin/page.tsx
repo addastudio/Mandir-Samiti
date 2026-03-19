@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
@@ -447,18 +448,27 @@ export default function AdminPage() {
                 </CardTitle>
                 <CardDescription>Manage administrative privileges for the temple association members.</CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-6 space-y-6">
+                <Alert className="bg-amber-50 border-amber-200">
+                  <Info className="h-4 w-4 text-amber-800" />
+                  <AlertTitle className="text-amber-800 font-bold">Admin Role Configuration Info</AlertTitle>
+                  <AlertDescription className="text-amber-700">
+                    To grant admin rights, a document must exist in the <code className="bg-white px-1 rounded border">roles_admin</code> collection where the <strong>Document ID</strong> is exactly the user's <strong>UID</strong>. You can promote/demote users using the buttons below.
+                  </AlertDescription>
+                </Alert>
+
                 <div className="space-y-3">
                   {allUsers?.map((u) => {
                     const isUserAdmin = isAdminUser(u.id);
                     return (
-                      <div key={u.id} className="flex items-center justify-between p-5 border rounded-xl hover:bg-muted/30 transition-colors bg-white">
+                      <div key={u.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 border rounded-xl hover:bg-muted/30 transition-colors bg-white gap-4">
                         <div className="flex items-center gap-4">
                           <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center font-bold text-lg text-primary">
                             {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex flex-col">
                             <span className="font-bold text-lg">{u.name || 'Anonymous User'}</span>
+                            <span className="text-xs font-mono text-muted-foreground bg-muted px-1 rounded w-fit mb-1">UID: {u.id}</span>
                             <span className="text-sm text-muted-foreground">{u.email}</span>
                             <div className="mt-1 flex gap-2">
                               {isUserAdmin ? (
