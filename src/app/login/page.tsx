@@ -26,7 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -34,6 +34,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -173,14 +174,32 @@ export default function LoginPage() {
               >
                 {language === "hi" ? "पासवर्ड" : "Password"}
               </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="border-primary/20 focus:border-primary"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="border-primary/20 focus:border-primary pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">
+                    {showPassword ? "Hide password" : "Show password"}
+                  </span>
+                </Button>
+              </div>
             </div>
             {error && <p className="text-sm text-destructive font-medium">{error}</p>}
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
