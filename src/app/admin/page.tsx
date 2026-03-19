@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
@@ -10,19 +11,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, setDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, ArrowLeft, Users, UserPlus, UserMinus } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, ArrowLeft, Users, UserPlus, UserMinus, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -51,10 +53,16 @@ export default function AdminPage() {
     return collection(firestore, "roles_admin");
   }, [firestore]);
 
+  const noticesRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "notices");
+  }, [firestore]);
+
   const { data: events } = useCollection(eventsRef);
   const { data: gallery } = useCollection(galleryRef);
   const { data: allUsers } = useCollection(usersRef);
   const { data: allAdmins } = useCollection(adminsRef);
+  const { data: notices } = useCollection(noticesRef);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -96,6 +104,24 @@ export default function AdminPage() {
     setIsSubmitting(false);
   };
 
+  const handleAddNotice = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!noticesRef) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const noticeData = {
+      title: formData.get("title") as string,
+      content: formData.get("content") as string,
+      importance: formData.get("importance") as string || "normal",
+      createdAt: new Date().toISOString(),
+    };
+
+    addDocumentNonBlocking(noticesRef, noticeData);
+    toast({ title: language === 'hi' ? "सूचना सफलतापूर्वक जोड़ी गई" : "Notice Added Successfully" });
+    (e.target as HTMLFormElement).reset();
+    setIsSubmitting(false);
+  };
+
   const handleAddGallery = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!galleryRef || !user) return;
@@ -124,7 +150,6 @@ export default function AdminPage() {
     if (!firestore) return;
     const roleRef = doc(firestore, "roles_admin", userId);
     if (isCurrentAdmin) {
-      // Prevent self-demotion to avoid losing access
       if (userId === user?.uid) {
         toast({ 
           variant: "destructive", 
@@ -163,12 +188,15 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="events" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
           <TabsTrigger value="events" className="gap-2">
             <Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}
           </TabsTrigger>
           <TabsTrigger value="gallery" className="gap-2">
             <ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}
+          </TabsTrigger>
+          <TabsTrigger value="notices" className="gap-2">
+            <Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}
@@ -181,9 +209,6 @@ export default function AdminPage() {
               <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>
                 {language === 'hi' ? 'नया कार्यक्रम जोड़ें' : 'Add New Event'}
               </CardTitle>
-              <CardDescription>
-                {language === 'hi' ? 'भक्तों को सूचित करने के लिए आगामी कार्यक्रम का विवरण भरें।' : 'Fill in the details for an upcoming event to notify devotees.'}
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleAddEvent} className="space-y-4">
@@ -232,15 +257,73 @@ export default function AdminPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="notices" className="space-y-6">
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.noticesAdd}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleAddNotice} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="notice-title">{t.noticesHeadlinePlaceholder}</Label>
+                    <Input id="notice-title" name="title" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="importance">{language === 'hi' ? 'महत्व' : 'Importance'}</Label>
+                    <Select name="importance" defaultValue="normal">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="normal">{t.noticesNormal}</SelectItem>
+                        <SelectItem value="urgent">{t.noticesUrgent}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notice-content">{language === 'hi' ? 'सामग्री' : 'Content'}</Label>
+                  <Textarea id="notice-content" name="content" placeholder={t.noticesContentPlaceholder} required />
+                </div>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? '...' : t.noticesAdd}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4 mt-8">
+            {notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((notice) => (
+              <Card key={notice.id} className={cn("relative", notice.importance === 'urgent' && "border-destructive/50 bg-destructive/5")}>
+                <CardHeader className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {notice.importance === 'urgent' && <Badge variant="destructive">{t.noticesUrgent}</Badge>}
+                        {notice.title}
+                      </CardTitle>
+                      <CardDescription>{new Date(notice.createdAt).toLocaleString()}</CardDescription>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDelete("notices", notice.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="text-sm whitespace-pre-wrap">{notice.content}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
         <TabsContent value="gallery" className="space-y-6">
           <Card className="border-primary/20">
             <CardHeader>
               <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>
                 {language === 'hi' ? 'गैलरी में जोड़ें' : 'Add to Gallery'}
               </CardTitle>
-              <CardDescription>
-                {language === 'hi' ? 'मंदिर के दर्शन की तस्वीरें साझा करें।' : 'Share photos of temple darshan.'}
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleAddGallery} className="space-y-4">
@@ -279,9 +362,6 @@ export default function AdminPage() {
               <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>
                 {language === 'hi' ? 'उपयोगकर्ता प्रबंधन' : 'User Management'}
               </CardTitle>
-              <CardDescription>
-                {language === 'hi' ? 'पंजीकृत उपयोगकर्ताओं को व्यवस्थापक अधिकार प्रदान करें।' : 'Grant administrative privileges to registered users.'}
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

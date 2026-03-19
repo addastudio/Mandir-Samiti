@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -5,6 +6,7 @@ import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
 import { Header } from "@/components/layout/Header";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { AboutSection } from "@/components/sections/AboutSection";
+import { NoticeSection } from "@/components/sections/NoticeSection";
 import { EventsSection } from "@/components/sections/EventsSection";
 import { SevaSection } from "@/components/sections/SevaSection";
 import { DonateSection } from "@/components/sections/DonateSection";
@@ -30,6 +32,7 @@ export default function Home() {
       <Header />
       <main className="animate-in fade-in duration-500">
         <HeroSection />
+        <NoticeSection />
         <AboutSection />
         <Separator />
         <EventsSection />

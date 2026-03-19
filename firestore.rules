@@ -1,66 +1,50 @@
+
 /**
  * @file Firestore Security Rules for Mandir Samiti Bahpura Web Application
- *
- * @corePhilosophy This ruleset enforces a strict user-ownership model for user profiles and donations,
- *                 public read access for events and gallery, and admin-only management for sensitive data.
- *                 It uses a separate collection (`/roles_admin/{userId}`) to manage admin privileges.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Global helper to check if the authenticated user is an admin
     function isAdmin() {
       return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    /**
-     * @description Secures user profile data.
-     */
     match /users/{userId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-
       allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin(); // Admins can list users for management
+      allow list: if isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    /**
-     * @description Secures donation records.
-     */
     match /users/{userId}/donations/{donationId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
-
       allow get, list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update, delete: if isAdmin();
     }
 
-    /**
-     * @description Public read access for events, admin-only write.
-     */
     match /events/{eventId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description Public read access for gallery, admin-only write.
-     */
     match /gallery/{galleryId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description Manages admin privileges.
-     */
+    match /notices/{noticeId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /roles_admin/{userId} {
       allow get: if request.auth != null;
       allow list: if isAdmin();

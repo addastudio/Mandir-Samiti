@@ -1,3 +1,4 @@
+
 export type TranslationKeys = {
   // Language Selector
   languagePopupTitle: string;
@@ -100,6 +101,14 @@ export type TranslationKeys = {
 
   // Navigation
   backToHome: string;
+
+  // Notices
+  noticesTitle: string;
+  noticesAdd: string;
+  noticesUrgent: string;
+  noticesNormal: string;
+  noticesContentPlaceholder: string;
+  noticesHeadlinePlaceholder: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -184,6 +193,12 @@ export const translations: { [key: string]: TranslationKeys } = {
     footerCopyright: '© मंदिर समिति बहपुरा २०२५. सर्वाधिकार सुरक्षित।',
     footerQuickLinks: 'त्वरित लिंक',
     backToHome: 'होम पेज पर वापस जाएं',
+    noticesTitle: 'सूचना पट्ट',
+    noticesAdd: 'नई सूचना जोड़ें',
+    noticesUrgent: 'महत्वपूर्ण',
+    noticesNormal: 'सामान्य',
+    noticesHeadlinePlaceholder: 'सूचना का शीर्षक',
+    noticesContentPlaceholder: 'यहाँ संदेश लिखें...',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -266,5 +281,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     footerCopyright: '© Mandir Samiti Bahpura 2025. All rights reserved.',
     footerQuickLinks: 'Quick Links',
     backToHome: 'Back to Home',
+    noticesTitle: 'Notice Board',
+    noticesAdd: 'Add New Notice',
+    noticesUrgent: 'Urgent',
+    noticesNormal: 'Normal',
+    noticesHeadlinePlaceholder: 'Notice Headline',
+    noticesContentPlaceholder: 'Write the message here...',
   },
 };

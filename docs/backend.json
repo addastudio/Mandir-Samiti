@@ -143,6 +143,37 @@
         "id",
         "imageURL"
       ]
+    },
+    "Notice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notice",
+      "type": "object",
+      "description": "Represents a public notice or announcement from the temple committee.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the notice."
+        },
+        "title": {
+          "type": "string",
+          "description": "The headline of the notice."
+        },
+        "content": {
+          "type": "string",
+          "description": "The detailed message."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of creation.",
+          "format": "date-time"
+        },
+        "importance": {
+          "type": "string",
+          "enum": ["normal", "urgent"],
+          "description": "Priority level of the notice."
+        }
+      },
+      "required": ["id", "title", "content", "createdAt"]
     }
   },
   "auth": {
@@ -161,7 +192,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile information. User's 'id' is used as the document ID, and only the authenticated user can access their own profile.",
+          "description": "Stores user profile information.",
           "params": [
             {
               "name": "userId",
@@ -177,7 +208,7 @@
           "schema": {
             "$ref": "#/backend/entities/Donation"
           },
-          "description": "Stores donation records for each user.  Donations are nested under the user's document to easily retrieve donation history. The `donation.userId` must match the `userId` path segment.",
+          "description": "Stores donation records for each user.",
           "params": [
             {
               "name": "userId",
@@ -197,7 +228,7 @@
           "schema": {
             "$ref": "#/backend/entities/Event"
           },
-          "description": "Stores event information.  Accessible to all users but manageable only by admins.",
+          "description": "Stores event information.",
           "params": [
             {
               "name": "eventId",
@@ -213,11 +244,27 @@
           "schema": {
             "$ref": "#/backend/entities/Gallery"
           },
-          "description": "Stores gallery images.  Accessible to all users, but upload/management requires admin privileges. Includes 'uploadedBy' field with the User ID.",
+          "description": "Stores gallery images.",
           "params": [
             {
               "name": "galleryId",
               "description": "The unique identifier for the gallery item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/notices/{noticeId}",
+        "definition": {
+          "entityName": "Notice",
+          "schema": {
+            "$ref": "#/backend/entities/Notice"
+          },
+          "description": "Stores temple announcements and notices.",
+          "params": [
+            {
+              "name": "noticeId",
+              "description": "The unique identifier for the notice."
             }
           ]
         }
@@ -229,7 +276,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Collection used to grant admin privileges. The existence of a document with a user's ID in this collection indicates admin status.",
+          "description": "Collection used to grant admin privileges.",
           "params": [
             {
               "name": "userId",
@@ -239,8 +286,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support a secure and scalable Mandir Samiti Bahpura web application with user authentication, profiles, dashboards, and admin management. It prioritizes authorization independence by denormalizing authorization data, ensuring that security rules can be evaluated without relying on `get()` calls, which can break atomic operations.  The structure also supports QAPs by segregating data based on access requirements and using membership maps where collaborative access is needed.  \n\nSpecifically:\n\n*   **User Data:** User profiles are stored under `/users/{userId}`. This path-based ownership ensures that users can only access their own data.\n*   **Donations:** Donations are stored under `/users/{userId}/donations/{donationId}`. The `donation.userId` field is used to associate donations with users, enabling individual donation history tracking and admin-level overview.\n*   **Events:** Events are stored under `/events/{eventId}`.  No user-specific data is directly linked, so it will be publicly available but manageable by admins.\n*   **Gallery:** Gallery images are stored under `/gallery/{galleryId}`.  The `gallery.uploadedBy` field tracks the user who uploaded the image, but admin privileges are required to manage the gallery.\n*   **Admin Roles:** The presence of a document in the `/roles_admin/{userId}` collection grants admin privileges.  This existence-based check is more efficient and secure than storing roles within the user document itself.\n\nThis structure facilitates clear and robust security rules by:\n\n*   **Authorization Independence:**  No `get()` calls are needed in security rules because authorization context is denormalized.\n*   **Clarity of Intent:**  The path structure explicitly reflects the ownership and access relationships between data.\n*   **DBAC:** Roles are managed within the database itself, relying solely on `request.auth.uid`.\n*   **QAPs:** Secure `list` operations are possible by segregating data with different access requirements into separate collections and leveraging path-based ownership.\n*   **Invariants:** Ownership, timestamps, and denormalized data can be consistently enforced through security rules."
+    "reasoning": "Standard structure with the addition of a 'notices' collection for public announcements."
   }
 }
-
-    
