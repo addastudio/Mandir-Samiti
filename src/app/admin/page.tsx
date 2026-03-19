@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, UserCog } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -184,6 +184,16 @@ export default function AdminPage() {
       setDoc(roleRef, { assignedAt: new Date().toISOString() });
       toast({ title: language === 'hi' ? "व्यवस्थापक जोड़ा गया" : "Admin added" });
     }
+  };
+
+  const handleUpdateUserRole = (userId: string, newRole: string) => {
+    if (!firestore) return;
+    const userRef = doc(firestore, "users", userId);
+    updateDocumentNonBlocking(userRef, { role: newRole });
+    toast({ 
+      title: language === 'hi' ? "भूमिका अपडेट की गई" : "Role Updated",
+      description: language === 'hi' ? `उपयोगकर्ता को '${newRole}' के रूप में सेट किया गया है।` : `User set as '${newRole}'.`
+    });
   };
 
   const isAdminUser = (userId: string) => {
@@ -444,64 +454,88 @@ export default function AdminPage() {
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5">
                 <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>
-                  {language === 'hi' ? 'उपयोगकर्ता प्रबंधन' : 'User Management'}
+                  {language === 'hi' ? 'उपयोगकर्ता एवं पद प्रबंधन' : 'User & Position Management'}
                 </CardTitle>
-                <CardDescription>Manage administrative privileges for the temple association members.</CardDescription>
+                <CardDescription>Manage administrative privileges and assign community roles/grades to members.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
                 <Alert className="bg-amber-50 border-amber-200">
                   <Info className="h-4 w-4 text-amber-800" />
                   <AlertTitle className="text-amber-800 font-bold">Admin Role Configuration Info</AlertTitle>
                   <AlertDescription className="text-amber-700">
-                    To grant admin rights, a document must exist in the <code className="bg-white px-1 rounded border">roles_admin</code> collection where the <strong>Document ID</strong> is exactly the user's <strong>UID</strong>. You can promote/demote users using the buttons below.
+                    To grant access to this panel, use the "Make Admin" button. To assign organizational grades (like President or Member), use the role selection dropdown.
                   </AlertDescription>
                 </Alert>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {allUsers?.map((u) => {
                     const isUserAdmin = isAdminUser(u.id);
                     return (
-                      <div key={u.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 border rounded-xl hover:bg-muted/30 transition-colors bg-white gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center font-bold text-lg text-primary">
-                            {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-lg">{u.name || 'Anonymous User'}</span>
-                            <span className="text-xs font-mono text-muted-foreground bg-muted px-1 rounded w-fit mb-1">UID: {u.id}</span>
-                            <span className="text-sm text-muted-foreground">{u.email}</span>
-                            <div className="mt-1 flex gap-2">
-                              {isUserAdmin ? (
-                                <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">
-                                  {language === 'hi' ? 'प्रशासक' : 'Administrator'}
+                      <Card key={u.id} className="overflow-hidden border shadow-sm hover:shadow-md transition-shadow">
+                        <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                          <div className="flex items-center gap-4">
+                            <div className="h-14 w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-xl text-primary border shadow-inner">
+                              {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-lg">{u.name || 'Anonymous User'}</span>
+                              <span className="text-xs font-mono text-muted-foreground mb-1">UID: {u.id}</span>
+                              <div className="flex flex-wrap gap-2 mt-1">
+                                {isUserAdmin && (
+                                  <Badge className="bg-primary/10 text-primary border-primary/20">
+                                    {language === 'hi' ? 'व्यवस्थापक' : 'Administrator'}
+                                  </Badge>
+                                )}
+                                <Badge variant="secondary" className="bg-secondary/50 text-secondary-foreground font-medium">
+                                  {u.role || (language === 'hi' ? 'भक्त' : 'Devotee')}
                                 </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-muted-foreground">
-                                  {language === 'hi' ? 'भक्त' : 'Devotee'}
-                                </Badge>
-                              )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <Button 
-                          variant={isUserAdmin ? "outline" : "default"} 
-                          size="sm" 
-                          onClick={() => toggleAdmin(u.id, !!isUserAdmin)}
-                          className={cn("gap-2 shadow-sm", isUserAdmin ? "border-destructive text-destructive hover:bg-destructive/10" : "bg-primary text-primary-foreground")}
-                        >
-                          {isUserAdmin ? (
-                            <>
-                              <UserMinus className="h-4 w-4" />
-                              {language === 'hi' ? 'व्यवस्थापक हटाएं' : 'Remove Admin'}
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus className="h-4 w-4" />
-                              {language === 'hi' ? 'व्यवस्थापक बनाएं' : 'Make Admin'}
-                            </>
-                          )}
-                        </Button>
-                      </div>
+
+                          <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="flex flex-col gap-2 w-full sm:w-48">
+                              <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'पद / ग्रेड असाइन करें' : 'Assign Grade/Role'}</Label>
+                              <Select defaultValue={u.role || 'devotee'} onValueChange={(val) => handleUpdateUserRole(u.id, val)}>
+                                <SelectTrigger className="h-9">
+                                  <SelectValue placeholder="Select Grade" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="devotee">{language === 'hi' ? 'भक्त' : 'Devotee'}</SelectItem>
+                                  <SelectItem value="member">{language === 'hi' ? 'सदस्य' : 'Member'}</SelectItem>
+                                  <SelectItem value="committee_member">{language === 'hi' ? 'समिति सदस्य' : 'Committee Member'}</SelectItem>
+                                  <SelectItem value="official">{language === 'hi' ? 'अधिकारी / Official' : 'Official'}</SelectItem>
+                                  <SelectItem value="president">{language === 'hi' ? 'अध्यक्ष' : 'President'}</SelectItem>
+                                  <SelectItem value="secretary">{language === 'hi' ? 'सचिव' : 'Secretary'}</SelectItem>
+                                  <SelectItem value="treasurer">{language === 'hi' ? 'कोषाध्यक्ष' : 'Treasurer'}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="flex flex-col gap-2 w-full sm:w-auto">
+                               <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'प्रबंधन पहुँच' : 'Management Access'}</Label>
+                               <Button 
+                                variant={isUserAdmin ? "outline" : "default"} 
+                                size="sm" 
+                                onClick={() => toggleAdmin(u.id, !!isUserAdmin)}
+                                className={cn("gap-2 shadow-sm h-9", isUserAdmin ? "border-destructive text-destructive hover:bg-destructive/10" : "bg-primary text-primary-foreground")}
+                              >
+                                {isUserAdmin ? (
+                                  <>
+                                    <UserMinus className="h-4 w-4" />
+                                    {language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin'}
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserPlus className="h-4 w-4" />
+                                    {language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin'}
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     );
                   })}
                 </div>
