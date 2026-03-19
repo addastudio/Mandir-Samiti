@@ -101,6 +101,7 @@ export type TranslationKeys = {
 
   // Navigation
   backToHome: string;
+  browseWebsite: string;
 
   // Notices
   noticesTitle: string;
@@ -109,6 +110,18 @@ export type TranslationKeys = {
   noticesNormal: string;
   noticesContentPlaceholder: string;
   noticesHeadlinePlaceholder: string;
+
+  // Dashboard
+  dashboardWelcome: string;
+  dashboardSubtitle: string;
+  dashboardLogout: string;
+  dashboardAdminPanel: string;
+  dashboardProfileInfo: string;
+  dashboardEmail: string;
+  dashboardMemberSince: string;
+  dashboardDonationHistory: string;
+  dashboardNoDonations: string;
+  dashboardTotalContribution: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -193,12 +206,23 @@ export const translations: { [key: string]: TranslationKeys } = {
     footerCopyright: '© मंदिर समिति बहपुरा २०२५. सर्वाधिकार सुरक्षित।',
     footerQuickLinks: 'त्वरित लिंक',
     backToHome: 'होम पेज पर वापस जाएं',
+    browseWebsite: 'वेबसाइट ब्राउज़ करें',
     noticesTitle: 'सूचना पट्ट',
     noticesAdd: 'नई सूचना जोड़ें',
     noticesUrgent: 'महत्वपूर्ण',
     noticesNormal: 'सामान्य',
     noticesHeadlinePlaceholder: 'सूचना का शीर्षक',
     noticesContentPlaceholder: 'यहाँ संदेश लिखें...',
+    dashboardWelcome: 'नमस्ते',
+    dashboardSubtitle: 'अपनी प्रोफ़ाइल प्रबंधित करें और अपना दान इतिहास देखें।',
+    dashboardLogout: 'लॉगआउट',
+    dashboardAdminPanel: 'एडमिन पैनल',
+    dashboardProfileInfo: 'प्रोफ़ाइल जानकारी',
+    dashboardEmail: 'ईमेल',
+    dashboardMemberSince: 'सदस्यता की तारीख',
+    dashboardDonationHistory: 'दान इतिहास',
+    dashboardNoDonations: 'कोई दान रिकॉर्ड नहीं मिला।',
+    dashboardTotalContribution: 'कुल योगदान',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -281,11 +305,22 @@ export const translations: { [key: string]: TranslationKeys } = {
     footerCopyright: '© Mandir Samiti Bahpura 2025. All rights reserved.',
     footerQuickLinks: 'Quick Links',
     backToHome: 'Back to Home',
+    browseWebsite: 'Browse Website',
     noticesTitle: 'Notice Board',
     noticesAdd: 'Add New Notice',
     noticesUrgent: 'Urgent',
     noticesNormal: 'Normal',
     noticesHeadlinePlaceholder: 'Notice Headline',
     noticesContentPlaceholder: 'Write the message here...',
+    dashboardWelcome: 'Welcome',
+    dashboardSubtitle: 'Manage your profile and view donation history.',
+    dashboardLogout: 'Logout',
+    dashboardAdminPanel: 'Admin Panel',
+    dashboardProfileInfo: 'Profile Info',
+    dashboardEmail: 'Email',
+    dashboardMemberSince: 'Member Since',
+    dashboardDonationHistory: 'Donation History',
+    dashboardNoDonations: 'No donation records found.',
+    dashboardTotalContribution: 'Total Contribution',
   },
 };

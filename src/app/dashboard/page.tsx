@@ -1,13 +1,14 @@
+
 "use client";
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAuth, signOut } from "firebase/auth";
 import { collection, doc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,11 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const { t, language } = useLanguage();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const donationsRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -32,10 +38,10 @@ export default function DashboardPage() {
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (mounted && !isUserLoading && !user) {
       router.push("/login");
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, mounted]);
 
   const handleLogout = async () => {
     const auth = getAuth();
@@ -43,9 +49,9 @@ export default function DashboardPage() {
     router.push("/");
   };
 
-  if (isUserLoading || isAdminLoading) {
+  if (!mounted || isUserLoading || isAdminLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -53,103 +59,131 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
+  const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
+
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8 mt-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className={cn("text-3xl font-bold flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-            <UserIcon className="h-8 w-8 text-primary" />
-            {language === 'hi' ? `नमस्ते, ${user.displayName || user.email}` : `Welcome, ${user.displayName || user.email}`}
-          </h1>
-          <p className={cn("text-muted-foreground", language === 'hi' ? 'font-hindi' : '')}>
-            {language === 'hi' ? 'अपनी प्रोफ़ाइल प्रबंधित करें और अपना दान इतिहास देखें।' : 'Manage your profile and view donation history.'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {adminDoc && (
-            <Link href="/admin">
-              <Button variant="outline" className="gap-2 border-primary text-primary hover:bg-primary/5">
-                <ShieldCheck className="h-4 w-4" /> 
-                <span className={cn(language === 'hi' ? 'font-hindi' : '')}>
-                  {language === 'hi' ? 'एडमिन पैनल' : 'Admin Panel'}
-                </span>
+    <div className="min-h-screen bg-secondary/30 pb-20 pt-28">
+      <div className="container mx-auto px-4 md:px-8 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-xl border shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary/10 p-3 rounded-full">
+              <UserIcon className="h-8 w-8 text-primary" />
+            </div>
+            <div className="space-y-1">
+              <h1 className={cn("text-2xl font-bold flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                {t.dashboardWelcome}, {user.displayName || user.email?.split('@')[0]}
+              </h1>
+              <p className={cn("text-sm text-muted-foreground", language === 'hi' ? 'font-hindi' : '')}>
+                {t.dashboardSubtitle}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/">
+              <Button variant="outline" className="gap-2">
+                <Globe className="h-4 w-4" />
+                <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.browseWebsite}</span>
               </Button>
             </Link>
-          )}
-          <Button variant="ghost" onClick={handleLogout} className="gap-2">
-            <LogOut className="h-4 w-4" /> 
-            <span className={cn(language === 'hi' ? 'font-hindi' : '')}>
-              {language === 'hi' ? 'लॉगआउट' : 'Logout'}
-            </span>
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1 border-primary/20">
-          <CardHeader>
-            <CardTitle className={cn(language === 'hi' ? 'font-hindi' : 'font-headline')}>
-              {language === 'hi' ? 'प्रोफ़ाइल जानकारी' : 'Profile Info'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase">{language === 'hi' ? 'ईमेल' : 'Email'}</label>
-              <p className="font-medium">{user.email}</p>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase">{language === 'hi' ? 'सदस्यता की तारीख' : 'Member Since'}</label>
-              <p className="font-medium">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
-            </div>
             {adminDoc && (
-              <div className="pt-2">
-                <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                  {language === 'hi' ? 'प्रशासक' : 'Administrator'}
-                </span>
-              </div>
+              <Link href="/admin">
+                <Button variant="default" className="gap-2 bg-primary text-primary-foreground">
+                  <ShieldCheck className="h-4 w-4" /> 
+                  <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardAdminPanel}</span>
+                </Button>
+              </Link>
             )}
-          </CardContent>
-        </Card>
+            <Button variant="ghost" onClick={handleLogout} className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10">
+              <LogOut className="h-4 w-4" /> 
+              <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardLogout}</span>
+            </Button>
+          </div>
+        </div>
 
-        <Card className="md:col-span-2 border-primary/20">
-          <CardHeader>
-            <CardTitle className={cn("flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-              <History className="h-5 w-5" /> {language === 'hi' ? 'दान इतिहास' : 'Donation History'}
-            </CardTitle>
-            <CardDescription className={cn(language === 'hi' ? 'font-hindi' : '')}>
-              {language === 'hi' ? 'मंदिर में आपके द्वारा दिए गए योगदान की सूची।' : 'A list of your contributions to the temple.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isDonationsLoading ? (
-              <div className="flex py-8 justify-center">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : donations && donations.length > 0 ? (
-              <div className="space-y-4">
-                {donations.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((donation) => (
-                  <div key={donation.id} className="flex items-center justify-between p-4 rounded-lg border bg-card hover:border-primary/40 transition-colors">
-                    <div>
-                      <p className="font-bold text-lg text-primary">₹{donation.amount}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(donation.date).toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm font-medium px-2 py-1 rounded bg-secondary">{donation.mode}</span>
-                    </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-4 space-y-8">
+            <Card className="border-primary/20 shadow-md">
+              <CardHeader className="bg-primary/5 border-b">
+                <CardTitle className={cn(language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                  {t.dashboardProfileInfo}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-5">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.dashboardEmail}</label>
+                  <p className="font-medium truncate">{user.email}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.dashboardMemberSince}</label>
+                  <p className="font-medium">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
+                </div>
+                {adminDoc && (
+                  <div className="pt-2">
+                    <span className="inline-flex items-center rounded-full bg-primary/20 px-3 py-1 text-xs font-bold text-primary border border-primary/30">
+                      {language === 'hi' ? 'प्रशासक' : 'Administrator'}
+                    </span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <History className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p className={cn(language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'कोई दान रिकॉर्ड नहीं मिला।' : 'No donation records found.'}</p>
-                <Link href="/#donate" className="text-primary hover:underline mt-2 inline-block font-medium">
-                  {t.navDonate}
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-accent/20 shadow-md bg-gradient-to-br from-white to-accent/5">
+              <CardHeader className="pb-2">
+                <CardDescription className="font-semibold text-accent uppercase tracking-wider">{t.dashboardTotalContribution}</CardDescription>
+                <CardTitle className="text-4xl font-bold flex items-center gap-1 text-primary">
+                  <IndianRupee className="h-8 w-8" />
+                  {totalDonated}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className="text-sm text-muted-foreground">Thank you for your generous support to the temple.</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="lg:col-span-8">
+            <Card className="border-primary/20 shadow-md h-full">
+              <CardHeader className="border-b bg-white">
+                <div className="flex items-center justify-between">
+                  <CardTitle className={cn("flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                    <History className="h-5 w-5 text-primary" /> {t.dashboardDonationHistory}
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {isDonationsLoading ? (
+                  <div className="flex py-20 justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : donations && donations.length > 0 ? (
+                  <div className="divide-y">
+                    {donations.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((donation) => (
+                      <div key={donation.id} className="flex items-center justify-between p-5 hover:bg-muted/30 transition-colors">
+                        <div className="space-y-1">
+                          <p className="font-bold text-xl text-primary">₹{donation.amount}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(donation.date).toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-bold px-3 py-1 rounded-full bg-secondary text-secondary-foreground border">
+                            {donation.mode}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-24 text-muted-foreground">
+                    <History className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                    <p className={cn("text-lg", language === 'hi' ? 'font-hindi' : '')}>{t.dashboardNoDonations}</p>
+                    <Link href="/#donate" className="text-primary hover:underline mt-4 inline-block font-bold">
+                      {t.navDonate}
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
