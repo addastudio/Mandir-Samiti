@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, UserCog } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -20,6 +20,17 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+// Define the hierarchy weight for roles
+const ROLE_HIERARCHY: Record<string, number> = {
+  'president': 100,
+  'secretary': 90,
+  'treasurer': 90,
+  'official': 70,
+  'committee_member': 50,
+  'member': 30,
+  'devotee': 10,
+};
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
@@ -32,6 +43,13 @@ export default function AdminPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fetch current user's profile to check their grade
+  const currentUserRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: currentUserProfile } = useDoc(currentUserRef);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -98,6 +116,16 @@ export default function AdminPage() {
   }
 
   if (!adminDoc) return null;
+
+  // Helper to check if current user can manage target user
+  const canManageUser = (targetUserId: string, targetRole: string) => {
+    if (user?.uid === targetUserId) return false; // Cannot manage self
+    const myPower = ROLE_HIERARCHY[currentUserProfile?.role || 'devotee'] || 0;
+    const targetPower = ROLE_HIERARCHY[targetRole || 'devotee'] || 0;
+    
+    // Only higher grade can manage lower grade
+    return myPower > targetPower;
+  };
 
   const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -166,18 +194,20 @@ export default function AdminPage() {
     toast({ title: language === 'hi' ? "आइटम हटा दिया गया" : "Item deleted" });
   };
 
-  const toggleAdmin = (userId: string, isCurrentAdmin: boolean) => {
+  const toggleAdmin = (userId: string, isCurrentAdmin: boolean, targetRole: string) => {
     if (!firestore) return;
+    
+    if (!canManageUser(userId, targetRole)) {
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "अनुमति अस्वीकृत" : "Permission Denied", 
+        description: language === 'hi' ? "आपके पास इस उपयोगकर्ता को प्रबंधित करने के लिए पर्याप्त अधिकार नहीं हैं।" : "You do not have sufficient grade to manage this user." 
+      });
+      return;
+    }
+
     const roleRef = doc(firestore, "roles_admin", userId);
     if (isCurrentAdmin) {
-      if (userId === user?.uid) {
-        toast({ 
-          variant: "destructive", 
-          title: language === 'hi' ? "त्रुटि" : "Error", 
-          description: language === 'hi' ? "आप स्वयं को व्यवस्थापक से नहीं हटा सकते।" : "You cannot remove yourself from admins." 
-        });
-        return;
-      }
       deleteDoc(roleRef);
       toast({ title: language === 'hi' ? "व्यवस्थापक हटा दिया गया" : "Admin removed" });
     } else {
@@ -186,8 +216,18 @@ export default function AdminPage() {
     }
   };
 
-  const handleUpdateUserRole = (userId: string, newRole: string) => {
+  const handleUpdateUserRole = (userId: string, currentRole: string, newRole: string) => {
     if (!firestore) return;
+    
+    if (!canManageUser(userId, currentRole)) {
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "अनुमति अस्वीकृत" : "Permission Denied", 
+        description: language === 'hi' ? "आप उच्च पद वाले सदस्यों का ग्रेड नहीं बदल सकते।" : "You cannot change the grade of members with higher or equal positions." 
+      });
+      return;
+    }
+
     const userRef = doc(firestore, "users", userId);
     updateDocumentNonBlocking(userRef, { role: newRole });
     toast({ 
@@ -208,9 +248,15 @@ export default function AdminPage() {
             <div className="bg-primary/10 p-3 rounded-full">
               <ShieldAlert className="h-8 w-8 text-primary" />
             </div>
-            <h1 className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-              {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
-            </h1>
+            <div>
+              <h1 className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
+              </h1>
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                <Badge variant="outline" className="text-[10px] py-0 h-4">{currentUserProfile?.role || 'devotee'}</Badge>
+                {language === 'hi' ? 'ग्रेड स्तर' : 'Grade Level'}: {ROLE_HIERARCHY[currentUserProfile?.role || 'devotee'] || 0}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/">
@@ -456,29 +502,41 @@ export default function AdminPage() {
                 <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>
                   {language === 'hi' ? 'उपयोगकर्ता एवं पद प्रबंधन' : 'User & Position Management'}
                 </CardTitle>
-                <CardDescription>Manage administrative privileges and assign community roles/grades to members.</CardDescription>
+                <CardDescription>Manage administrative privileges based on hierarchical grades. Only higher positions can manage lower ones.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
                 <Alert className="bg-amber-50 border-amber-200">
                   <Info className="h-4 w-4 text-amber-800" />
-                  <AlertTitle className="text-amber-800 font-bold">Admin Role Configuration Info</AlertTitle>
+                  <AlertTitle className="text-amber-800 font-bold">Hierarchical Rules</AlertTitle>
                   <AlertDescription className="text-amber-700">
-                    To grant access to this panel, use the "Make Admin" button. To assign organizational grades (like President or Member), use the role selection dropdown.
+                    - Each grade has a numeric weight. You can only manage users with a <strong>strictly lower</strong> grade than yours.<br/>
+                    - No one can demote the <strong>President</strong> or remove their admin access.<br/>
+                    - You cannot manage your own grade or admin status from this panel.
                   </AlertDescription>
                 </Alert>
 
                 <div className="space-y-4">
                   {allUsers?.map((u) => {
                     const isUserAdmin = isAdminUser(u.id);
+                    const canIManage = canManageUser(u.id, u.role);
+                    
                     return (
-                      <Card key={u.id} className="overflow-hidden border shadow-sm hover:shadow-md transition-shadow">
+                      <Card key={u.id} className={cn("overflow-hidden border shadow-sm hover:shadow-md transition-shadow", !canIManage && u.id !== user?.uid && "bg-muted/30")}>
                         <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                           <div className="flex items-center gap-4">
-                            <div className="h-14 w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-xl text-primary border shadow-inner">
+                            <div className="h-14 w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-xl text-primary border shadow-inner relative">
                               {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
+                              {!canIManage && u.id !== user?.uid && (
+                                <div className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow-sm border">
+                                  <Lock className="h-3 w-3 text-muted-foreground" />
+                                </div>
+                              )}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-bold text-lg">{u.name || 'Anonymous User'}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-lg">{u.name || 'Anonymous User'}</span>
+                                {u.id === user?.uid && <Badge variant="outline" className="text-[10px]">{language === 'hi' ? 'आप' : 'You'}</Badge>}
+                              </div>
                               <span className="text-xs font-mono text-muted-foreground mb-1">UID: {u.id}</span>
                               <div className="flex flex-wrap gap-2 mt-1">
                                 {isUserAdmin && (
@@ -496,7 +554,11 @@ export default function AdminPage() {
                           <div className="flex flex-col sm:flex-row items-center gap-4">
                             <div className="flex flex-col gap-2 w-full sm:w-48">
                               <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'पद / ग्रेड असाइन करें' : 'Assign Grade/Role'}</Label>
-                              <Select defaultValue={u.role || 'devotee'} onValueChange={(val) => handleUpdateUserRole(u.id, val)}>
+                              <Select 
+                                disabled={!canIManage}
+                                defaultValue={u.role || 'devotee'} 
+                                onValueChange={(val) => handleUpdateUserRole(u.id, u.role, val)}
+                              >
                                 <SelectTrigger className="h-9">
                                   <SelectValue placeholder="Select Grade" />
                                 </SelectTrigger>
@@ -515,9 +577,10 @@ export default function AdminPage() {
                             <div className="flex flex-col gap-2 w-full sm:w-auto">
                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'प्रबंधन पहुँच' : 'Management Access'}</Label>
                                <Button 
+                                disabled={!canIManage}
                                 variant={isUserAdmin ? "outline" : "default"} 
                                 size="sm" 
-                                onClick={() => toggleAdmin(u.id, !!isUserAdmin)}
+                                onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role)}
                                 className={cn("gap-2 shadow-sm h-9", isUserAdmin ? "border-destructive text-destructive hover:bg-destructive/10" : "bg-primary text-primary-foreground")}
                               >
                                 {isUserAdmin ? (
