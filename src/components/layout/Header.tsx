@@ -137,7 +137,7 @@ export function Header() {
             <div className="relative h-10 w-10 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
               <Image 
                 src="/logo.png" 
-                alt="Temple Logo" 
+                alt="Logo" 
                 fill 
                 className="object-contain p-0.5 z-10"
                 onError={(e) => {
@@ -153,10 +153,10 @@ export function Header() {
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
-                {language === "hi" ? "बहपुरा मंदिर" : "Bahpura Mandir"}
+                {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-muted-foreground">
-                {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
+                {language === "hi" ? "बहपुरा" : "Bahpura"}
               </span>
             </div>
           </div>
@@ -214,7 +214,7 @@ export function Header() {
                     <TempleIcon className="h-5 w-5 text-primary absolute" />
                   </div>
                   <span className={cn("text-lg font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-                    {language === 'hi' ? 'बहपुरा मंदिर' : 'Bahpura Mandir'}
+                    {language === 'hi' ? 'मंदिर समिति' : 'Mandir Samiti'}
                   </span>
                 </Link>
               </div>

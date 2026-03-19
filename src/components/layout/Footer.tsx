@@ -31,7 +31,7 @@ export function Footer() {
               <div className="relative h-12 w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
                 <Image 
                   src="/logo.png" 
-                  alt="Temple Logo" 
+                  alt="Logo" 
                   fill 
                   className="object-contain p-1 z-10"
                   onError={(e) => {
@@ -40,14 +40,19 @@ export function Footer() {
                 />
                 <TempleIcon className="h-8 w-8 text-primary absolute" />
               </div>
-              <span
-                className={cn(
-                  "text-xl font-bold",
-                  language === "hi" ? "font-hindi" : "font-headline"
-                )}
-              >
-                {language === "hi" ? "बहपुरा मंदिर" : "Bahpura Mandir"}
-              </span>
+              <div className="flex flex-col">
+                <span
+                  className={cn(
+                    "text-xl font-bold",
+                    language === "hi" ? "font-hindi" : "font-headline"
+                  )}
+                >
+                  {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
+                </span>
+                <span className="text-xs text-muted-foreground uppercase tracking-widest">
+                  {language === "hi" ? "बहपुरा" : "Bahpura"}
+                </span>
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">
               {t.heroSubtitle}
