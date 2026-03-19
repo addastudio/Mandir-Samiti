@@ -5,13 +5,21 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Banknote, QrCode, Heart, Copy } from "lucide-react";
+import { Banknote, QrCode, Heart, Copy, Loader2 } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useToast } from "@/hooks/use-toast";
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useState } from "react";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export function DonateSection() {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const qrImage = PlaceHolderImages.find((img) => img.id === "donation-qr");
   const upiId = t.donateUpiId;
 
@@ -19,10 +27,43 @@ export function DonateSection() {
     navigator.clipboard.writeText(upiId);
     toast({
       title: language === 'hi' ? "कॉपी किया गया" : "Copied to clipboard",
-      description: language === 'hi' ? `UPI ID: ${upiId}`: `UPI ID: ${upiId}`,
+      description: `UPI ID: ${upiId}`,
     });
   };
 
+  const handleDonateRecord = async () => {
+    if (!user) {
+      toast({
+        title: language === 'hi' ? "लॉगिन आवश्यक है" : "Login Required",
+        description: language === 'hi' ? "दान का रिकॉर्ड रखने के लिए कृपया लॉगिन करें।" : "Please login to keep a record of your donation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!firestore) return;
+
+    setIsProcessing(true);
+    
+    // Simulate a donation record being created
+    const donationsRef = collection(firestore, "users", user.uid, "donations");
+    const donationData = {
+      userId: user.uid,
+      amount: 501, // Example fixed amount for "record"
+      date: new Date().toISOString(),
+      mode: "UPI (Scanned QR)",
+    };
+
+    addDocumentNonBlocking(donationsRef, donationData);
+
+    setTimeout(() => {
+      toast({
+        title: language === 'hi' ? "रिकॉर्ड सहेजा गया" : "Record Saved",
+        description: language === 'hi' ? "आपके दान का विवरण आपके डैशबोर्ड में जोड़ दिया गया है।" : "Your donation details have been added to your dashboard.",
+      });
+      setIsProcessing(false);
+    }, 1000);
+  };
 
   return (
     <section id="donate" className="py-20 md:py-28 bg-gradient-to-br from-yellow-50/50 via-amber-100/30 to-background">
@@ -83,14 +124,15 @@ export function DonateSection() {
             <CardContent className="flex flex-col items-center justify-center gap-8">
               <div className="flex w-full flex-col items-center justify-center gap-6 sm:flex-row sm:gap-8">
                 {qrImage && (
-                  <Image
-                    src={qrImage.imageUrl}
-                    alt={qrImage.description}
-                    width={180}
-                    height={180}
-                    className="rounded-lg shadow-md flex-shrink-0"
-                    data-ai-hint={qrImage.imageHint}
-                  />
+                  <div className="relative h-[180px] w-[180px]">
+                    <Image
+                      src={qrImage.imageUrl}
+                      alt={qrImage.description}
+                      fill
+                      className="rounded-lg shadow-md flex-shrink-0 object-cover"
+                      data-ai-hint={qrImage.imageHint}
+                    />
+                  </div>
                 )}
                 <div className={cn("flex flex-col items-center gap-3 text-center sm:items-start sm:text-left", language === "hi" ? "font-hindi" : "")}>
                   <p className="text-muted-foreground">{language === 'hi' ? 'स्कैन करें और भुगतान करें' : 'Scan & Pay'}</p>
@@ -104,11 +146,14 @@ export function DonateSection() {
               </div>
               <Button
                 size="lg"
+                onClick={handleDonateRecord}
+                disabled={isProcessing}
                 className={cn(
                   "w-full max-w-xs bg-gradient-to-r from-accent to-primary text-white shadow-lg transition-transform hover:scale-105",
                   language === "hi" ? "font-hindi" : ""
                 )}
               >
+                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {t.donateBtn}
               </Button>
             </CardContent>

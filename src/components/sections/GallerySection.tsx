@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Youtube, Play } from "lucide-react";
+import { Camera, Youtube, Play, Loader2 } from "lucide-react";
 import React from "react";
 import {
   Dialog,
@@ -17,9 +17,20 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 export function GallerySection() {
   const { t, language } = useLanguage();
+  const firestore = useFirestore();
+
+  const galleryQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "gallery");
+  }, [firestore]);
+
+  const { data: firebaseGallery, isLoading } = useCollection(galleryQuery);
+  
   const galleryImages = PlaceHolderImages.filter((img) =>
     img.id.startsWith("gallery-")
   );
@@ -47,19 +58,41 @@ export function GallerySection() {
           </h2>
         </div>
 
+        {/* Dynamic Gallery Content */}
         <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {galleryImages.slice(0,8).map((image) => (
-            <div key={image.id} className="group overflow-hidden rounded-lg shadow-lg cursor-pointer" onClick={() => openLightbox(image.imageUrl)}>
-              <Image
-                src={image.imageUrl}
-                alt={language === 'hi' ? image.description : image.description}
-                width={600}
-                height={400}
-                className="h-full w-full object-cover aspect-[3/2] transition-transform duration-300 group-hover:scale-105"
-                data-ai-hint={image.imageHint}
-              />
+          {isLoading ? (
+            <div className="col-span-full flex justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ))}
+          ) : firebaseGallery && firebaseGallery.length > 0 ? (
+            firebaseGallery.map((image) => (
+              <div 
+                key={image.id} 
+                className="group overflow-hidden rounded-lg shadow-lg cursor-pointer aspect-[3/2] relative" 
+                onClick={() => openLightbox(image.imageURL)}
+              >
+                <Image
+                  src={image.imageURL}
+                  alt={image.caption || "Gallery image"}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+            ))
+          ) : (
+            // Fallback to placeholders if no Firebase images
+            galleryImages.slice(0, 8).map((image) => (
+              <div key={image.id} className="group overflow-hidden rounded-lg shadow-lg cursor-pointer aspect-[3/2] relative" onClick={() => openLightbox(image.imageUrl)}>
+                <Image
+                  src={image.imageUrl}
+                  alt={image.description}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  data-ai-hint={image.imageHint}
+                />
+              </div>
+            ))
+          )}
         </div>
 
         <div className="mt-20">
@@ -116,13 +149,14 @@ export function GallerySection() {
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl p-2 bg-transparent border-0">
           {selectedImage && 
-            <Image 
-              src={selectedImage} 
-              alt="Lightbox view"
-              width={1200}
-              height={800}
-              className="rounded-lg object-contain"
-            />
+            <div className="relative aspect-video w-full">
+              <Image 
+                src={selectedImage} 
+                alt="Lightbox view"
+                fill
+                className="rounded-lg object-contain"
+              />
+            </div>
           }
         </DialogContent>
       </Dialog>
