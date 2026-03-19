@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { ArrowDown } from "lucide-react";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export function HeroSection() {
   const { t, language } = useLanguage();
@@ -28,6 +29,9 @@ export function HeroSection() {
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-amber-900/40" />
       <div className="relative z-10 flex flex-col items-center p-4">
+        <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+          <LanguageSwitcher />
+        </div>
         <h1
           className={cn(
             "text-5xl font-bold tracking-tight text-white drop-shadow-md sm:text-6xl md:text-7xl",
