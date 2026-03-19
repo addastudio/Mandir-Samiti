@@ -5,12 +5,18 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent } from "@/components/ui/card";
-import { Video, Camera } from "lucide-react";
+import { Camera, Youtube, Play } from "lucide-react";
 import React from "react";
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 export function GallerySection() {
   const { t, language } = useLanguage();
@@ -61,20 +67,47 @@ export function GallerySection() {
             <CardContent className="p-6">
               <h3
                 className={cn(
-                  "mb-4 text-center text-2xl font-semibold",
+                  "mb-6 text-center text-2xl font-semibold",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
                 {t.galleryLiveDarshan}
               </h3>
-              <div className="aspect-video w-full rounded-lg bg-muted flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <Video className="mx-auto h-12 w-12" />
-                  <p className={cn(language === 'hi' ? 'font-hindi' : '')}>
-                    {language === 'hi' ? 'वीडियो जल्द ही आ रहा है' : 'Video Coming Soon'}
-                  </p>
-                </div>
-              </div>
+              
+              <Tabs defaultValue="youtube" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6 max-w-md mx-auto">
+                  <TabsTrigger value="youtube" className={cn("gap-2", language === 'hi' ? 'font-hindi' : '')}>
+                    <Youtube className="h-4 w-4" /> {t.galleryYoutubeVideo}
+                  </TabsTrigger>
+                  <TabsTrigger value="local" className={cn("gap-2", language === 'hi' ? 'font-hindi' : '')}>
+                    <Play className="h-4 w-4" /> {t.galleryLocalVideo}
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="youtube" className="animate-in fade-in duration-300">
+                  <div className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl bg-black">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      src="https://www.youtube.com/embed/y6120QOlsfU"
+                      title="Mandir Live Darshan"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="border-0"
+                    ></iframe>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="local" className="animate-in fade-in duration-300">
+                  <div className="aspect-video w-full rounded-lg overflow-hidden shadow-2xl bg-black flex items-center justify-center">
+                    <video controls className="w-full h-full object-contain">
+                      <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
