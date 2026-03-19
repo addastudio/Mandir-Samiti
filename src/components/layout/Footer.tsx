@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Facebook, Instagram, Youtube } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import TempleIcon from "@/components/icons/TempleIcon";
 
 export function Footer() {
   const { t, language } = useLanguage();
@@ -27,8 +28,17 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="relative h-12 w-12 overflow-hidden rounded-full border border-primary/20 bg-white">
-                <Image src="/logo.png" alt="Temple Logo" fill className="object-contain p-1" />
+              <div className="relative h-12 w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
+                <Image 
+                  src="/logo.png" 
+                  alt="Temple Logo" 
+                  fill 
+                  className="object-contain p-1 z-10"
+                  onError={(e) => {
+                    (e.target as any).style.opacity = '0';
+                  }}
+                />
+                <TempleIcon className="h-8 w-8 text-primary absolute" />
               </div>
               <span
                 className={cn(

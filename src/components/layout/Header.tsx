@@ -17,6 +17,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { useUser } from "@/firebase";
+import TempleIcon from "@/components/icons/TempleIcon";
 
 export function Header() {
   const { t, language } = useLanguage();
@@ -133,16 +134,17 @@ export function Header() {
       <div className="container mx-auto flex h-20 items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95 group">
           <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
-            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-primary/20 bg-white">
+            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
               <Image 
                 src="/logo.png" 
                 alt="Temple Logo" 
                 fill 
-                className="object-contain p-0.5"
+                className="object-contain p-0.5 z-10"
                 onError={(e) => {
-                  (e.target as any).style.display = 'none';
+                  (e.target as any).style.opacity = '0';
                 }}
               />
+              <TempleIcon className="h-6 w-6 text-primary absolute" />
             </div>
             <div className="flex flex-col items-start leading-none">
               <span
@@ -199,8 +201,17 @@ export function Header() {
               
               <div className="flex h-20 items-center border-b px-6 bg-amber-50">
                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white">
-                    <Image src="/logo.png" alt="Logo" fill className="object-contain p-0.5" />
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
+                    <Image 
+                      src="/logo.png" 
+                      alt="Logo" 
+                      fill 
+                      className="object-contain p-0.5 z-10"
+                      onError={(e) => {
+                        (e.target as any).style.opacity = '0';
+                      }}
+                    />
+                    <TempleIcon className="h-5 w-5 text-primary absolute" />
                   </div>
                   <span className={cn("text-lg font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                     {language === 'hi' ? 'बहपुरा मंदिर' : 'Bahpura Mandir'}
