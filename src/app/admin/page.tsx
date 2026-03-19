@@ -25,7 +25,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -330,6 +329,32 @@ export default function AdminPage() {
                 {language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}
               </Button>
             </Link>
+            {currentRole !== 'devotee' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="gap-2">
+                    <LogOut className="h-4 w-4" />
+                    {language === 'hi' ? 'पद त्यागें' : 'Resign Post'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {language === 'hi' 
+                        ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप अभी भी एक भक्त के रूप में लॉग इन रहेंगे।' 
+                        : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground">
+                      {language === 'hi' ? 'पुष्टि करें' : 'Confirm Resignation'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
 
@@ -678,33 +703,6 @@ export default function AdminPage() {
                                           <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
                                           <AlertDialogAction onClick={() => handleRemoveMember(u.id, u.role)} className="bg-destructive text-destructive-foreground">
                                             {language === 'hi' ? 'हटाएं' : 'Remove Member'}
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  )}
-
-                                  {isTargetMe && currentRole !== 'devotee' && (
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="sm" className="gap-2 h-9">
-                                          <LogOut className="h-4 w-4" />
-                                          {language === 'hi' ? 'पद त्यागें' : 'Resign Post'}
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            {language === 'hi' 
-                                              ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप अभी भी एक भक्त के रूप में लॉग इन रहेंगे।' 
-                                              : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
-                                          <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground">
-                                            {language === 'hi' ? 'पुष्टि करें' : 'Confirm Resignation'}
                                           </AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>
