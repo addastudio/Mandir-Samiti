@@ -131,20 +131,22 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 lg:px-8">
-        <Link href="/" className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95">
-          <TempleIcon className="h-9 w-9 text-primary" />
-          <div className="flex flex-col items-start leading-none">
-            <span
-              className={cn(
-                "text-xl font-bold text-foreground",
-                language === "hi" ? "font-hindi" : "font-headline"
-              )}
-            >
-              {language === "hi" ? "बहपुरा मंदिर" : "Bahpura Mandir"}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
-            </span>
+        <Link href="/" className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95 group">
+          <div className="flex items-center gap-2 rounded-lg bg-secondary/80 px-3 py-1.5 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-secondary">
+            <TempleIcon className="h-8 w-8 text-primary" />
+            <div className="flex flex-col items-start leading-none">
+              <span
+                className={cn(
+                  "text-lg font-bold text-foreground",
+                  language === "hi" ? "font-hindi" : "font-headline"
+                )}
+              >
+                {language === "hi" ? "बहपुरा मंदिर" : "Bahpura Mandir"}
+              </span>
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
+              </span>
+            </div>
           </div>
         </Link>
 
