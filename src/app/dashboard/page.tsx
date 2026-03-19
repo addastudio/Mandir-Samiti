@@ -7,11 +7,13 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAuth, signOut } from "firebase/auth";
-import { collection, doc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee } from "lucide-react";
+import { collection, doc, query, where, orderBy } from "firebase/firestore";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, Eye } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -29,12 +31,21 @@ export default function DashboardPage() {
     return collection(firestore, "users", user.uid, "donations");
   }, [firestore, user]);
 
+  const requestsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, "prayer_requests"),
+      where("userId", "==", user.uid)
+    );
+  }, [firestore, user]);
+
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "roles_admin", user.uid);
   }, [firestore, user]);
 
   const { data: donations, isLoading: isDonationsLoading } = useCollection(donationsRef);
+  const { data: userRequests, isLoading: isRequestsLoading } = useCollection(requestsQuery);
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
 
   useEffect(() => {
@@ -139,48 +150,113 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">Thank you for your generous support to the temple.</p>
               </CardContent>
             </Card>
+
+            <Link href="/#prayer" className="block">
+              <Button className="w-full gap-2 py-6 text-lg bg-white border-2 border-primary/20 text-primary hover:bg-primary/5 shadow-sm">
+                <PlusCircle className="h-5 w-5" />
+                {t.dashboardNewRequest}
+              </Button>
+            </Link>
           </div>
 
           <div className="lg:col-span-8">
-            <Card className="border-primary/20 shadow-md h-full">
-              <CardHeader className="border-b bg-white">
-                <div className="flex items-center justify-between">
-                  <CardTitle className={cn("flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-                    <History className="h-5 w-5 text-primary" /> {t.dashboardDonationHistory}
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {isDonationsLoading ? (
-                  <div className="flex py-20 justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : donations && donations.length > 0 ? (
-                  <div className="divide-y">
-                    {donations.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((donation) => (
-                      <div key={donation.id} className="flex items-center justify-between p-5 hover:bg-muted/30 transition-colors">
-                        <div className="space-y-1">
-                          <p className="font-bold text-xl text-primary">₹{donation.amount}</p>
-                          <p className="text-xs text-muted-foreground">{new Date(donation.date).toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xs font-bold px-3 py-1 rounded-full bg-secondary text-secondary-foreground border">
-                            {donation.mode}
-                          </span>
-                        </div>
+            <Card className="border-primary/20 shadow-md h-full overflow-hidden">
+              <Tabs defaultValue="donations" className="w-full">
+                <CardHeader className="border-b bg-white p-0">
+                  <TabsList className="w-full justify-start rounded-none h-14 bg-transparent border-b-0 p-0">
+                    <TabsTrigger 
+                      value="donations" 
+                      className="rounded-none h-full px-6 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none font-bold"
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      {t.dashboardDonationHistory}
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="requests" 
+                      className="rounded-none h-full px-6 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none font-bold"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      {t.dashboardMyRequests}
+                    </TabsTrigger>
+                  </TabsList>
+                </CardHeader>
+
+                <TabsContent value="donations" className="m-0">
+                  <CardContent className="p-0">
+                    {isDonationsLoading ? (
+                      <div className="flex py-20 justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-24 text-muted-foreground">
-                    <History className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                    <p className={cn("text-lg", language === 'hi' ? 'font-hindi' : '')}>{t.dashboardNoDonations}</p>
-                    <Link href="/#donate" className="text-primary hover:underline mt-4 inline-block font-bold">
-                      {t.navDonate}
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
+                    ) : donations && donations.length > 0 ? (
+                      <div className="divide-y">
+                        {donations.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((donation) => (
+                          <div key={donation.id} className="flex items-center justify-between p-5 hover:bg-muted/30 transition-colors">
+                            <div className="space-y-1">
+                              <p className="font-bold text-xl text-primary">₹{donation.amount}</p>
+                              <p className="text-xs text-muted-foreground">{new Date(donation.date).toLocaleString()}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs font-bold px-3 py-1 rounded-full bg-secondary text-secondary-foreground border">
+                                {donation.mode}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-24 text-muted-foreground">
+                        <History className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                        <p className={cn("text-lg", language === 'hi' ? 'font-hindi' : '')}>{t.dashboardNoDonations}</p>
+                        <Link href="/#donate" className="text-primary hover:underline mt-4 inline-block font-bold">
+                          {t.navDonate}
+                        </Link>
+                      </div>
+                    )}
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="requests" className="m-0">
+                  <CardContent className="p-0">
+                    {isRequestsLoading ? (
+                      <div className="flex py-20 justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                    ) : userRequests && userRequests.length > 0 ? (
+                      <div className="divide-y">
+                        {userRequests.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((req) => (
+                          <div key={req.id} className="p-5 hover:bg-muted/30 transition-colors space-y-3">
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-lg">{req.requestType === 'puja' ? t.prayerTypePuja : req.requestType === 'prayer' ? t.prayerTypePrayer : t.prayerTypeOther}</h4>
+                                  <Badge variant={req.status === 'completed' ? 'default' : req.status === 'viewed' ? 'secondary' : 'outline'}>
+                                    {req.status === 'completed' ? t.prayerStatusCompleted : req.status === 'viewed' ? t.prayerStatusViewed : t.prayerStatusPending}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleString()}</p>
+                              </div>
+                              {req.status === 'completed' ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Clock className="h-5 w-5 text-amber-500" />}
+                            </div>
+                            <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded italic border-l-2 border-primary/20 line-clamp-2">
+                              {req.message}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-24 text-muted-foreground">
+                        <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                        <p className={cn("text-lg", language === 'hi' ? 'font-hindi' : '')}>
+                          {language === 'hi' ? 'कोई निवेदन नहीं मिला।' : 'No requests found.'}
+                        </p>
+                        <Link href="/#prayer" className="text-primary hover:underline mt-4 inline-block font-bold">
+                          {t.dashboardNewRequest}
+                        </Link>
+                      </div>
+                    )}
+                  </CardContent>
+                </TabsContent>
+              </Tabs>
             </Card>
           </div>
         </div>

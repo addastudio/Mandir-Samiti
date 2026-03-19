@@ -47,7 +47,9 @@ service cloud.firestore {
 
     match /prayer_requests/{requestId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      // Users can read their own prayer requests. Admins can read all.
+      allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     match /roles_admin/{userId} {
