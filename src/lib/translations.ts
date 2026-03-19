@@ -1,4 +1,3 @@
-
 export type TranslationKeys = {
   // Language Selector
   languagePopupTitle: string;
@@ -242,7 +241,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardNoDonations: 'कोई दान रिकॉर्ड नहीं मिला।',
     dashboardTotalContribution: 'कुल योगदान',
     dashboardMyRequests: 'मेरे निवेदन',
-    dashboardNewRequest: 'नया निवेदन भेजें',
+    dashboardNewRequest: 'प्रार्थना या पूजा का निवेदन भेजें',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -356,18 +355,6 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardNoDonations: 'No donation records found.',
     dashboardTotalContribution: 'Total Contribution',
     dashboardMyRequests: 'My Requests',
-    dashboardNewRequest: 'Submit New Request',
-    prayerTitle: 'Prayer & Ritual Request',
-    prayerSubtitle: 'Submit your request for special prayers or pujas. Our temple priests will offer prayers on your behalf.',
-    prayerFormType: 'Request Type',
-    prayerTypePrayer: 'Special Prayer',
-    prayerTypePuja: 'Special Puja / Ritual',
-    prayerTypeOther: 'Other Request',
-    prayerFormSuccess: 'Your request has been received successfully.',
-    prayerFormError: 'There was an error sending your request. Please try again.',
-    prayerAdminRequests: 'Devotee Requests',
-    prayerStatusPending: 'Pending',
-    prayerStatusViewed: 'Viewed',
-    prayerStatusCompleted: 'Completed',
+    dashboardNewRequest: 'Request Prayer or Puja',
   },
 };
