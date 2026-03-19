@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   title: 'Bahpura Mandir',
   description:
     'मंदिर समिति बहपुरा में आपका स्वागत है। Welcome to Mandir Samiti Bahpura.',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -49,5 +54,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    

@@ -13,13 +13,19 @@ const TempleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     className={cn("h-8 w-8", props.className)}
     {...props}
   >
-    <path d="M4 22h16" />
-    <path d="M12 9.5V22" />
-    <path d="M10 22h4" />
-    <path d="M12 2l4.95 4.95" />
-    <path d="M12 2L7.05 6.95" />
-    <path d="m5 10 7-7 7 7" />
-    <path d="M19 10v12H5V10h14z" />
+    {/* Temple Base */}
+    <path d="M2 22h20" />
+    <path d="M4 22V12h16v10" />
+    {/* Spire/Shikhara */}
+    <path d="M12 2L7 12h10L12 2z" />
+    {/* Flag Staff */}
+    <path d="M12 2V1" />
+    {/* Flag */}
+    <path d="M12 1c2 0 3 0.5 3 1s-1 1-3 1" fill="currentColor" opacity="0.5" />
+    {/* Entrance */}
+    <path d="M10 22v-4a2 2 0 0 1 4 0v4" />
+    {/* Circular motif */}
+    <circle cx="12" cy="7" r="1" />
   </svg>
 );
 

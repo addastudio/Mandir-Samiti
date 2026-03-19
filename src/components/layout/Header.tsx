@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X, LogIn, LayoutDashboard, Heart } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import TempleIcon from "@/components/icons/TempleIcon";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import {
@@ -132,8 +132,18 @@ export function Header() {
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95 group">
-          <div className="flex items-center gap-2 rounded-lg bg-secondary/80 px-3 py-1.5 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-secondary">
-            <TempleIcon className="h-8 w-8 text-primary" />
+          <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
+            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-primary/20 bg-white">
+              <Image 
+                src="/logo.png" 
+                alt="Temple Logo" 
+                fill 
+                className="object-contain p-0.5"
+                onError={(e) => {
+                  (e.target as any).style.display = 'none';
+                }}
+              />
+            </div>
             <div className="flex flex-col items-start leading-none">
               <span
                 className={cn(
@@ -187,9 +197,11 @@ export function Header() {
                 <SheetDescription>Main navigation menu for the temple website.</SheetDescription>
               </SheetHeader>
               
-              <div className="flex h-20 items-center border-b px-6">
+              <div className="flex h-20 items-center border-b px-6 bg-amber-50">
                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                  <TempleIcon className="h-7 w-7 text-primary" />
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white">
+                    <Image src="/logo.png" alt="Logo" fill className="object-contain p-0.5" />
+                  </div>
                   <span className={cn("text-lg font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                     {language === 'hi' ? 'बहपुरा मंदिर' : 'Bahpura Mandir'}
                   </span>

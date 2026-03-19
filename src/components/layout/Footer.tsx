@@ -1,8 +1,8 @@
 "use client";
 
-import { Facebook, Instagram, Youtube, Twitter } from "lucide-react";
+import Image from "next/image";
+import { Facebook, Instagram, Youtube } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import TempleIcon from "@/components/icons/TempleIcon";
 import { cn } from "@/lib/utils";
 
 export function Footer() {
@@ -27,7 +27,9 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <TempleIcon className="h-8 w-8 text-primary" />
+              <div className="relative h-12 w-12 overflow-hidden rounded-full border border-primary/20 bg-white">
+                <Image src="/logo.png" alt="Temple Logo" fill className="object-contain p-1" />
+              </div>
               <span
                 className={cn(
                   "text-xl font-bold",
