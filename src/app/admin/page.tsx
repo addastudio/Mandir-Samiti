@@ -9,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, ArrowLeft } from "lucide-react";
+import { collection, doc, deleteDoc, setDoc } from "firebase/firestore";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, ArrowLeft, Users, UserPlus, UserMinus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminPage() {
   const { user, isUserLoading } = useUser();
@@ -40,8 +41,20 @@ export default function AdminPage() {
     return collection(firestore, "gallery");
   }, [firestore]);
 
+  const usersRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "users");
+  }, [firestore]);
+
+  const adminsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "roles_admin");
+  }, [firestore]);
+
   const { data: events } = useCollection(eventsRef);
   const { data: gallery } = useCollection(galleryRef);
+  const { data: allUsers } = useCollection(usersRef);
+  const { data: allAdmins } = useCollection(adminsRef);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,7 +63,6 @@ export default function AdminPage() {
       if (!user) {
         router.push("/login");
       } else if (!adminDoc) {
-        // Not an authorized administrator
         router.push("/dashboard");
       }
     }
@@ -108,6 +120,31 @@ export default function AdminPage() {
     toast({ title: language === 'hi' ? "आइटम हटा दिया गया" : "Item deleted" });
   };
 
+  const toggleAdmin = (userId: string, isCurrentAdmin: boolean) => {
+    if (!firestore) return;
+    const roleRef = doc(firestore, "roles_admin", userId);
+    if (isCurrentAdmin) {
+      // Prevent self-demotion to avoid losing access
+      if (userId === user?.uid) {
+        toast({ 
+          variant: "destructive", 
+          title: language === 'hi' ? "त्रुटि" : "Error", 
+          description: language === 'hi' ? "आप स्वयं को व्यवस्थापक से नहीं हटा सकते।" : "You cannot remove yourself from admins." 
+        });
+        return;
+      }
+      deleteDoc(roleRef);
+      toast({ title: language === 'hi' ? "व्यवस्थापक हटा दिया गया" : "Admin removed" });
+    } else {
+      setDoc(roleRef, { assignedAt: new Date().toISOString() });
+      toast({ title: language === 'hi' ? "व्यवस्थापक जोड़ा गया" : "Admin added" });
+    }
+  };
+
+  const isAdminUser = (userId: string) => {
+    return allAdmins?.some(admin => admin.id === userId);
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8 mt-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -126,12 +163,15 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="events" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-8">
+        <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="events" className="gap-2">
             <Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}
           </TabsTrigger>
           <TabsTrigger value="gallery" className="gap-2">
             <ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}
+          </TabsTrigger>
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}
           </TabsTrigger>
         </TabsList>
 
@@ -231,6 +271,63 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-6">
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>
+                {language === 'hi' ? 'उपयोगकर्ता प्रबंधन' : 'User Management'}
+              </CardTitle>
+              <CardDescription>
+                {language === 'hi' ? 'पंजीकृत उपयोगकर्ताओं को व्यवस्थापक अधिकार प्रदान करें।' : 'Grant administrative privileges to registered users.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {allUsers?.map((u) => {
+                  const isUserAdmin = isAdminUser(u.id);
+                  return (
+                    <div key={u.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex flex-col">
+                        <span className="font-bold">{u.name}</span>
+                        <span className="text-sm text-muted-foreground">{u.email}</span>
+                        <div className="mt-1">
+                          {isUserAdmin ? (
+                            <Badge className="bg-primary text-primary-foreground">
+                              {language === 'hi' ? 'प्रशासक' : 'Administrator'}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">
+                              {language === 'hi' ? 'भक्त' : 'Devotee'}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Button 
+                        variant={isUserAdmin ? "outline" : "default"} 
+                        size="sm" 
+                        onClick={() => toggleAdmin(u.id, !!isUserAdmin)}
+                        className="gap-2"
+                      >
+                        {isUserAdmin ? (
+                          <>
+                            <UserMinus className="h-4 w-4" />
+                            {language === 'hi' ? 'व्यवस्थापक हटाएं' : 'Remove Admin'}
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-4 w-4" />
+                            {language === 'hi' ? 'व्यवस्थापक बनाएं' : 'Make Admin'}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
