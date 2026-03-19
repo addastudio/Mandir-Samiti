@@ -168,6 +168,9 @@ export function Header() {
 
         {/* Mobile Navigation Trigger */}
         <div className="flex items-center gap-2 lg:hidden">
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
           <AuthButton className="mr-1" />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
