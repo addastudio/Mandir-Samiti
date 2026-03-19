@@ -36,6 +36,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   
   const [auth, setAuth] = useState<Auth | null>(null);
   const [firestore, setFirestore] = useState<Firestore | null>(null);
@@ -44,6 +45,7 @@ export default function LoginPage() {
   const firebaseFirestore = useFirestore();
 
   useEffect(() => {
+    setMounted(true);
     setAuth(firebaseAuth);
     setFirestore(firebaseFirestore);
   }, [firebaseAuth, firebaseFirestore]);
@@ -55,13 +57,13 @@ export default function LoginPage() {
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Logged in successfully" });
+      toast({ title: language === "hi" ? "सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully" });
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
       toast({
         variant: "destructive",
-        title: "Login failed",
+        title: language === "hi" ? "लॉगिन विफल" : "Login failed",
         description: err.message,
       });
     } finally {
@@ -91,13 +93,13 @@ export default function LoginPage() {
         });
       }
 
-      toast({ title: "Logged in successfully with Google" });
+      toast({ title: language === "hi" ? "Google के साथ सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully with Google" });
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
       toast({
         variant: "destructive",
-        title: "Login failed",
+        title: language === "hi" ? "लॉगिन विफल" : "Login failed",
         description: err.message,
       });
     } finally {
@@ -105,22 +107,32 @@ export default function LoginPage() {
     }
   };
 
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md animate-pulse">
+          <div className="h-64 bg-muted rounded-lg" />
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center">
+      <Card className="w-full max-w-md shadow-lg border-primary/20">
+        <CardHeader className="text-center space-y-1">
           <CardTitle
             className={cn(
-              "text-2xl",
+              "text-3xl font-bold text-primary",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
             {language === "hi" ? "लॉग इन करें" : "Login"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className={cn(language === "hi" ? "font-hindi" : "")}>
             {language === "hi"
-              ? "अपने खाते तक पहुंचने के लिए"
-              : "to access your account"}
+              ? "अपने खाते तक पहुंचने के लिए विवरण दर्ज करें"
+              : "Enter your details to access your account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -139,6 +151,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="border-primary/20 focus:border-primary"
               />
             </div>
             <div className="space-y-2">
@@ -154,10 +167,11 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="border-primary/20 focus:border-primary"
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            {error && <p className="text-sm text-destructive font-medium">{error}</p>}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
               {isLoading
                 ? language === "hi"
                   ? "लॉग इन हो रहा है..."
@@ -168,31 +182,39 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="my-4 flex items-center">
-            <div className="flex-grow border-t border-muted" />
-            <span className="mx-4 text-xs text-muted-foreground">OR</span>
-            <div className="flex-grow border-t border-muted" />
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-muted" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                {language === "hi" ? "या" : "OR"}
+              </span>
+            </div>
           </div>
+
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full border-primary/20 hover:bg-primary/5"
             onClick={handleGoogleLogin}
             disabled={isLoading}
           >
             <Image
-              src="/google.svg"
+              src="https://images.unsplash.com/path-to-google-logo" 
               width={20}
               height={20}
               alt="Google logo"
               className="mr-2"
+              loader={({src}) => "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"}
+              unoptimized
             />
             {language === "hi"
               ? "Google के साथ जारी रखें"
               : "Continue with Google"}
           </Button>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center text-sm text-muted-foreground">
             {language === "hi" ? "खाता नहीं है?" : "Don't have an account?"}{" "}
-            <Link href="/signup" className="underline">
+            <Link href="/signup" className="text-primary font-semibold hover:underline">
               {language === "hi" ? "साइन अप करें" : "Sign up"}
             </Link>
           </div>
