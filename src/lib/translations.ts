@@ -13,6 +13,7 @@ export type TranslationKeys = {
   navDonate: string;
   navGallery: string;
   navContact: string;
+  navPrayer: string;
   languageSwitcher: string;
 
   // Hero Section
@@ -122,6 +123,20 @@ export type TranslationKeys = {
   dashboardDonationHistory: string;
   dashboardNoDonations: string;
   dashboardTotalContribution: string;
+
+  // Prayer Request
+  prayerTitle: string;
+  prayerSubtitle: string;
+  prayerFormType: string;
+  prayerTypePrayer: string;
+  prayerTypePuja: string;
+  prayerTypeOther: string;
+  prayerFormSuccess: string;
+  prayerFormError: string;
+  prayerAdminRequests: string;
+  prayerStatusPending: string;
+  prayerStatusViewed: string;
+  prayerStatusCompleted: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -136,6 +151,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     navDonate: 'दान',
     navGallery: 'गैलरी',
     navContact: 'संपर्क',
+    navPrayer: 'प्रार्थना निवेदन',
     languageSwitcher: 'भाषा',
     heroHeadline: 'मंदिर समिति बहपुरा में आपका स्वागत है',
     heroSubtitle: 'आस्था का संरक्षण, समुदाय की सेवा।',
@@ -223,6 +239,18 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardDonationHistory: 'दान इतिहास',
     dashboardNoDonations: 'कोई दान रिकॉर्ड नहीं मिला।',
     dashboardTotalContribution: 'कुल योगदान',
+    prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
+    prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
+    prayerFormType: 'निवेदन का प्रकार',
+    prayerTypePrayer: 'विशेष प्रार्थना (Prayer)',
+    prayerTypePuja: 'विशेष पूजा (Ritual/Puja)',
+    prayerTypeOther: 'अन्य निवेदन',
+    prayerFormSuccess: 'आपका निवेदन सफलतापूर्वक प्राप्त हो गया है।',
+    prayerFormError: 'निवेदन भेजने में त्रुटि हुई। कृपया पुन: प्रयास करें।',
+    prayerAdminRequests: 'भक्तों के निवेदन',
+    prayerStatusPending: 'लंबित (Pending)',
+    prayerStatusViewed: 'देखा गया (Viewed)',
+    prayerStatusCompleted: 'पूर्ण (Completed)',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -235,6 +263,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     navDonate: 'Donate',
     navGallery: 'Gallery',
     navContact: 'Contact',
+    navPrayer: 'Prayer Requests',
     languageSwitcher: 'Language',
     heroHeadline: 'Welcome to Mandir Samiti Bahpura',
     heroSubtitle: 'Preserving Faith, Serving Community.',
@@ -322,5 +351,17 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardDonationHistory: 'Donation History',
     dashboardNoDonations: 'No donation records found.',
     dashboardTotalContribution: 'Total Contribution',
+    prayerTitle: 'Prayer & Ritual Request',
+    prayerSubtitle: 'Submit your request for special prayers or pujas. Our temple priests will offer prayers on your behalf.',
+    prayerFormType: 'Request Type',
+    prayerTypePrayer: 'Special Prayer',
+    prayerTypePuja: 'Special Puja / Ritual',
+    prayerTypeOther: 'Other Request',
+    prayerFormSuccess: 'Your request has been received successfully.',
+    prayerFormError: 'There was an error sending your request. Please try again.',
+    prayerAdminRequests: 'Devotee Requests',
+    prayerStatusPending: 'Pending',
+    prayerStatusViewed: 'Viewed',
+    prayerStatusCompleted: 'Completed',
   },
 };

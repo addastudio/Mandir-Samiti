@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -31,6 +32,7 @@ export function Header() {
     { href: "#about", label: t.navAbout },
     { href: "#events", label: t.navEvents },
     { href: "#seva", label: t.navSeva },
+    { href: "#prayer", label: t.navPrayer },
     { href: "#gallery", label: t.navGallery },
     { href: "#contact", label: t.navContact },
   ];

@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, deleteDoc, setDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, ArrowLeft, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard } from "lucide-react";
+import { collection, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -64,11 +64,17 @@ export default function AdminPage() {
     return collection(firestore, "notices");
   }, [firestore]);
 
+  const requestsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "prayer_requests");
+  }, [firestore]);
+
   const { data: events } = useCollection(eventsRef);
   const { data: gallery } = useCollection(galleryRef);
   const { data: allUsers } = useCollection(usersRef);
   const { data: allAdmins } = useCollection(adminsRef);
   const { data: notices } = useCollection(noticesRef);
+  const { data: requests } = useCollection(requestsRef);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -126,6 +132,13 @@ export default function AdminPage() {
     toast({ title: language === 'hi' ? "सूचना सफलतापूर्वक जोड़ी गई" : "Notice Added Successfully" });
     (e.target as HTMLFormElement).reset();
     setIsSubmitting(false);
+  };
+
+  const updateRequestStatus = (id: string, newStatus: string) => {
+    if (!firestore) return;
+    const docRef = doc(firestore, "prayer_requests", id);
+    updateDocumentNonBlocking(docRef, { status: newStatus });
+    toast({ title: language === 'hi' ? "स्थिति अपडेट की गई" : "Status updated" });
   };
 
   const handleAddGallery = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -205,7 +218,7 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-8 h-auto gap-2 bg-transparent p-0">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 mb-8 h-auto gap-2 bg-transparent p-0">
             <TabsTrigger value="events" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
               <Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}
             </TabsTrigger>
@@ -214,6 +227,9 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="notices" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
               <Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
+              <MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
               <Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}
@@ -275,6 +291,52 @@ export default function AdminPage() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="requests" className="space-y-6">
+             <div className="grid grid-cols-1 gap-6">
+                <h3 className={cn("text-xl font-bold", language === 'hi' ? 'font-hindi' : '')}>{t.prayerAdminRequests}</h3>
+                {requests?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((req) => (
+                  <Card key={req.id} className="shadow-sm border-l-4 border-l-primary">
+                    <CardHeader className="p-5">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-xl">{req.name}</CardTitle>
+                            <Badge variant={req.status === 'completed' ? 'default' : req.status === 'viewed' ? 'secondary' : 'outline'}>
+                              {req.status === 'completed' ? t.prayerStatusCompleted : req.status === 'viewed' ? t.prayerStatusViewed : t.prayerStatusPending}
+                            </Badge>
+                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200">
+                              {req.requestType === 'puja' ? t.prayerTypePuja : req.requestType === 'prayer' ? t.prayerTypePrayer : t.prayerTypeOther}
+                            </Badge>
+                          </div>
+                          <CardDescription className="flex gap-4">
+                             <span>{req.email}</span>
+                             <span>{req.phone}</span>
+                             <span>{new Date(req.createdAt).toLocaleString()}</span>
+                          </CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete("prayer_requests", req.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-5 pt-0">
+                      <p className="text-sm bg-muted/30 p-4 rounded-lg border italic">{req.message}</p>
+                      <div className="mt-4 flex gap-3">
+                         <Button variant="outline" size="sm" onClick={() => updateRequestStatus(req.id, "viewed")} className="gap-2">
+                            <Clock className="h-3 w-3" /> {t.prayerStatusViewed}
+                         </Button>
+                         <Button variant="outline" size="sm" onClick={() => updateRequestStatus(req.id, "completed")} className="gap-2 text-green-600 hover:text-green-700">
+                            <CheckCircle2 className="h-3 w-3" /> {t.prayerStatusCompleted}
+                         </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+             </div>
           </TabsContent>
 
           <TabsContent value="notices" className="space-y-6">

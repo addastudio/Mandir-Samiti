@@ -45,6 +45,11 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /prayer_requests/{requestId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /roles_admin/{userId} {
       // Allow any logged-in user to check if they (or others) are admin for UI purposes
       allow get: if request.auth != null;

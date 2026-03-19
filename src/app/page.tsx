@@ -12,6 +12,7 @@ import { SevaSection } from "@/components/sections/SevaSection";
 import { DonateSection } from "@/components/sections/DonateSection";
 import { GallerySection } from "@/components/sections/GallerySection";
 import { ContactSection } from "@/components/sections/ContactSection";
+import { PrayerRequestSection } from "@/components/sections/PrayerRequestSection";
 import { Footer } from "@/components/layout/Footer";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +41,8 @@ export default function Home() {
         <SevaSection />
         <Separator />
         <DonateSection />
+        <Separator />
+        <PrayerRequestSection />
         <Separator />
         <GallerySection />
         <Separator />
