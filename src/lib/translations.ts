@@ -97,6 +97,9 @@ export type TranslationKeys = {
   // Footer
   footerCopyright: string;
   footerQuickLinks: string;
+
+  // Navigation
+  backToHome: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -180,6 +183,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     contactFollow: 'हमें फॉलो करें',
     footerCopyright: '© मंदिर समिति बहपुरा २०२५. सर्वाधिकार सुरक्षित।',
     footerQuickLinks: 'त्वरित लिंक',
+    backToHome: 'होम पेज पर वापस जाएं',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -261,5 +265,6 @@ export const translations: { [key: string]: TranslationKeys } = {
     contactFollow: 'Follow Us',
     footerCopyright: '© Mandir Samiti Bahpura 2025. All rights reserved.',
     footerQuickLinks: 'Quick Links',
+    backToHome: 'Back to Home',
   },
 };

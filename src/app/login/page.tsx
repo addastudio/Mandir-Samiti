@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,6 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -118,7 +118,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="mb-6 w-full max-w-md">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className={cn(language === "hi" ? "font-hindi" : "")}>
+            {t.backToHome}
+          </span>
+        </Link>
+      </div>
+      
       <Card className="w-full max-w-md shadow-lg border-primary/20">
         <CardHeader className="text-center space-y-1">
           <CardTitle
@@ -200,12 +212,11 @@ export default function LoginPage() {
             disabled={isLoading}
           >
             <Image
-              src="https://images.unsplash.com/path-to-google-logo" 
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
               width={20}
               height={20}
               alt="Google logo"
               className="mr-2"
-              loader={({src}) => "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"}
               unoptimized
             />
             {language === "hi"

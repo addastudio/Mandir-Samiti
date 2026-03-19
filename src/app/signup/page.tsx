@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -28,6 +27,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { ArrowLeft } from "lucide-react";
 
 export default function SignupPage() {
   const { t, language } = useLanguage();
@@ -136,7 +136,19 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div className="mb-6 w-full max-w-md">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className={cn(language === "hi" ? "font-hindi" : "")}>
+            {t.backToHome}
+          </span>
+        </Link>
+      </div>
+
       <Card className="w-full max-w-md shadow-lg border-primary/20">
         <CardHeader className="text-center space-y-1">
           <CardTitle
