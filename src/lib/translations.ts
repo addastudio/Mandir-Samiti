@@ -152,6 +152,14 @@ export type TranslationKeys = {
   prayerStatusViewed: string;
   prayerStatusCompleted: string;
 
+  // Auth Errors
+  authErrorEmailInUse: string;
+  authErrorWeakPassword: string;
+  authErrorInvalidEmail: string;
+  authErrorUserNotFound: string;
+  authErrorWrongPassword: string;
+  authErrorGeneric: string;
+
   // Signup
   signupEmailSent: string;
 };
@@ -283,6 +291,12 @@ export const translations: { [key: string]: TranslationKeys } = {
     prayerStatusPending: 'लंबित (Pending)',
     prayerStatusViewed: 'देखा गया (Viewed)',
     prayerStatusCompleted: 'पूर्ण (Completed)',
+    authErrorEmailInUse: 'यह ईमेल पहले से ही पंजीकृत है। कृपया लॉग इन करें।',
+    authErrorWeakPassword: 'पासवर्ड बहुत कमजोर है। कृपया कम से कम 6 अक्षरों का उपयोग करें।',
+    authErrorInvalidEmail: 'अमान्य ईमेल पता।',
+    authErrorUserNotFound: 'इस ईमेल के साथ कोई खाता नहीं मिला।',
+    authErrorWrongPassword: 'गलत पासवर्ड। कृपया पुनः प्रयास करें।',
+    authErrorGeneric: 'एक अनपेक्षित त्रुटि हुई। कृपया बाद में पुनः प्रयास करें।',
     signupEmailSent: 'सत्यापन ईमेल भेज दिया गया है। कृपया अपना इनबॉक्स जांचें।',
   },
   en: {
@@ -411,6 +425,12 @@ export const translations: { [key: string]: TranslationKeys } = {
     prayerStatusPending: 'Pending',
     prayerStatusViewed: 'Viewed',
     prayerStatusCompleted: 'Completed',
+    authErrorEmailInUse: 'This email is already registered. Please log in instead.',
+    authErrorWeakPassword: 'Password is too weak. Please use at least 6 characters.',
+    authErrorInvalidEmail: 'Invalid email address.',
+    authErrorUserNotFound: 'No account found with this email.',
+    authErrorWrongPassword: 'Incorrect password. Please try again.',
+    authErrorGeneric: 'An unexpected error occurred. Please try again later.',
     signupEmailSent: 'Verification email sent. Please check your inbox.',
   },
 };

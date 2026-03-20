@@ -88,11 +88,20 @@ export default function SignupPage() {
       });
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
+      let errorMessage = err.message;
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = t.authErrorEmailInUse;
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = t.authErrorWeakPassword;
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = t.authErrorInvalidEmail;
+      }
+      
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: language === "hi" ? "साइनअप विफल" : "Signup failed",
-        description: err.message,
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

@@ -62,11 +62,18 @@ export default function LoginPage() {
       toast({ title: language === "hi" ? "सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully" });
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
+      let errorMessage = err.message;
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        errorMessage = t.authErrorWrongPassword;
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = t.authErrorInvalidEmail;
+      }
+      
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: language === "hi" ? "लॉगिन विफल" : "Login failed",
-        description: err.message,
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
