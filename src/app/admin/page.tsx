@@ -680,9 +680,12 @@ export default function AdminPage() {
 
                 <div className="space-y-4">
                   {allUsers?.slice().sort((a, b) => {
-                    const aWeight = ROLE_HIERARCHY[a.role || 'devotee'] || 0;
-                    const bWeight = ROLE_HIERARCHY[b.role || 'devotee'] || 0;
-                    return bWeight - aWeight;
+                    const roleA = a.role || '';
+                    const roleB = b.role || '';
+                    const aWeight = ROLE_HIERARCHY[roleA] || 0;
+                    const bWeight = ROLE_HIERARCHY[roleB] || 0;
+                    if (bWeight !== aWeight) return bWeight - aWeight;
+                    return (a.name || '').localeCompare(b.name || '');
                   }).map((u) => {
                     const isUserAdmin = isAdminUser(u.id);
                     const canIManage = canManageUser(u.id, u.role);
