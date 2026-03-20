@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle, Mail, RefreshCw, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle, Mail, RefreshCw, ArrowLeft, ShieldCheck, UserX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -144,10 +144,13 @@ export default function AdminPage() {
 
   const canManageUser = (targetUserId: string, targetRole: string) => {
     if (user?.uid === targetUserId) return false;
+    
+    // As President, you can manage anyone else
+    if (isPresident) return true;
+
     const myPower = ROLE_HIERARCHY[currentRole] || 0;
     const targetPower = ROLE_HIERARCHY[targetRole || 'devotee'] || 0;
     
-    if (isPresident && targetRole !== 'president') return true;
     return myPower > targetPower;
   };
 
@@ -342,6 +345,28 @@ export default function AdminPage() {
       toast({ 
         title: language === 'hi' ? "सदस्य हटाया गया" : "Member Removed",
         description: language === 'hi' ? "उपयोगकर्ता को समिति से हटा दिया गया है।" : "The user has been removed from the committee."
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    }
+  };
+
+  const handleHardDeleteUser = async (targetUserId: string) => {
+    if (!firestore || !isPresident) return;
+    
+    const userRef = doc(firestore, "users", targetUserId);
+    const adminRef = doc(firestore, "roles_admin", targetUserId);
+    
+    try {
+      await deleteDoc(userRef);
+      await deleteDoc(adminRef);
+      toast({ 
+        title: language === 'hi' ? "रिकॉर्ड हटाया गया" : "Record Deleted",
+        description: language === 'hi' ? "उपयोगकर्ता का डेटाबेस रिकॉर्ड हटा दिया गया है।" : "The database record for this user has been permanently removed."
       });
     } catch (error: any) {
       toast({
@@ -779,26 +804,26 @@ export default function AdminPage() {
                                     )}
                                   </Button>
                                   
-                                  {isPresident && !isTargetMe && !isTargetPresident && (
+                                  {isPresident && !isTargetMe && (
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10">
-                                          <RemoveUserIcon className="h-4 w-4" />
+                                          <UserX className="h-4 w-4" />
                                         </Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent>
                                         <AlertDialogHeader>
-                                          <AlertDialogTitle>{language === 'hi' ? 'क्या आप इस सदस्य को हटाना चाहते हैं?' : 'Remove Member?'}</AlertDialogTitle>
+                                          <AlertDialogTitle>{language === 'hi' ? 'रिकॉर्ड साफ़ करें?' : 'Clear User Record?'}</AlertDialogTitle>
                                           <AlertDialogDescription>
                                             {language === 'hi' 
-                                              ? `यह ${u.name || 'उपयोगकर्ता'} के सभी पदों और प्रशासनिक पहुँच को हटा देगा। वे एक भक्त के रूप में रहेंगे।` 
-                                              : `This will revoke all committee roles and administrative access for ${u.name || 'this user'}. They will return to 'Devotee' status.`}
+                                              ? `यह डेटाबेस से ${u.name || 'उपयोगकर्ता'} के रिकॉर्ड को स्थायी रूप से हटा देगा। यह उन खातों के लिए उपयोगी है जिन्हें पहले ही हटाया जा चुका है लेकिन अभी भी सूची में दिखाई दे रहे हैं।` 
+                                              : `This will permanently delete the database record for ${u.name || 'this user'}. Useful for clearing accounts that were deleted but still appear in the list.`}
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                           <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleRemoveMember(u.id, u.role)} className="bg-destructive text-destructive-foreground">
-                                            {language === 'hi' ? 'हटाएं' : 'Remove Member'}
+                                          <AlertDialogAction onClick={() => handleHardDeleteUser(u.id)} className="bg-destructive text-destructive-foreground">
+                                            {language === 'hi' ? 'रिकॉर्ड हटाएं' : 'Delete Record'}
                                           </AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>
@@ -853,3 +878,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
