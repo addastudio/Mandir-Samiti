@@ -57,7 +57,11 @@ service cloud.firestore {
       allow get: if request.auth != null;
       // Listing admins and managing roles is strictly for existing admins
       allow list: if isAdmin();
-      allow create, delete: if isAdmin();
+      // Only existing admins can create/grant new admin roles
+      allow create: if isAdmin();
+      // Admins can remove roles, and users can remove their own (Resign)
+      allow delete: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      // Roles are managed by deletion and creation, no direct updates
       allow update: if false;
     }
   }
