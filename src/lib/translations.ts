@@ -1,3 +1,4 @@
+
 export type TranslationKeys = {
   // Language Selector
   languagePopupTitle: string;
@@ -137,6 +138,13 @@ export type TranslationKeys = {
   dashboardVerifyRequiredTitle: string;
   dashboardVerifyRequiredDesc: string;
   dashboardVerifyRefresh: string;
+  dashboardSecurityTab: string;
+  dashboard2FAEnable: string;
+  dashboard2FADisabled: string;
+  dashboard2FAEnabled: string;
+  dashboard2FASetPin: string;
+  dashboard2FAPinPlaceholder: string;
+  dashboard2FAUpdateSuccess: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -159,6 +167,7 @@ export type TranslationKeys = {
   authErrorUserNotFound: string;
   authErrorWrongPassword: string;
   authErrorGeneric: string;
+  authError2FAPin: string;
 
   // Signup
   signupEmailSent: string;
@@ -279,6 +288,13 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardVerifyRequiredTitle: 'ईमेल सत्यापन आवश्यक है',
     dashboardVerifyRequiredDesc: 'डैशबोर्ड तक पहुंचने के लिए कृपया अपने ईमेल पर भेजे गए लिंक पर क्लिक करके सत्यापन पूरा करें।',
     dashboardVerifyRefresh: 'सत्यापन की स्थिति जांचें',
+    dashboardSecurityTab: 'सुरक्षा',
+    dashboard2FAEnable: '2-स्टेप सत्यापन सक्षम करें',
+    dashboard2FADisabled: '2-स्टेप सत्यापन वर्तमान में अक्षम है।',
+    dashboard2FAEnabled: '2-स्टेप सत्यापन सक्षम है।',
+    dashboard2FASetPin: '6-अंकों का पिन सेट करें',
+    dashboard2FAPinPlaceholder: '6-अंकों का पिन',
+    dashboard2FAUpdateSuccess: 'सुरक्षा सेटिंग्स अपडेट की गईं।',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -297,6 +313,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     authErrorUserNotFound: 'इस ईमेल के साथ कोई खाता नहीं मिला।',
     authErrorWrongPassword: 'गलत पासवर्ड। कृपया पुनः प्रयास करें।',
     authErrorGeneric: 'एक अनपेक्षित त्रुटि हुई। कृपया बाद में पुनः प्रयास करें।',
+    authError2FAPin: 'अमान्य पिन। कृपया पुनः प्रयास करें।',
     signupEmailSent: 'सत्यापन ईमेल भेज दिया गया है। कृपया अपना इनबॉक्स जांचें।',
   },
   en: {
@@ -413,6 +430,13 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardVerifyRequiredTitle: 'Email Verification Required',
     dashboardVerifyRequiredDesc: 'To access the dashboard, please verify your email by clicking the link sent to your inbox.',
     dashboardVerifyRefresh: 'Refresh Status',
+    dashboardSecurityTab: 'Security',
+    dashboard2FAEnable: 'Enable 2-Step Verification',
+    dashboard2FADisabled: '2-step verification is currently disabled.',
+    dashboard2FAEnabled: '2-step verification is enabled.',
+    dashboard2FASetPin: 'Set 6-Digit PIN',
+    dashboard2FAPinPlaceholder: '6-digit PIN',
+    dashboard2FAUpdateSuccess: 'Security settings updated.',
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
     prayerFormType: 'Request Type',
@@ -431,6 +455,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     authErrorUserNotFound: 'No account found with this email.',
     authErrorWrongPassword: 'Incorrect password. Please try again.',
     authErrorGeneric: 'An unexpected error occurred. Please try again later.',
+    authError2FAPin: 'Invalid PIN. Please try again.',
     signupEmailSent: 'Verification email sent. Please check your inbox.',
   },
 };

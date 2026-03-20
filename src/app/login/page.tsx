@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,7 +27,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function LoginPage() {
@@ -39,6 +40,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  
+  // 2FA state
+  const [is2FAChallenge, setIs2FAChallenge] = useState(false);
+  const [pin, setPin] = useState("");
+  const [tempUserDoc, setTempUserDoc] = useState<any>(null);
   
   const [auth, setAuth] = useState<Auth | null>(null);
   const [firestore, setFirestore] = useState<Firestore | null>(null);
@@ -54,11 +60,25 @@ export default function LoginPage() {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
+    if (!auth || !firestore) return;
     setIsLoading(true);
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const user = result.user;
+
+      // Check for 2FA in Firestore
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+      const userData = userDoc.data();
+
+      if (userData?.twoFactorEnabled) {
+        setIs2FAChallenge(true);
+        setTempUserDoc(userData);
+        setIsLoading(false);
+        return;
+      }
+
       toast({ title: language === "hi" ? "सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully" });
       router.push("/dashboard");
     } catch (err: any) {
@@ -75,8 +95,21 @@ export default function LoginPage() {
         title: language === "hi" ? "लॉगिन विफल" : "Login failed",
         description: errorMessage,
       });
-    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleVerify2FA = () => {
+    if (pin === tempUserDoc?.twoFactorPin) {
+      toast({ title: language === "hi" ? "सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully" });
+      router.push("/dashboard");
+    } else {
+      toast({
+        variant: "destructive",
+        title: language === "hi" ? "अमान्य पिन" : "Invalid PIN",
+        description: t.authError2FAPin,
+      });
+      setPin("");
     }
   };
 
@@ -122,6 +155,41 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md animate-pulse">
           <div className="h-64 bg-muted rounded-lg" />
+        </Card>
+      </div>
+    );
+  }
+
+  if (is2FAChallenge) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md shadow-lg border-primary/20">
+          <CardHeader className="text-center">
+            <div className="mx-auto h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : '')}>
+              {t.dashboard2FAEnable}
+            </CardTitle>
+            <CardDescription>{language === 'hi' ? 'अपना 6-अंकीय पिन दर्ज करें' : 'Enter your 6-digit PIN'}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input 
+              type="password"
+              maxLength={6}
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+              placeholder="******"
+              className="text-center text-2xl tracking-widest"
+              autoFocus
+            />
+            <Button onClick={handleVerify2FA} className="w-full" disabled={pin.length !== 6}>
+              {language === 'hi' ? 'सत्यापित करें' : 'Verify'}
+            </Button>
+            <Button variant="ghost" onClick={() => setIs2FAChallenge(false)} className="w-full">
+              {t.navHome}
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );

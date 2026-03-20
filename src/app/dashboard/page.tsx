@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw, ArrowLeft } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw, ArrowLeft, Shield } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -41,7 +43,8 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
-  const [refreshTick, setRefreshTick] = useState(0);
+  const [isUpdating2FA, setIsUpdating2FA] = useState(false);
+  const [newPin, setNewPin] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -65,31 +68,17 @@ export default function DashboardPage() {
     return doc(firestore, "roles_admin", user.uid);
   }, [firestore, user]);
 
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+
   const { data: donations, isLoading: isDonationsLoading } = useCollection(donationsRef);
   const { data: userRequests, isLoading: isRequestsLoading } = useCollection(requestsQuery);
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
+  const { data: userProfile } = useDoc(userDocRef);
 
   const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
-
-  // Auto-refresh verification status while on the blocked screen
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (user && !user.emailVerified && isPasswordUser) {
-      interval = setInterval(async () => {
-        try {
-          await user.reload();
-          if (user.emailVerified) {
-            setRefreshTick(prev => prev + 1);
-          }
-        } catch (e) {
-          // Ignore polling errors (like network issues)
-        }
-      }, 3000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [user, isPasswordUser]);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
@@ -103,25 +92,22 @@ export default function DashboardPage() {
     router.push("/");
   };
 
-  const handleRefresh = async () => {
-    if (!user) return;
-    setIsRefreshing(true);
-    try {
-      await user.reload();
-      setRefreshTick(prev => prev + 1);
-      toast({
-        title: language === 'hi' ? "रिफ्रेश किया गया" : "Refreshed",
-        description: language === 'hi' ? "सत्यापन स्थिति अपडेट की गई।" : "Verification status updated.",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: language === 'hi' ? "त्रुटि" : "Error",
-        description: error.message,
-      });
-    } finally {
-      setIsRefreshing(false);
+  const handleUpdate2FA = async (enabled: boolean) => {
+    if (!userDocRef) return;
+    setIsUpdating2FA(true);
+    
+    const updateData: any = { twoFactorEnabled: enabled };
+    if (enabled && newPin.length === 6) {
+      updateData.twoFactorPin = newPin;
     }
+
+    updateDocumentNonBlocking(userDocRef, updateData);
+    toast({
+      title: t.dashboard2FAUpdateSuccess,
+      description: enabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled,
+    });
+    setNewPin("");
+    setIsUpdating2FA(false);
   };
 
   const handleDeleteAccount = async () => {
@@ -181,26 +167,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleResendEmail = async () => {
-    if (!user) return;
-    setIsResending(true);
-    try {
-      await sendEmailVerification(user);
-      toast({
-        title: language === 'hi' ? "सफलता" : "Success",
-        description: t.dashboardVerificationSent,
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: language === 'hi' ? "त्रुटि" : "Error",
-        description: error.message,
-      });
-    } finally {
-      setIsResending(false);
-    }
-  };
-
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -210,43 +176,6 @@ export default function DashboardPage() {
   }
 
   if (!user) return null;
-
-  // Block dashboard if unverified (for email/password users)
-  if (!user.emailVerified && isPasswordUser) {
-    return (
-      <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-destructive/20 shadow-xl overflow-hidden">
-          <CardHeader className="bg-destructive/5 text-center pb-8 pt-10">
-            <div className="mx-auto h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
-              <Mail className="h-10 w-10 text-destructive" />
-            </div>
-            <CardTitle className={cn("text-2xl font-bold text-destructive", language === 'hi' ? 'font-hindi' : '')}>
-              {t.dashboardVerifyRequiredTitle}
-            </CardTitle>
-            <CardDescription className={cn("mt-2 px-4", language === 'hi' ? 'font-hindi' : '')}>
-              {t.dashboardVerifyRequiredDesc}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-8 space-y-4">
-            <Button onClick={handleRefresh} disabled={isRefreshing} className="w-full gap-2">
-              {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              {t.dashboardVerifyRefresh}
-            </Button>
-            <Button variant="outline" onClick={handleResendEmail} disabled={isResending} className="w-full">
-              {isResending ? '...' : t.dashboardResendVerification}
-            </Button>
-            <Button variant="ghost" onClick={() => router.back()} className="w-full gap-2 text-muted-foreground border">
-              <ArrowLeft className="h-4 w-4" />
-              {language === 'hi' ? 'पीछे जाएं' : 'Go Back'}
-            </Button>
-            <Button variant="ghost" onClick={handleLogout} className="w-full text-muted-foreground">
-              {t.dashboardLogout}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
 
@@ -315,13 +244,6 @@ export default function DashboardPage() {
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.dashboardMemberSince}</label>
                   <p className="font-medium">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
                 </div>
-                {adminDoc && (
-                  <div className="pt-2">
-                    <span className="inline-flex items-center rounded-full bg-primary/20 px-3 py-1 text-xs font-bold text-primary border border-primary/30">
-                      {language === 'hi' ? 'प्रशासक' : 'Administrator'}
-                    </span>
-                  </div>
-                )}
                 
                 <div className="pt-4 border-t">
                   <AlertDialog>
@@ -411,6 +333,13 @@ export default function DashboardPage() {
                       <MessageSquare className="h-4 w-4 mr-2" />
                       {t.dashboardMyRequests}
                     </TabsTrigger>
+                    <TabsTrigger 
+                      value="security" 
+                      className="rounded-none h-full px-6 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none font-bold"
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      {t.dashboardSecurityTab}
+                    </TabsTrigger>
                   </TabsList>
                 </CardHeader>
 
@@ -485,6 +414,49 @@ export default function DashboardPage() {
                         <Link href="/#prayer" className="text-primary hover:underline mt-4 inline-block font-bold">
                           {t.dashboardNewRequest}
                         </Link>
+                      </div>
+                    )}
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="security" className="m-0">
+                  <CardContent className="p-6 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-lg font-bold">{t.dashboard2FAEnable}</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {userProfile?.twoFactorEnabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled}
+                        </p>
+                      </div>
+                      <Switch 
+                        checked={userProfile?.twoFactorEnabled} 
+                        onCheckedChange={handleUpdate2FA} 
+                        disabled={isUpdating2FA || (!userProfile?.twoFactorEnabled && newPin.length !== 6)}
+                      />
+                    </div>
+                    
+                    {!userProfile?.twoFactorEnabled && (
+                      <div className="space-y-4 pt-4 border-t">
+                        <div className="space-y-2">
+                          <Label htmlFor="twoFactorPin">{t.dashboard2FASetPin}</Label>
+                          <Input 
+                            id="twoFactorPin"
+                            type="password"
+                            maxLength={6}
+                            placeholder={t.dashboard2FAPinPlaceholder}
+                            value={newPin}
+                            onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+                          />
+                        </div>
+                        <Alert className="bg-primary/5 border-primary/20">
+                          <AlertCircle className="h-4 w-4 text-primary" />
+                          <AlertTitle>{language === 'hi' ? 'महत्वपूर्ण' : 'Important'}</AlertTitle>
+                          <AlertDescription>
+                            {language === 'hi' 
+                              ? 'पिन सेट करने के बाद स्विच ऑन करें। लॉगिन के लिए यह पिन आवश्यक होगा।' 
+                              : 'Enable the switch after setting your PIN. This PIN will be required for every login.'}
+                          </AlertDescription>
+                        </Alert>
                       </div>
                     )}
                   </CardContent>

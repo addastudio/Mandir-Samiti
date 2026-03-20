@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
@@ -49,9 +50,6 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -110,28 +108,6 @@ export default function AdminPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
-
-  // Auto-refresh verification status while on the blocked screen
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (user && !user.emailVerified && isPasswordUser) {
-      interval = setInterval(async () => {
-        try {
-          await user.reload();
-          if (user.emailVerified) {
-            setRefreshTick(prev => prev + 1);
-          }
-        } catch (e) {
-          // Ignore polling errors
-        }
-      }, 3000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [user, isPasswordUser]);
-
   useEffect(() => {
     if (mounted && !isUserLoading && !isAdminLoading) {
       if (!user) {
@@ -142,53 +118,6 @@ export default function AdminPage() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
 
-  const handleResendEmail = async () => {
-    if (!user) return;
-    setIsResending(true);
-    try {
-      await sendEmailVerification(user);
-      toast({
-        title: language === 'hi' ? "सफलता" : "Success",
-        description: t.dashboardVerificationSent,
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: language === 'hi' ? "त्रुटि" : "Error",
-        description: error.message,
-      });
-    } finally {
-      setIsResending(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    if (!user) return;
-    setIsRefreshing(true);
-    try {
-      await user.reload();
-      setRefreshTick(prev => prev + 1);
-      toast({
-        title: language === 'hi' ? "रिफ्रेश किया गया" : "Refreshed",
-        description: language === 'hi' ? "सत्यापन स्थिति अपडेट की गई।" : "Verification status updated.",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: language === 'hi' ? "त्रुटि" : "Error",
-        description: error.message,
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    const auth = getAuth();
-    await signOut(auth);
-    router.push("/");
-  };
-
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -198,43 +127,6 @@ export default function AdminPage() {
   }
 
   if (!adminDoc) return null;
-
-  // Block admin access if unverified (for email/password users)
-  if (user && !user.emailVerified && isPasswordUser) {
-    return (
-      <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-destructive/20 shadow-xl overflow-hidden">
-          <CardHeader className="bg-destructive/5 text-center pb-8 pt-10">
-            <div className="mx-auto h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
-              <Mail className="h-10 w-10 text-destructive" />
-            </div>
-            <CardTitle className={cn("text-2xl font-bold text-destructive", language === 'hi' ? 'font-hindi' : '')}>
-              {t.dashboardVerifyRequiredTitle}
-            </CardTitle>
-            <CardDescription className={cn("mt-2 px-4", language === 'hi' ? 'font-hindi' : '')}>
-              {t.dashboardVerifyRequiredDesc}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-8 space-y-4">
-            <Button onClick={handleRefresh} disabled={isRefreshing} className="w-full gap-2">
-              {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              {t.dashboardVerifyRefresh}
-            </Button>
-            <Button variant="outline" onClick={handleResendEmail} disabled={isResending} className="w-full">
-              {isResending ? '...' : t.dashboardResendVerification}
-            </Button>
-            <Button variant="ghost" onClick={() => router.back()} className="w-full gap-2 text-muted-foreground border">
-              <ArrowLeft className="h-4 w-4" />
-              {language === 'hi' ? 'पीछे जाएं' : 'Go Back'}
-            </Button>
-            <Button variant="ghost" onClick={handleLogout} className="w-full text-muted-foreground">
-              {t.dashboardLogout}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const currentRole = currentUserProfile?.role || 'devotee';
   const isPresident = currentRole === 'president';

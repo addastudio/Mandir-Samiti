@@ -35,6 +35,14 @@
         "language": {
           "type": "string",
           "description": "User's preferred language (e.g., 'hi-IN', 'en-US')."
+        },
+        "twoFactorEnabled": {
+          "type": "boolean",
+          "description": "Whether 2-step verification is enabled."
+        },
+        "twoFactorPin": {
+          "type": "string",
+          "description": "6-digit PIN for 2-step verification."
         }
       },
       "required": [
