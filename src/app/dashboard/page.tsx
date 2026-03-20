@@ -372,6 +372,55 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
+            <Card className="border-primary/20 shadow-md">
+              <CardHeader className="bg-primary/5 border-b py-4">
+                <CardTitle className={cn("text-lg flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                  <Shield className="h-5 w-5 text-primary" />
+                  {t.dashboardSecurityTab}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold">{t.dashboard2FAEnable}</Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      {userProfile?.twoFactorEnabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled}
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={userProfile?.twoFactorEnabled} 
+                    onCheckedChange={handleUpdate2FA} 
+                    disabled={isUpdating2FA || (!userProfile?.twoFactorEnabled && newPin.length !== 6)}
+                  />
+                </div>
+                
+                {!userProfile?.twoFactorEnabled && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-2">
+                      <Label htmlFor="twoFactorPin" className="text-xs">{t.dashboard2FASetPin}</Label>
+                      <Input 
+                        id="twoFactorPin"
+                        type="password"
+                        maxLength={6}
+                        placeholder={t.dashboard2FAPinPlaceholder}
+                        value={newPin}
+                        onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <Alert className="bg-primary/5 border-primary/20 p-2">
+                      <AlertCircle className="h-3 w-3 text-primary" />
+                      <AlertDescription className="text-[10px] leading-tight">
+                        {language === 'hi' 
+                          ? 'पिन सेट करने के बाद स्विच ऑन करें। लॉगिन के लिए यह पिन आवश्यक होगा।' 
+                          : 'Enable the switch after setting your PIN. This PIN will be required for every login.'}
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Link href="/#prayer" className="block">
               <Button className="w-full gap-2 py-6 text-lg bg-white border-2 border-primary/20 text-primary hover:bg-primary/5 shadow-sm">
                 <PlusCircle className="h-5 w-5" />
@@ -398,13 +447,6 @@ export default function DashboardPage() {
                     >
                       <MessageSquare className="h-4 w-4 mr-2" />
                       {t.dashboardMyRequests}
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="security" 
-                      className="rounded-none h-full px-6 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none font-bold"
-                    >
-                      <Shield className="h-4 w-4 mr-2" />
-                      {t.dashboardSecurityTab}
                     </TabsTrigger>
                   </TabsList>
                 </CardHeader>
@@ -480,49 +522,6 @@ export default function DashboardPage() {
                         <Link href="/#prayer" className="text-primary hover:underline mt-4 inline-block font-bold">
                           {t.dashboardNewRequest}
                         </Link>
-                      </div>
-                    )}
-                  </CardContent>
-                </TabsContent>
-
-                <TabsContent value="security" className="m-0">
-                  <CardContent className="p-6 space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-lg font-bold">{t.dashboard2FAEnable}</Label>
-                        <p className="text-sm text-muted-foreground">
-                          {userProfile?.twoFactorEnabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled}
-                        </p>
-                      </div>
-                      <Switch 
-                        checked={userProfile?.twoFactorEnabled} 
-                        onCheckedChange={handleUpdate2FA} 
-                        disabled={isUpdating2FA || (!userProfile?.twoFactorEnabled && newPin.length !== 6)}
-                      />
-                    </div>
-                    
-                    {!userProfile?.twoFactorEnabled && (
-                      <div className="space-y-4 pt-4 border-t">
-                        <div className="space-y-2">
-                          <Label htmlFor="twoFactorPin">{t.dashboard2FASetPin}</Label>
-                          <Input 
-                            id="twoFactorPin"
-                            type="password"
-                            maxLength={6}
-                            placeholder={t.dashboard2FAPinPlaceholder}
-                            value={newPin}
-                            onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
-                          />
-                        </div>
-                        <Alert className="bg-primary/5 border-primary/20">
-                          <AlertCircle className="h-4 w-4 text-primary" />
-                          <AlertTitle>{language === 'hi' ? 'महत्वपूर्ण' : 'Important'}</AlertTitle>
-                          <AlertDescription>
-                            {language === 'hi' 
-                              ? 'पिन सेट करने के बाद स्विच ऑन करें। लॉगिन के लिए यह पिन आवश्यक होगा।' 
-                              : 'Enable the switch after setting your PIN. This PIN will be required for every login.'}
-                          </AlertDescription>
-                        </Alert>
                       </div>
                     )}
                   </CardContent>
