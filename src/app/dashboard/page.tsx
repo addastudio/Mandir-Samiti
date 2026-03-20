@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -68,6 +69,28 @@ export default function DashboardPage() {
   const { data: userRequests, isLoading: isRequestsLoading } = useCollection(requestsQuery);
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
 
+  const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
+
+  // Auto-refresh verification status while on the blocked screen
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (user && !user.emailVerified && isPasswordUser) {
+      interval = setInterval(async () => {
+        try {
+          await user.reload();
+          if (user.emailVerified) {
+            setRefreshTick(prev => prev + 1);
+          }
+        } catch (e) {
+          // Ignore polling errors (like network issues)
+        }
+      }, 3000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [user, isPasswordUser]);
+
   useEffect(() => {
     if (mounted && !isUserLoading && !user) {
       router.push("/login");
@@ -85,7 +108,7 @@ export default function DashboardPage() {
     setIsRefreshing(true);
     try {
       await user.reload();
-      // user object updates via the onAuthStateChanged listener in provider
+      setRefreshTick(prev => prev + 1);
       toast({
         title: language === 'hi' ? "रिफ्रेश किया गया" : "Refreshed",
         description: language === 'hi' ? "सत्यापन स्थिति अपडेट की गई।" : "Verification status updated.",
@@ -105,7 +128,6 @@ export default function DashboardPage() {
     if (!user || !firestore) return;
     setIsDeleting(true);
     try {
-      const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
       if (isPasswordUser) {
         if (!deletePassword) {
           toast({
@@ -190,7 +212,6 @@ export default function DashboardPage() {
   if (!user) return null;
 
   // Block dashboard if unverified (for email/password users)
-  const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
   if (!user.emailVerified && isPasswordUser) {
     return (
       <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
@@ -250,20 +271,20 @@ export default function DashboardPage() {
             <Link href="/">
               <Button variant="outline" className="gap-2">
                 <Globe className="h-4 w-4" />
-                <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.browseWebsite}</span>
+                <span className={cn(language === "hi" ? "font-hindi" : "")}>{t.browseWebsite}</span>
               </Button>
             </Link>
             {adminDoc && (
               <Link href="/admin">
                 <Button variant="default" className="gap-2 bg-primary text-primary-foreground">
                   <ShieldCheck className="h-4 w-4" /> 
-                  <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardAdminPanel}</span>
+                  <span className={cn(language === "hi" ? "font-hindi" : "")}>{t.dashboardAdminPanel}</span>
                 </Button>
               </Link>
             )}
             <Button variant="ghost" onClick={handleLogout} className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10">
               <LogOut className="h-4 w-4" /> 
-              <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardLogout}</span>
+              <span className={cn(language === "hi" ? "font-hindi" : "")}>{t.dashboardLogout}</span>
             </Button>
           </div>
         </div>

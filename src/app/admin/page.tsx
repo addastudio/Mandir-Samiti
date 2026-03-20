@@ -51,6 +51,7 @@ export default function AdminPage() {
   const [mounted, setMounted] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -109,6 +110,28 @@ export default function AdminPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
+
+  // Auto-refresh verification status while on the blocked screen
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (user && !user.emailVerified && isPasswordUser) {
+      interval = setInterval(async () => {
+        try {
+          await user.reload();
+          if (user.emailVerified) {
+            setRefreshTick(prev => prev + 1);
+          }
+        } catch (e) {
+          // Ignore polling errors
+        }
+      }, 3000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [user, isPasswordUser]);
+
   useEffect(() => {
     if (mounted && !isUserLoading && !isAdminLoading) {
       if (!user) {
@@ -144,6 +167,7 @@ export default function AdminPage() {
     setIsRefreshing(true);
     try {
       await user.reload();
+      setRefreshTick(prev => prev + 1);
       toast({
         title: language === 'hi' ? "रिफ्रेश किया गया" : "Refreshed",
         description: language === 'hi' ? "सत्यापन स्थिति अपडेट की गई।" : "Verification status updated.",
@@ -176,7 +200,6 @@ export default function AdminPage() {
   if (!adminDoc) return null;
 
   // Block admin access if unverified (for email/password users)
-  const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
   if (user && !user.emailVerified && isPasswordUser) {
     return (
       <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
