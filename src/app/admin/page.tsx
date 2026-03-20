@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
@@ -680,7 +679,11 @@ export default function AdminPage() {
                 </Alert>
 
                 <div className="space-y-4">
-                  {allUsers?.map((u) => {
+                  {allUsers?.slice().sort((a, b) => {
+                    const aWeight = ROLE_HIERARCHY[a.role || 'devotee'] || 0;
+                    const bWeight = ROLE_HIERARCHY[b.role || 'devotee'] || 0;
+                    return bWeight - aWeight;
+                  }).map((u) => {
                     const isUserAdmin = isAdminUser(u.id);
                     const canIManage = canManageUser(u.id, u.role);
                     const isTargetMe = u.id === user?.uid;
