@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { sendEmailVerification, signOut, getAuth } from "firebase/auth";
+import { signOut, getAuth } from "firebase/auth";
 
 // Define the hierarchy weight for roles
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -51,6 +51,12 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  const [pendingRoleUpdate, setPendingRoleUpdate] = useState<{
+    userId: string;
+    targetCurrentRole: string;
+    newRole: string;
+    userName: string;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -231,7 +237,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleUpdateUserRole = (userId: string, targetCurrentRole: string, newRole: string) => {
+  const handleUpdateUserRole = (userId: string, targetCurrentRole: string, newRole: string, userName: string) => {
     if (!firestore) return;
     
     if (!canManageUser(userId, targetCurrentRole)) {
@@ -243,12 +249,19 @@ export default function AdminPage() {
       return;
     }
 
+    setPendingRoleUpdate({ userId, targetCurrentRole, newRole, userName });
+  };
+
+  const confirmRoleUpdate = () => {
+    if (!pendingRoleUpdate || !firestore) return;
+    const { userId, newRole } = pendingRoleUpdate;
     const userRef = doc(firestore, "users", userId);
     updateDocumentNonBlocking(userRef, { role: newRole });
     toast({ 
       title: language === 'hi' ? "भूमिका अपडेट की गई" : "Role Updated",
       description: language === 'hi' ? `उपयोगकर्ता को '${newRole}' के रूप में सेट किया गया है।` : `User set as '${newRole}'.`
     });
+    setPendingRoleUpdate(null);
   };
 
   const handleResign = async () => {
@@ -648,7 +661,7 @@ export default function AdminPage() {
                               <Select 
                                 disabled={!canIManage}
                                 defaultValue={u.role || 'devotee'} 
-                                onValueChange={(val) => handleUpdateUserRole(u.id, u.role, val)}
+                                onValueChange={(val) => handleUpdateUserRole(u.id, u.role, val, u.name || 'User')}
                               >
                                 <SelectTrigger className="h-9">
                                   <SelectValue placeholder="Select Grade" />
@@ -726,6 +739,37 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <AlertDialog open={!!pendingRoleUpdate} onOpenChange={() => setPendingRoleUpdate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              {language === 'hi' ? 'ग्रेड परिवर्तन की पुष्टि' : 'Confirm Grade Change'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4 pt-2">
+              <p className="font-semibold text-foreground">
+                {language === 'hi' 
+                  ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?`
+                  : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position from '${pendingRoleUpdate?.targetCurrentRole}' to '${pendingRoleUpdate?.newRole}'?`}
+              </p>
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-amber-900 text-sm italic">
+                {language === 'hi'
+                  ? 'अस्वीकरण: सदस्य के ग्रेड को अपडेट करना एक महत्वपूर्ण प्रशासनिक कार्य है। कृपया सुनिश्चित करें कि यह परिवर्तन समिति के आधिकारिक निर्णयों के अनुरूप है और सदस्य की वर्तमान जिम्मेदारियों को दर्शाता है।'
+                  : 'Disclaimer: Updating a member\'s grade is a significant administrative action. Please ensure this change aligns with the committee\'s official decisions and reflects the member\'s current responsibilities.'}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingRoleUpdate(null)}>
+              {language === 'hi' ? 'रद्द करें' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRoleUpdate} className="bg-primary text-primary-foreground">
+              {language === 'hi' ? 'पुष्टि करें' : 'Confirm Change'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
