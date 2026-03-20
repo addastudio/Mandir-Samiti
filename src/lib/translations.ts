@@ -134,6 +134,9 @@ export type TranslationKeys = {
   dashboardDeleteRecentLogin: string;
   dashboardDeletePasswordLabel: string;
   dashboardDeletePasswordPlaceholder: string;
+  dashboardVerifyRequiredTitle: string;
+  dashboardVerifyRequiredDesc: string;
+  dashboardVerifyRefresh: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -265,6 +268,9 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardDeleteRecentLogin: 'सुरक्षा कारणों से अपना खाता हटाने से पहले कृपया पुनः लॉग इन करें।',
     dashboardDeletePasswordLabel: 'हटाने की पुष्टि के लिए अपना पासवर्ड दर्ज करें',
     dashboardDeletePasswordPlaceholder: 'पासवर्ड',
+    dashboardVerifyRequiredTitle: 'ईमेल सत्यापन आवश्यक है',
+    dashboardVerifyRequiredDesc: 'डैशबोर्ड तक पहुंचने के लिए कृपया अपने ईमेल पर भेजे गए लिंक पर क्लिक करके सत्यापन पूरा करें।',
+    dashboardVerifyRefresh: 'सत्यापन की स्थिति जांचें',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -390,6 +396,9 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardDeleteRecentLogin: 'Please log in again before deleting your account for security reasons.',
     dashboardDeletePasswordLabel: 'Enter your password to confirm deletion',
     dashboardDeletePasswordPlaceholder: 'Password',
+    dashboardVerifyRequiredTitle: 'Email Verification Required',
+    dashboardVerifyRequiredDesc: 'To access the dashboard, please verify your email by clicking the link sent to your inbox.',
+    dashboardVerifyRefresh: 'Refresh Status',
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
     prayerFormType: 'Request Type',

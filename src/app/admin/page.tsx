@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle, Mail, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -29,7 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { sendEmailVerification } from "firebase/auth";
+import { sendEmailVerification, signOut, getAuth } from "firebase/auth";
 
 // Define the hierarchy weight for roles
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -50,6 +50,7 @@ export default function AdminPage() {
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -138,6 +139,32 @@ export default function AdminPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    if (!user) return;
+    setIsRefreshing(true);
+    try {
+      await user.reload();
+      toast({
+        title: language === 'hi' ? "रिफ्रेश किया गया" : "Refreshed",
+        description: language === 'hi' ? "सत्यापन स्थिति अपडेट की गई।" : "Verification status updated.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    const auth = getAuth();
+    await signOut(auth);
+    router.push("/");
+  };
+
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -147,6 +174,40 @@ export default function AdminPage() {
   }
 
   if (!adminDoc) return null;
+
+  // Block admin access if unverified (for email/password users)
+  const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
+  if (user && !user.emailVerified && isPasswordUser) {
+    return (
+      <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-destructive/20 shadow-xl overflow-hidden">
+          <CardHeader className="bg-destructive/5 text-center pb-8 pt-10">
+            <div className="mx-auto h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+              <Mail className="h-10 w-10 text-destructive" />
+            </div>
+            <CardTitle className={cn("text-2xl font-bold text-destructive", language === 'hi' ? 'font-hindi' : '')}>
+              {t.dashboardVerifyRequiredTitle}
+            </CardTitle>
+            <CardDescription className={cn("mt-2 px-4", language === 'hi' ? 'font-hindi' : '')}>
+              {t.dashboardVerifyRequiredDesc}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 space-y-4">
+            <Button onClick={handleRefresh} disabled={isRefreshing} className="w-full gap-2">
+              {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {t.dashboardVerifyRefresh}
+            </Button>
+            <Button variant="outline" onClick={handleResendEmail} disabled={isResending} className="w-full">
+              {isResending ? '...' : t.dashboardResendVerification}
+            </Button>
+            <Button variant="ghost" onClick={handleLogout} className="w-full text-muted-foreground">
+              {t.dashboardLogout}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const currentRole = currentUserProfile?.role || 'devotee';
   const isPresident = currentRole === 'president';
@@ -316,29 +377,6 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background pb-20 pt-28">
       <div className="container mx-auto px-4 md:px-8 space-y-8">
-        {!user?.emailVerified && (
-          <Alert variant="destructive" className="bg-amber-50 border-amber-200 text-amber-900">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardVerificationSent}</AlertTitle>
-            <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
-              <span className={cn(language === 'hi' ? 'font-hindi' : '')}>
-                {language === 'hi' 
-                  ? 'आपका ईमेल सत्यापित नहीं है। कृपया पूर्ण सुरक्षा और पहुँच के लिए इसे सत्यापित करें।' 
-                  : 'Your email is not verified. Please verify it to ensure full account security and access.'}
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleResendEmail} 
-                disabled={isResending}
-                className="bg-white border-amber-200 hover:bg-amber-100 text-amber-900"
-              >
-                {isResending ? '...' : t.dashboardResendVerification}
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
             <div className="bg-primary/10 p-3 rounded-full">

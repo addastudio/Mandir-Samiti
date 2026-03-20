@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2 } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
 
@@ -77,6 +78,27 @@ export default function DashboardPage() {
     const auth = getAuth();
     await signOut(auth);
     router.push("/");
+  };
+
+  const handleRefresh = async () => {
+    if (!user) return;
+    setIsRefreshing(true);
+    try {
+      await user.reload();
+      // user object updates via the onAuthStateChanged listener in provider
+      toast({
+        title: language === 'hi' ? "रिफ्रेश किया गया" : "Refreshed",
+        description: language === 'hi' ? "सत्यापन स्थिति अपडेट की गई।" : "Verification status updated.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -167,35 +189,45 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
+  // Block dashboard if unverified (for email/password users)
   const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
+  if (!user.emailVerified && isPasswordUser) {
+    return (
+      <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-destructive/20 shadow-xl overflow-hidden">
+          <CardHeader className="bg-destructive/5 text-center pb-8 pt-10">
+            <div className="mx-auto h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+              <Mail className="h-10 w-10 text-destructive" />
+            </div>
+            <CardTitle className={cn("text-2xl font-bold text-destructive", language === 'hi' ? 'font-hindi' : '')}>
+              {t.dashboardVerifyRequiredTitle}
+            </CardTitle>
+            <CardDescription className={cn("mt-2 px-4", language === 'hi' ? 'font-hindi' : '')}>
+              {t.dashboardVerifyRequiredDesc}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 space-y-4">
+            <Button onClick={handleRefresh} disabled={isRefreshing} className="w-full gap-2">
+              {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {t.dashboardVerifyRefresh}
+            </Button>
+            <Button variant="outline" onClick={handleResendEmail} disabled={isResending} className="w-full">
+              {isResending ? '...' : t.dashboardResendVerification}
+            </Button>
+            <Button variant="ghost" onClick={handleLogout} className="w-full text-muted-foreground">
+              {t.dashboardLogout}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
 
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-28">
       <div className="container mx-auto px-4 md:px-8 space-y-8">
-        {!user.emailVerified && user.providerData[0]?.providerId === 'password' && (
-          <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive shadow-sm">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardUnverifiedEmail}</AlertTitle>
-            <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
-              <span className={cn(language === 'hi' ? 'font-hindi text-sm' : 'text-sm')}>
-                {language === 'hi' 
-                  ? 'कृपया अपना ईमेल सत्यापित करें। यदि आपको लिंक नहीं मिला है, तो आप नीचे दिए गए बटन पर क्लिक करके इसे पुनः प्राप्त कर सकते हैं।' 
-                  : 'Please verify your email to ensure full access to all features. If you haven\'t received the link, you can resend it below.'}
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleResendEmail} 
-                disabled={isResending}
-                className="bg-white border-destructive/30 hover:bg-destructive/10 text-destructive h-8"
-              >
-                {isResending ? '...' : t.dashboardResendVerification}
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
             <div className="bg-primary/10 p-3 rounded-full">
