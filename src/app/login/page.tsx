@@ -24,9 +24,10 @@ import {
   Firestore,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import Image from "next/image";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import Image from "image/image";
+import { doc, getDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -85,13 +86,14 @@ export default function LoginPage() {
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
+        const userData = {
           id: user.uid,
           name: user.displayName,
           email: user.email,
           role: "user",
           language: language,
-        });
+        };
+        setDocumentNonBlocking(userDocRef, userData, { merge: true });
       }
 
       toast({ title: language === "hi" ? "Google के साथ सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully with Google" });

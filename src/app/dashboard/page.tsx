@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { collection, doc, query, where, deleteDoc } from "firebase/firestore";
+import { collection, doc, query, where } from "firebase/firestore";
 import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -82,7 +83,6 @@ export default function DashboardPage() {
     if (!user || !firestore) return;
     setIsDeleting(true);
     try {
-      // 0. Re-authenticate if user signed in with password
       const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
       if (isPasswordUser) {
         if (!deletePassword) {
@@ -98,15 +98,12 @@ export default function DashboardPage() {
         await reauthenticateWithCredential(user, credential);
       }
 
-      // 1. Delete Firestore User Document
       const userRef = doc(firestore, "users", user.uid);
-      await deleteDoc(userRef);
-
-      // 2. Delete Admin Role if exists
       const adminRef = doc(firestore, "roles_admin", user.uid);
-      await deleteDoc(adminRef);
+      
+      deleteDocumentNonBlocking(userRef);
+      deleteDocumentNonBlocking(adminRef);
 
-      // 3. Delete Auth User
       await deleteUser(user);
       
       toast({
@@ -115,7 +112,6 @@ export default function DashboardPage() {
       });
       router.push("/");
     } catch (error: any) {
-      console.error(error);
       if (error.code === 'auth/wrong-password') {
         toast({
           variant: "destructive",

@@ -27,8 +27,9 @@ import {
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function SignupPage() {
   const { t, language } = useLanguage();
@@ -68,17 +69,18 @@ export default function SignupPage() {
       const user = userCredential.user;
 
       await updateProfile(user, { displayName: name });
-      
-      // Send link-based email verification
       await sendEmailVerification(user);
 
-      await setDoc(doc(firestore, "users", user.uid), {
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userData = {
         id: user.uid,
         name: name,
         email: user.email,
         role: "user",
         language: language,
-      });
+      };
+
+      setDocumentNonBlocking(userDocRef, userData, { merge: true });
 
       toast({ 
         title: language === "hi" ? "सफलता" : "Success",
@@ -107,17 +109,15 @@ export default function SignupPage() {
       const user = result.user;
 
       const userDocRef = doc(firestore, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
+      const userData = {
+        id: user.uid,
+        name: user.displayName,
+        email: user.email,
+        role: "user",
+        language: language,
+      };
 
-      if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
-          id: user.uid,
-          name: user.displayName,
-          email: user.email,
-          role: "user",
-          language: language,
-        });
-      }
+      setDocumentNonBlocking(userDocRef, userData, { merge: true });
 
       toast({ title: language === "hi" ? "Google के साथ सफलतापूर्वक साइन अप किया गया" : "Signed up successfully with Google" });
       router.push("/dashboard");

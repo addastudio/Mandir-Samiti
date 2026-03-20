@@ -9,10 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -151,16 +151,12 @@ export default function AdminPage() {
   const currentRole = currentUserProfile?.role || 'devotee';
   const isPresident = currentRole === 'president';
 
-  // Helper to check if current user can manage target user
   const canManageUser = (targetUserId: string, targetRole: string) => {
-    if (user?.uid === targetUserId) return false; // Cannot manage self
+    if (user?.uid === targetUserId) return false;
     const myPower = ROLE_HIERARCHY[currentRole] || 0;
     const targetPower = ROLE_HIERARCHY[targetRole || 'devotee'] || 0;
     
-    // President can manage everyone (except maybe other presidents if they existed)
     if (isPresident && targetRole !== 'president') return true;
-    
-    // Only strictly higher grade can manage lower grade
     return myPower > targetPower;
   };
 
@@ -245,10 +241,11 @@ export default function AdminPage() {
 
     const roleRef = doc(firestore, "roles_admin", userId);
     if (isCurrentAdmin) {
-      deleteDoc(roleRef);
+      deleteDocumentNonBlocking(roleRef);
       toast({ title: language === 'hi' ? "व्यवस्थापक हटा दिया गया" : "Admin removed" });
     } else {
-      setDoc(roleRef, { assignedAt: new Date().toISOString() });
+      const data = { assignedAt: new Date().toISOString() };
+      setDocumentNonBlocking(roleRef, data, { merge: true });
       toast({ title: language === 'hi' ? "व्यवस्थापक जोड़ा गया" : "Admin added" });
     }
   };
@@ -279,7 +276,7 @@ export default function AdminPage() {
     const adminRef = doc(firestore, "roles_admin", user.uid);
     
     updateDocumentNonBlocking(userRef, { role: "devotee" });
-    deleteDoc(adminRef);
+    deleteDocumentNonBlocking(adminRef);
     
     toast({ 
       title: language === 'hi' ? "इस्तीफा स्वीकार किया गया" : "Resignation Accepted",
@@ -304,7 +301,7 @@ export default function AdminPage() {
     const adminRef = doc(firestore, "roles_admin", targetUserId);
     
     updateDocumentNonBlocking(userRef, { role: "devotee" });
-    deleteDoc(adminRef);
+    deleteDocumentNonBlocking(adminRef);
     
     toast({ 
       title: language === 'hi' ? "सदस्य हटाया गया" : "Member Removed",
@@ -322,7 +319,7 @@ export default function AdminPage() {
         {!user?.emailVerified && (
           <Alert variant="destructive" className="bg-amber-50 border-amber-200 text-amber-900">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardUnverifiedEmail}</AlertTitle>
+            <AlertTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardVerificationSent}</AlertTitle>
             <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
               <span className={cn(language === 'hi' ? 'font-hindi' : '')}>
                 {language === 'hi' 
