@@ -247,7 +247,7 @@ export default function DashboardPage() {
               <CardContent className="pt-6 space-y-5">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.dashboardEmail}</label>
-                  <p className="font-medium truncate flex items-center gap-2">
+                  <div className="font-medium truncate flex items-center gap-2">
                     {user.email}
                     {user.emailVerified ? (
                       <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 h-5 px-1.5">
@@ -256,7 +256,7 @@ export default function DashboardPage() {
                     ) : (
                       <Badge variant="outline" className="text-destructive border-destructive/30 h-5 px-1.5">Unverified</Badge>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.dashboardMemberSince}</label>
