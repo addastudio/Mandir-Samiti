@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Lock, LogOut, ShieldCheck, UserX } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Lock, LogOut, ShieldCheck, UserX, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -152,7 +152,7 @@ export default function AdminPage(props: {
   const canManageUser = (targetUserId: string, targetRole: string) => {
     if (user?.uid === targetUserId) return false;
     
-    // As President, you have full oversight
+    // As President, you have full oversight to resolve duplicates or issues
     if (isPresident) return true;
 
     const myPower = ROLE_HIERARCHY[currentRole] || 0;
@@ -295,6 +295,7 @@ export default function AdminPage(props: {
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
+      // Atomic resign: Clear role and delete admin status
       await updateDoc(userRef, { role: "devotee" });
       await deleteDoc(adminRef);
       
@@ -316,6 +317,7 @@ export default function AdminPage(props: {
     const adminRef = doc(firestore, "roles_admin", targetUserId);
     
     try {
+      // President can purge any user record to fix duplicates or orphaned entries
       await deleteDoc(userRef);
       await deleteDoc(adminRef);
       toast({ title: language === 'hi' ? "रिकॉर्ड हटाया गया" : "Record Purged" });
@@ -375,7 +377,7 @@ export default function AdminPage(props: {
                     <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="space-y-4 pt-2">
-                        <p>{language === 'hi' ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा।' : 'This will remove your current role and administrative access.'}</p>
+                        <p>{language === 'hi' ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप एक भक्त के रूप में लॉग इन रहेंगे।' : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}</p>
                         {isPasswordUser && (
                           <div className="space-y-2 pt-2">
                             <Label htmlFor="resign-password">{language === 'hi' ? 'पुष्टि के लिए अपना पासवर्ड दर्ज करें' : 'Enter your password to confirm'}</Label>
@@ -481,7 +483,7 @@ export default function AdminPage(props: {
                   <AlertDescription className="text-amber-700 space-y-2 mt-2">
                     <p>• {language === 'hi' ? 'समिति के भीतर आपके निर्धारित पद के आधार पर प्रबंधन अनुमतियां प्रदान की जाती हैं।' : 'Management permissions are assigned based on your designated position within the committee.'}</p>
                     <p>• {language === 'hi' ? 'आपके पास अपने से निम्न पद वाले सदस्यों की भूमिकाओं को प्रबंधित करने का अधिकार है।' : 'You have the authority to manage the roles of members at a lower grade level than your own.'}</p>
-                    {isPresident && <p>• <strong>{language === 'hi' ? 'अध्यक्ष के रूप में, आपके पास सभी समिति सदस्यों का पूर्ण निरीक्षण और प्रबंधन अधिकार है।' : 'As President, you maintain full oversight of all committee members.'}</strong></p>}
+                    <p>• {language === 'hi' ? 'कोर समिति के प्रशासनिक पदों को सुरक्षित रखा गया है और केवल अधिकृत वरिष्ठ निरीक्षण द्वारा प्रबंधित किया जाता है।' : 'Core committee administrative positions are protected and managed only by authorized senior oversight.'}</p>
                   </AlertDescription>
                 </Alert>
 
@@ -509,7 +511,10 @@ export default function AdminPage(props: {
                                 <span className="font-bold text-lg">{u.name || 'User'}</span>
                                 {isTargetMe && <Badge variant="outline" className="text-[10px]">{language === 'hi' ? 'आप' : 'You'}</Badge>}
                               </div>
-                              <span className="text-xs font-mono text-muted-foreground mb-1">UID: {u.id}</span>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Mail className="h-3 w-3" /> {u.email}
+                              </div>
+                              <span className="text-[10px] font-mono text-muted-foreground/60 mb-1">UID: {u.id}</span>
                               <div className="flex flex-wrap gap-2 mt-1">
                                 {isUserAdmin && <Badge className="bg-primary/10 text-primary border-primary/20">{language === 'hi' ? 'व्यवस्थापक' : 'Admin'}</Badge>}
                                 <Badge variant="secondary" className="bg-secondary/50 font-medium">{u.role || (language === 'hi' ? 'भक्त' : 'Devotee')}</Badge>
@@ -550,7 +555,7 @@ export default function AdminPage(props: {
                                       <AlertDialogContent>
                                         <AlertDialogHeader>
                                           <AlertDialogTitle>{language === 'hi' ? 'रिकॉर्ड साफ़ करें?' : 'Purge User Record?'}</AlertDialogTitle>
-                                          <AlertDialogDescription>{language === 'hi' ? `यह डेटाबेस से ${u.name || 'उपयोगकर्ता'} के रिकॉर्ड को स्थायी रूप से हटा देगा।` : `Permanently delete the database record for ${u.name || 'this user'}.`}</AlertDialogDescription>
+                                          <AlertDialogDescription>{language === 'hi' ? `यह डेटाबेस से ${u.name || 'उपयोगकर्ता'} के रिकॉर्ड को स्थायी रूप से हटा देगा। यह क्रिया तभी करें जब उपयोगकर्ता के कई रिकॉर्ड हों या उनका खाता हटा दिया गया हो।` : `Permanently delete the database record for ${u.name || 'this user'}. Use this only if the user has duplicate records or their account has been deleted.`}</AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -570,7 +575,139 @@ export default function AdminPage(props: {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Other tabs content omitted for brevity */}
+          <TabsContent value="gallery" className="space-y-6">
+            <Card className="border-primary/20 shadow-md">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'नया गैलरी आइटम जोड़ें' : 'Add New Gallery Item'}</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleAddGallery} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="imageURL">{language === 'hi' ? 'इमेज URL' : 'Image URL'}</Label>
+                    <Input id="imageURL" name="imageURL" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="caption">{language === 'hi' ? 'कैप्शन' : 'Caption'}</Label>
+                    <Input id="caption" name="caption" required />
+                  </div>
+                  <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+                    {isSubmitting ? '...' : (language === 'hi' ? 'गैलरी में जोड़ें' : 'Add to Gallery')}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-10">
+              {gallery?.map((item) => (
+                <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border shadow-sm">
+                  <img src={item.imageURL} alt={item.caption} className="object-cover w-full h-full" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
+                    <div className="text-center">
+                      <p className="text-white text-xs mb-2 line-clamp-2">{item.caption}</p>
+                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete("gallery", item.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+          <TabsContent value="notices" className="space-y-6">
+             <Card className="border-primary/20 shadow-md">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.noticesAdd}</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleAddNotice} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="notice-title">{t.noticesHeadlinePlaceholder}</Label>
+                      <Input id="notice-title" name="title" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="importance">{language === 'hi' ? 'महत्व' : 'Importance'}</Label>
+                      <Select name="importance" defaultValue="normal">
+                        <SelectTrigger id="importance">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="normal">{t.noticesNormal}</SelectItem>
+                          <SelectItem value="urgent">{t.noticesUrgent}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="content">{t.noticesContentPlaceholder}</Label>
+                    <Textarea id="content" name="content" required />
+                  </div>
+                  <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+                    {isSubmitting ? '...' : (language === 'hi' ? 'सूचना जारी करें' : 'Post Notice')}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            <div className="space-y-4 mt-10">
+              {notices?.map((notice) => (
+                <Card key={notice.id} className={cn("border-l-4", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
+                  <CardContent className="p-4 flex justify-between items-start gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold">{notice.title}</h4>
+                        <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'}>{notice.importance}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{notice.content}</p>
+                      <p className="text-[10px] text-muted-foreground/60">{new Date(notice.createdAt).toLocaleString()}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete("notices", notice.id)} className="text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+          <TabsContent value="requests" className="space-y-6">
+             <div className="grid grid-cols-1 gap-4">
+               {requests?.map((req) => (
+                 <Card key={req.id} className="overflow-hidden">
+                   <CardHeader className="bg-secondary/20 py-3 flex flex-row items-center justify-between">
+                     <div className="flex items-center gap-2">
+                       <MessageSquare className="h-4 w-4 text-primary" />
+                       <CardTitle className="text-sm font-bold uppercase tracking-wider">{req.requestType}</CardTitle>
+                     </div>
+                     <Badge className={cn(
+                       req.status === 'completed' ? 'bg-green-100 text-green-700' : 
+                       req.status === 'viewed' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                     )}>
+                       {req.status}
+                     </Badge>
+                   </CardHeader>
+                   <CardContent className="pt-4 space-y-3">
+                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
+                       <div>
+                         <p className="font-bold">{req.name}</p>
+                         <p className="text-xs text-muted-foreground">{req.email} | {req.phone}</p>
+                       </div>
+                       <p className="text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleString()}</p>
+                     </div>
+                     <p className="text-sm italic p-3 bg-muted/30 rounded-lg">"{req.message}"</p>
+                     <div className="flex flex-wrap gap-2 pt-2">
+                       <Button size="sm" variant="outline" onClick={() => updateRequestStatus(req.id, 'viewed')} disabled={req.status === 'viewed' || req.status === 'completed'}>
+                         <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Viewed
+                       </Button>
+                       <Button size="sm" variant="outline" onClick={() => updateRequestStatus(req.id, 'completed')} disabled={req.status === 'completed'}>
+                         <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Completed
+                       </Button>
+                       <Button size="sm" variant="ghost" onClick={() => handleDelete("prayer_requests", req.id)} className="text-destructive ml-auto">
+                         <Trash2 className="h-3 w-3" />
+                       </Button>
+                     </div>
+                   </CardContent>
+                 </Card>
+               ))}
+             </div>
+          </TabsContent>
         </Tabs>
       </div>
 
