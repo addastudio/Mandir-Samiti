@@ -747,16 +747,18 @@ export default function AdminPage() {
               <ShieldCheck className="h-5 w-5 text-primary" />
               {language === 'hi' ? 'ग्रेड परिवर्तन की पुष्टि' : 'Confirm Grade Change'}
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-4 pt-2">
-              <p className="font-semibold text-foreground">
-                {language === 'hi' 
-                  ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?`
-                  : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position from '${pendingRoleUpdate?.targetCurrentRole}' to '${pendingRoleUpdate?.newRole}'?`}
-              </p>
-              <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-amber-900 text-sm italic">
-                {language === 'hi'
-                  ? 'अस्वीकरण: सदस्य के ग्रेड को अपडेट करना एक महत्वपूर्ण प्रशासनिक कार्य है। कृपया सुनिश्चित करें कि यह परिवर्तन समिति के आधिकारिक निर्णयों के अनुरूप है और सदस्य की वर्तमान जिम्मेदारियों को दर्शाता है।'
-                  : 'Disclaimer: Updating a member\'s grade is a significant administrative action. Please ensure this change aligns with the committee\'s official decisions and reflects the member\'s current responsibilities.'}
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 pt-2">
+                <div className="font-semibold text-foreground">
+                  {language === 'hi' 
+                    ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?`
+                    : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position from '${pendingRoleUpdate?.targetCurrentRole}' to '${pendingRoleUpdate?.newRole}'?`}
+                </div>
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-amber-900 text-sm italic">
+                  {language === 'hi'
+                    ? 'अस्वीकरण: सदस्य के ग्रेड को अपडेट करना एक महत्वपूर्ण प्रशासनिक कार्य है। कृपया सुनिश्चित करें कि यह परिवर्तन समिति के आधिकारिक निर्णयों के अनुरूप है और सदस्य की वर्तमान जिम्मेदारियों को दर्शाता है।'
+                    : 'Disclaimer: Updating a member\'s grade is a significant administrative action. Please ensure this change aligns with the committee\'s official decisions and reflects the member\'s current responsibilities.'}
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
