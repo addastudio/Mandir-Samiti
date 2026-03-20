@@ -81,7 +81,7 @@ export default function LoginPage() {
       toast({ title: language === "hi" ? "सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully" });
       router.push("/dashboard");
     } catch (err: any) {
-      console.error("Login error code:", err.code);
+      // Intentionally not logging expected auth errors to console.error to avoid triggering global error listeners/overlays
       let errorMessage = err.message;
       
       // Map specific Firebase error codes to translated messages
