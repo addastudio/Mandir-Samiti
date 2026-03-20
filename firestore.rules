@@ -18,7 +18,8 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
+      // Allow users to delete their own profile (e.g. during account deletion)
+      allow delete: if isOwner(userId) || isAdmin();
     }
 
     match /users/{userId}/donations/{donationId} {

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { collection, doc, query, where } from "firebase/firestore";
+import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
 import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw, ArrowLeft, Shield } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -30,7 +30,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -133,21 +132,30 @@ export default function DashboardPage() {
   };
 
   const handleUpdate2FA = async (enabled: boolean) => {
-    if (!userDocRef) return;
+    if (!userDocRef || !firestore) return;
     setIsUpdating2FA(true);
     
-    const updateData: any = { twoFactorEnabled: enabled };
-    if (enabled && newPin.length === 6) {
-      updateData.twoFactorPin = newPin;
-    }
+    try {
+      const updateData: any = { twoFactorEnabled: enabled };
+      if (enabled && newPin.length === 6) {
+        updateData.twoFactorPin = newPin;
+      }
 
-    updateDocumentNonBlocking(userDocRef, updateData);
-    toast({
-      title: t.dashboard2FAUpdateSuccess,
-      description: enabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled,
-    });
-    setNewPin("");
-    setIsUpdating2FA(false);
+      await updateDoc(userDocRef, updateData);
+      toast({
+        title: t.dashboard2FAUpdateSuccess,
+        description: enabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled,
+      });
+      setNewPin("");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsUpdating2FA(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -171,8 +179,10 @@ export default function DashboardPage() {
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
-      deleteDocumentNonBlocking(userRef);
-      deleteDocumentNonBlocking(adminRef);
+      // We MUST await these deletions before deleting the user identity,
+      // otherwise security rules will block the background sync.
+      await deleteDoc(userRef);
+      await deleteDoc(adminRef);
 
       await deleteUser(user);
       
@@ -182,6 +192,7 @@ export default function DashboardPage() {
       });
       router.push("/");
     } catch (error: any) {
+      console.error("Account deletion error:", error);
       if (error.code === 'auth/wrong-password') {
         toast({
           variant: "destructive",

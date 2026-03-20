@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc } from "firebase/firestore";
+import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle, Mail, RefreshCw, ArrowLeft, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -289,8 +290,9 @@ export default function AdminPage() {
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
-      updateDocumentNonBlocking(userRef, { role: "devotee" });
-      deleteDocumentNonBlocking(adminRef);
+      // Use await to ensure synchronization before navigation
+      await updateDoc(userRef, { role: "devotee" });
+      await deleteDoc(adminRef);
       
       toast({ 
         title: language === 'hi' ? "इस्तीफा स्वीकार किया गया" : "Resignation Accepted",
@@ -318,7 +320,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleRemoveMember = (targetUserId: string, targetRole: string) => {
+  const handleRemoveMember = async (targetUserId: string, targetRole: string) => {
     if (!firestore) return;
     
     if (!isPresident) {
@@ -333,13 +335,21 @@ export default function AdminPage() {
     const userRef = doc(firestore, "users", targetUserId);
     const adminRef = doc(firestore, "roles_admin", targetUserId);
     
-    updateDocumentNonBlocking(userRef, { role: "devotee" });
-    deleteDocumentNonBlocking(adminRef);
-    
-    toast({ 
-      title: language === 'hi' ? "सदस्य हटाया गया" : "Member Removed",
-      description: language === 'hi' ? "उपयोगकर्ता को समिति से हटा दिया गया है।" : "The user has been removed from the committee."
-    });
+    try {
+      await updateDoc(userRef, { role: "devotee" });
+      await deleteDoc(adminRef);
+      
+      toast({ 
+        title: language === 'hi' ? "सदस्य हटाया गया" : "Member Removed",
+        description: language === 'hi' ? "उपयोगकर्ता को समिति से हटा दिया गया है।" : "The user has been removed from the committee."
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    }
   };
 
   const isAdminUser = (userId: string) => {
