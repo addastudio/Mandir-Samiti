@@ -168,6 +168,7 @@ export type TranslationKeys = {
   authErrorWrongPassword: string;
   authErrorGeneric: string;
   authError2FAPin: string;
+  authErrorInvalidCredential: string;
 
   // Signup
   signupEmailSent: string;
@@ -314,6 +315,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     authErrorWrongPassword: 'गलत पासवर्ड। कृपया पुनः प्रयास करें।',
     authErrorGeneric: 'एक अनपेक्षित त्रुटि हुई। कृपया बाद में पुनः प्रयास करें।',
     authError2FAPin: 'अमान्य पिन। कृपया पुनः प्रयास करें।',
+    authErrorInvalidCredential: 'अमान्य ईमेल या पासवर्ड। कृपया पुनः प्रयास करें।',
     signupEmailSent: 'सत्यापन ईमेल भेज दिया गया है। कृपया अपना इनबॉक्स जांचें।',
   },
   en: {
@@ -456,6 +458,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     authErrorWrongPassword: 'Incorrect password. Please try again.',
     authErrorGeneric: 'An unexpected error occurred. Please try again later.',
     authError2FAPin: 'Invalid PIN. Please try again.',
+    authErrorInvalidCredential: 'Invalid email or password. Please try again.',
     signupEmailSent: 'Verification email sent. Please check your inbox.',
   },
 };

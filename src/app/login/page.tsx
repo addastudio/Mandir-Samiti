@@ -28,7 +28,6 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react";
-import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -82,13 +81,22 @@ export default function LoginPage() {
       toast({ title: language === "hi" ? "सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully" });
       router.push("/dashboard");
     } catch (err: any) {
+      console.error("Login error code:", err.code);
       let errorMessage = err.message;
+      
+      // Map specific Firebase error codes to translated messages
       if (err.code === 'auth/user-not-found') {
         errorMessage = t.authErrorUserNotFound;
-      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      } else if (err.code === 'auth/wrong-password') {
         errorMessage = t.authErrorWrongPassword;
+      } else if (err.code === 'auth/invalid-credential') {
+        // Many modern Firebase projects return this generic code for security.
+        // It covers both "user not found" and "wrong password".
+        errorMessage = t.authErrorInvalidCredential;
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = t.authErrorInvalidEmail;
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = language === 'hi' ? "बहुत अधिक प्रयास। कृपया बाद में पुनः प्रयास करें।" : "Too many attempts. Please try again later.";
       }
       
       setError(errorMessage);
@@ -135,6 +143,7 @@ export default function LoginPage() {
           role: "user",
           language: language,
         };
+        const { setDocumentNonBlocking } = await import("@/firebase/non-blocking-updates");
         setDocumentNonBlocking(userDocRef, userData, { merge: true });
       }
 
