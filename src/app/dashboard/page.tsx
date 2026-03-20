@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAuth, signOut, sendEmailVerification, deleteUser } from "firebase/auth";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc } from "firebase/firestore";
 import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -36,6 +38,7 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -79,6 +82,22 @@ export default function DashboardPage() {
     if (!user || !firestore) return;
     setIsDeleting(true);
     try {
+      // 0. Re-authenticate if user signed in with password
+      const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
+      if (isPasswordUser) {
+        if (!deletePassword) {
+          toast({
+            variant: "destructive",
+            title: language === 'hi' ? "पासवर्ड आवश्यक है" : "Password Required",
+            description: language === 'hi' ? "कृपया अपना पासवर्ड दर्ज करें।" : "Please enter your password to confirm.",
+          });
+          setIsDeleting(false);
+          return;
+        }
+        const credential = EmailAuthProvider.credential(user.email!, deletePassword);
+        await reauthenticateWithCredential(user, credential);
+      }
+
       // 1. Delete Firestore User Document
       const userRef = doc(firestore, "users", user.uid);
       await deleteDoc(userRef);
@@ -96,7 +115,14 @@ export default function DashboardPage() {
       });
       router.push("/");
     } catch (error: any) {
-      if (error.code === 'auth/requires-recent-login') {
+      console.error(error);
+      if (error.code === 'auth/wrong-password') {
+        toast({
+          variant: "destructive",
+          title: language === 'hi' ? "गलत पासवर्ड" : "Incorrect Password",
+          description: language === 'hi' ? "कृपया सही पासवर्ड दर्ज करें।" : "Please enter the correct password.",
+        });
+      } else if (error.code === 'auth/requires-recent-login') {
         toast({
           variant: "destructive",
           title: language === 'hi' ? "सुरक्षा त्रुटि" : "Security Error",
@@ -111,6 +137,7 @@ export default function DashboardPage() {
       }
     } finally {
       setIsDeleting(false);
+      setDeletePassword("");
     }
   };
 
@@ -145,6 +172,7 @@ export default function DashboardPage() {
   if (!user) return null;
 
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
+  const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
 
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-28">
@@ -257,12 +285,29 @@ export default function DashboardPage() {
                           {t.dashboardDeleteConfirmDesc}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
+                      
+                      {isPasswordUser && (
+                        <div className="py-4 space-y-3">
+                          <Label htmlFor="delete-password" className={cn(language === 'hi' ? 'font-hindi' : '')}>
+                            {t.dashboardDeletePasswordLabel}
+                          </Label>
+                          <Input
+                            id="delete-password"
+                            type="password"
+                            value={deletePassword}
+                            onChange={(e) => setDeletePassword(e.target.value)}
+                            placeholder={t.dashboardDeletePasswordPlaceholder}
+                            className="border-primary/20"
+                          />
+                        </div>
+                      )}
+
                       <AlertDialogFooter>
-                        <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setDeletePassword("")}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
                         <AlertDialogAction 
                           onClick={handleDeleteAccount} 
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          disabled={isDeleting}
+                          disabled={isDeleting || (isPasswordUser && !deletePassword)}
                         >
                           {isDeleting ? '...' : t.dashboardDeleteAccount}
                         </AlertDialogAction>

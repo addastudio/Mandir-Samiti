@@ -132,6 +132,8 @@ export type TranslationKeys = {
   dashboardDeleteConfirmDesc: string;
   dashboardDeleteSuccess: string;
   dashboardDeleteRecentLogin: string;
+  dashboardDeletePasswordLabel: string;
+  dashboardDeletePasswordPlaceholder: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -261,6 +263,8 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardDeleteConfirmDesc: 'यह क्रिया वापस नहीं ली जा सकती। आपका सारा डेटा स्थायी रूप से हटा दिया जाएगा।',
     dashboardDeleteSuccess: 'खाता सफलतापूर्वक हटा दिया गया।',
     dashboardDeleteRecentLogin: 'सुरक्षा कारणों से अपना खाता हटाने से पहले कृपया पुनः लॉग इन करें।',
+    dashboardDeletePasswordLabel: 'हटाने की पुष्टि के लिए अपना पासवर्ड दर्ज करें',
+    dashboardDeletePasswordPlaceholder: 'पासवर्ड',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -384,6 +388,8 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardDeleteConfirmDesc: 'This action cannot be undone. All your data will be permanently removed.',
     dashboardDeleteSuccess: 'Account deleted successfully.',
     dashboardDeleteRecentLogin: 'Please log in again before deleting your account for security reasons.',
+    dashboardDeletePasswordLabel: 'Enter your password to confirm deletion',
+    dashboardDeletePasswordPlaceholder: 'Password',
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
     prayerFormType: 'Request Type',
