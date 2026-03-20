@@ -1,6 +1,6 @@
-
 "use client";
 
+import * as React from "react";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -44,7 +44,14 @@ const ROLE_HIERARCHY: Record<string, number> = {
   'devotee': 10,
 };
 
-export default function AdminPage() {
+export default function AdminPage(props: {
+  params: Promise<any>;
+  searchParams: Promise<any>;
+}) {
+  // Next.js 15: params and searchParams are Promises
+  const params = React.use(props.params);
+  const searchParams = React.use(props.searchParams);
+
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -367,7 +374,7 @@ export default function AdminPage() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
                     <AlertDialogDescription asChild>
-                      <div className="space-y-4">
+                      <div className="space-y-4 pt-2">
                         <p>{language === 'hi' ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा।' : 'This will remove your current role and administrative access.'}</p>
                         {isPasswordUser && (
                           <div className="space-y-2 pt-2">
@@ -480,13 +487,14 @@ export default function AdminPage() {
 
                 <div className="space-y-4">
                   {allUsers?.slice().sort((a, b) => {
-                    const weightA = ROLE_HIERARCHY[a.role || 'devotee'] || 0;
-                    const weightB = ROLE_HIERARCHY[b.role || 'devotee'] || 0;
+                    // Refined sorting: users with no role (unspecified) go to the very bottom
+                    const weightA = a.role ? (ROLE_HIERARCHY[a.role] || 0) : 0;
+                    const weightB = b.role ? (ROLE_HIERARCHY[b.role] || 0) : 0;
                     if (weightB !== weightA) return weightB - weightA;
                     return (a.name || '').localeCompare(b.name || '');
                   }).map((u) => {
                     const isUserAdmin = isAdminUser(u.id);
-                    const canIManage = canManageUser(u.id, u.role);
+                    const canIManage = canManageUser(u.id, u.role || 'devotee');
                     const isTargetMe = u.id === user?.uid;
                     
                     return (
@@ -512,7 +520,7 @@ export default function AdminPage() {
                           <div className="flex flex-col sm:flex-row items-center gap-4">
                             <div className="flex flex-col gap-2 w-full sm:w-48">
                               <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'पद / ग्रेड असाइन करें' : 'Assign Grade'}</Label>
-                              <Select disabled={!canIManage} defaultValue={u.role || 'devotee'} onValueChange={(val) => handleUpdateUserRole(u.id, u.role, val, u.name || 'User')}>
+                              <Select disabled={!canIManage} defaultValue={u.role || 'devotee'} onValueChange={(val) => handleUpdateUserRole(u.id, u.role || 'devotee', val, u.name || 'User')}>
                                 <SelectTrigger className="h-9"><SelectValue placeholder="Select Grade" /></SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="devotee">{language === 'hi' ? 'भक्त' : 'Devotee'}</SelectItem>
@@ -529,7 +537,7 @@ export default function AdminPage() {
                             <div className="flex flex-col gap-2 w-full sm:w-auto">
                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'प्रबंधन पहुँच' : 'Management'}</Label>
                                <div className="flex gap-2">
-                                  <Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role)} className={cn("gap-2 h-9", isUserAdmin && "text-destructive border-destructive hover:bg-destructive/10")}>
+                                  <Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role || 'devotee')} className={cn("gap-2 h-9", isUserAdmin && "text-destructive border-destructive hover:bg-destructive/10")}>
                                     {isUserAdmin ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
                                     {isUserAdmin ? (language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin') : (language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin')}
                                   </Button>
@@ -572,7 +580,11 @@ export default function AdminPage() {
             <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'ग्रेड परिवर्तन की पुष्टि' : 'Confirm Grade Change'}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4 pt-2">
-                <div className="font-semibold text-foreground">{language === 'hi' ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?` : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position to '${pendingRoleUpdate?.newRole}'?`}</div>
+                <div className="font-semibold text-foreground">
+                  {language === 'hi' 
+                    ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?` 
+                    : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position from '${pendingRoleUpdate?.targetCurrentRole}' to '${pendingRoleUpdate?.newRole}'?`}
+                </div>
                 <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-amber-900 text-sm italic">{language === 'hi' ? 'अस्वीकरण: यह एक महत्वपूर्ण प्रशासनिक कार्य है।' : 'Disclaimer: This is a significant administrative action.'}</div>
               </div>
             </AlertDialogDescription>

@@ -1,6 +1,6 @@
-
 "use client";
 
+import * as React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,7 +29,14 @@ import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
-export default function LoginPage() {
+export default function LoginPage(props: {
+  params: Promise<any>;
+  searchParams: Promise<any>;
+}) {
+  // Next.js 15: params and searchParams are Promises
+  const params = React.use(props.params);
+  const searchParams = React.use(props.searchParams);
+
   const { t, language } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();
@@ -81,17 +88,14 @@ export default function LoginPage() {
       toast({ title: language === "hi" ? "सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully" });
       router.push("/dashboard");
     } catch (err: any) {
-      // Intentionally not logging expected auth errors to console.error to avoid triggering global error listeners/overlays
+      // Map specific Firebase error codes to translated messages
       let errorMessage = err.message;
       
-      // Map specific Firebase error codes to translated messages
       if (err.code === 'auth/user-not-found') {
         errorMessage = t.authErrorUserNotFound;
       } else if (err.code === 'auth/wrong-password') {
         errorMessage = t.authErrorWrongPassword;
       } else if (err.code === 'auth/invalid-credential') {
-        // Many modern Firebase projects return this generic code for security.
-        // It covers both "user not found" and "wrong password".
         errorMessage = t.authErrorInvalidCredential;
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = t.authErrorInvalidEmail;

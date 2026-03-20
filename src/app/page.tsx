@@ -1,6 +1,6 @@
-
 "use client";
 
+import * as React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
 import { Header } from "@/components/layout/Header";
@@ -18,7 +18,14 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
-export default function Home() {
+export default function Home(props: {
+  params: Promise<any>;
+  searchParams: Promise<any>;
+}) {
+  // Next.js 15: params and searchParams are Promises
+  const params = React.use(props.params);
+  const searchParams = React.use(props.searchParams);
+
   const { isLangLoading, language } = useLanguage();
 
   if (isLangLoading) {

@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { Poppins, Mukta } from 'next/font/google';
 import { FirebaseClientProvider } from '@/firebase';
+import * as React from 'react';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -29,11 +30,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+export default function RootLayout(props: {
   children: React.ReactNode;
-}>) {
+  params: Promise<any>;
+}) {
+  const children = props.children;
+  // Unwrap params if needed, though not used here directly, it's good practice for Next.js 15
+  const params = React.use(props.params);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body

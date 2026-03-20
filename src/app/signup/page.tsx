@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,7 +32,14 @@ import { doc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
-export default function SignupPage() {
+export default function SignupPage(props: {
+  params: Promise<any>;
+  searchParams: Promise<any>;
+}) {
+  // Next.js 15: params and searchParams are Promises
+  const params = React.use(props.params);
+  const searchParams = React.use(props.searchParams);
+
   const { t, language } = useLanguage();
   const router = useRouter();
   const { toast } = useToast();

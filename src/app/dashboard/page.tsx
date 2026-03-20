@@ -1,6 +1,6 @@
-
 "use client";
 
+import * as React from "react";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -31,7 +31,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export default function DashboardPage() {
+export default function DashboardPage(props: {
+  params: Promise<any>;
+  searchParams: Promise<any>;
+}) {
+  // Next.js 15: params and searchParams are Promises
+  const params = React.use(props.params);
+  const searchParams = React.use(props.searchParams);
+
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -145,7 +152,6 @@ export default function DashboardPage() {
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
-      // CRITICAL: Delete Firestore docs BEFORE the Auth user.
       await deleteDoc(userRef);
       await deleteDoc(adminRef);
       await deleteUser(user);
@@ -187,7 +193,12 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/"><Button variant="outline" className="gap-2"><Globe className="h-4 w-4" />{t.browseWebsite}</Button></Link>
+            <Link href="/">
+              <Button variant="outline" className="gap-2">
+                <Globe className="h-4 w-4" />
+                <span className={cn(language === "hi" ? "font-hindi" : "")}>{t.browseWebsite}</span>
+              </Button>
+            </Link>
             {adminDoc && <Link href="/admin"><Button variant="default" className="gap-2 bg-primary text-primary-foreground"><ShieldCheck className="h-4 w-4" />{t.dashboardAdminPanel}</Button></Link>}
             <Button variant="ghost" onClick={handleLogout} className="gap-2 text-destructive hover:bg-destructive/10"><LogOut className="h-4 w-4" />{t.dashboardLogout}</Button>
           </div>
