@@ -24,7 +24,7 @@ import {
   Firestore,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import Image from "image/image";
+import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
