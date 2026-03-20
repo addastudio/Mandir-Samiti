@@ -83,7 +83,9 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: any) {
       let errorMessage = err.message;
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = t.authErrorUserNotFound;
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         errorMessage = t.authErrorWrongPassword;
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = t.authErrorInvalidEmail;
