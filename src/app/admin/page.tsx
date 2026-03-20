@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { signOut, getAuth } from "firebase/auth";
+import { signOut, getAuth, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 
 // Define the hierarchy weight for roles
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -57,6 +57,9 @@ export default function AdminPage() {
     newRole: string;
     userName: string;
   } | null>(null);
+
+  const [resignPassword, setResignPassword] = useState("");
+  const [isResigningInProgress, setIsResigningInProgress] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -137,6 +140,7 @@ export default function AdminPage() {
 
   const currentRole = currentUserProfile?.role || 'devotee';
   const isPresident = currentRole === 'president';
+  const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
 
   const canManageUser = (targetUserId: string, targetRole: string) => {
     if (user?.uid === targetUserId) return false;
@@ -266,17 +270,53 @@ export default function AdminPage() {
 
   const handleResign = async () => {
     if (!firestore || !user) return;
-    const userRef = doc(firestore, "users", user.uid);
-    const adminRef = doc(firestore, "roles_admin", user.uid);
+    setIsResigningInProgress(true);
     
-    updateDocumentNonBlocking(userRef, { role: "devotee" });
-    deleteDocumentNonBlocking(adminRef);
-    
-    toast({ 
-      title: language === 'hi' ? "इस्तीफा स्वीकार किया गया" : "Resignation Accepted",
-      description: language === 'hi' ? "अब आप एक भक्त के रूप में लॉग इन हैं।" : "You have successfully resigned from your committee post."
-    });
-    router.push("/dashboard");
+    try {
+      if (isPasswordUser) {
+        if (!resignPassword) {
+          toast({
+            variant: "destructive",
+            title: language === 'hi' ? "पासवर्ड आवश्यक है" : "Password Required",
+            description: language === 'hi' ? "कृपया अपना पासवर्ड दर्ज करें।" : "Please enter your password to confirm.",
+          });
+          setIsResigningInProgress(false);
+          return;
+        }
+        const credential = EmailAuthProvider.credential(user.email!, resignPassword);
+        await reauthenticateWithCredential(user, credential);
+      }
+
+      const userRef = doc(firestore, "users", user.uid);
+      const adminRef = doc(firestore, "roles_admin", user.uid);
+      
+      updateDocumentNonBlocking(userRef, { role: "devotee" });
+      deleteDocumentNonBlocking(adminRef);
+      
+      toast({ 
+        title: language === 'hi' ? "इस्तीफा स्वीकार किया गया" : "Resignation Accepted",
+        description: language === 'hi' ? "अब आप एक भक्त के रूप में लॉग इन हैं।" : "You have successfully resigned from your committee post."
+      });
+      router.push("/dashboard");
+    } catch (error: any) {
+      console.error("Resignation error:", error);
+      if (error.code === 'auth/wrong-password') {
+        toast({
+          variant: "destructive",
+          title: language === 'hi' ? "गलत पासवर्ड" : "Incorrect Password",
+          description: language === 'hi' ? "कृपया सही पासवर्ड दर्ज करें।" : "Please enter the correct password.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: language === 'hi' ? "त्रुटि" : "Error",
+          description: error.message,
+        });
+      }
+    } finally {
+      setIsResigningInProgress(false);
+      setResignPassword("");
+    }
   };
 
   const handleRemoveMember = (targetUserId: string, targetRole: string) => {
@@ -352,16 +392,38 @@ export default function AdminPage() {
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {language === 'hi' 
-                        ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप अभी भी एक भक्त के रूप में लॉग इन रहेंगे।' 
-                        : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-4">
+                        <p>
+                          {language === 'hi' 
+                            ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप अभी भी एक भक्त के रूप में लॉग इन रहेंगे।' 
+                            : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}
+                        </p>
+                        {isPasswordUser && (
+                          <div className="space-y-2 pt-2">
+                            <Label htmlFor="resign-password">
+                              {language === 'hi' ? 'पुष्टि के लिए अपना पासवर्ड दर्ज करें' : 'Enter your password to confirm'}
+                            </Label>
+                            <Input 
+                              id="resign-password" 
+                              type="password" 
+                              value={resignPassword}
+                              onChange={(e) => setResignPassword(e.target.value)}
+                              placeholder={language === 'hi' ? 'पासवर्ड' : 'Password'}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground">
-                      {language === 'hi' ? 'पुष्टि करें' : 'Confirm Resignation'}
+                    <AlertDialogCancel onClick={() => setResignPassword("")}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleResign} 
+                      className="bg-destructive text-destructive-foreground"
+                      disabled={isResigningInProgress || (isPasswordUser && !resignPassword)}
+                    >
+                      {isResigningInProgress ? '...' : (language === 'hi' ? 'पुष्टि करें' : 'Confirm Resignation')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
