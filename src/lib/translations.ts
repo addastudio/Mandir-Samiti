@@ -127,6 +127,11 @@ export type TranslationKeys = {
   dashboardUnverifiedEmail: string;
   dashboardResendVerification: string;
   dashboardVerificationSent: string;
+  dashboardDeleteAccount: string;
+  dashboardDeleteConfirmTitle: string;
+  dashboardDeleteConfirmDesc: string;
+  dashboardDeleteSuccess: string;
+  dashboardDeleteRecentLogin: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -251,6 +256,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardUnverifiedEmail: 'आपका ईमेल सत्यापित नहीं है।',
     dashboardResendVerification: 'सत्यापन लिंक पुनः भेजें',
     dashboardVerificationSent: 'सत्यापन लिंक भेज दिया गया!',
+    dashboardDeleteAccount: 'खाता हटाएं',
+    dashboardDeleteConfirmTitle: 'क्या आप वाकई हटाना चाहते हैं?',
+    dashboardDeleteConfirmDesc: 'यह क्रिया वापस नहीं ली जा सकती। आपका सारा डेटा स्थायी रूप से हटा दिया जाएगा।',
+    dashboardDeleteSuccess: 'खाता सफलतापूर्वक हटा दिया गया।',
+    dashboardDeleteRecentLogin: 'सुरक्षा कारणों से अपना खाता हटाने से पहले कृपया पुनः लॉग इन करें।',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -369,6 +379,23 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardUnverifiedEmail: 'Your email is not verified.',
     dashboardResendVerification: 'Resend Verification Link',
     dashboardVerificationSent: 'Verification link resent!',
+    dashboardDeleteAccount: 'Delete Account',
+    dashboardDeleteConfirmTitle: 'Are you sure?',
+    dashboardDeleteConfirmDesc: 'This action cannot be undone. All your data will be permanently removed.',
+    dashboardDeleteSuccess: 'Account deleted successfully.',
+    dashboardDeleteRecentLogin: 'Please log in again before deleting your account for security reasons.',
+    prayerTitle: 'Prayer & Ritual Request',
+    prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
+    prayerFormType: 'Request Type',
+    prayerTypePrayer: 'Special Prayer',
+    prayerTypePuja: 'Special Ritual/Puja',
+    prayerTypeOther: 'Other Request',
+    prayerFormSuccess: 'Your request has been received successfully.',
+    prayerFormError: 'Error sending request. Please try again.',
+    prayerAdminRequests: 'Devotee Requests',
+    prayerStatusPending: 'Pending',
+    prayerStatusViewed: 'Viewed',
+    prayerStatusCompleted: 'Completed',
     signupEmailSent: 'Verification email sent. Please check your inbox.',
   },
 };

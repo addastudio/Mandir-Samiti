@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAuth, signOut, sendEmailVerification } from "firebase/auth";
-import { collection, doc, query, where, orderBy } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, Eye, AlertCircle } from "lucide-react";
+import { getAuth, signOut, sendEmailVerification, deleteUser } from "firebase/auth";
+import { collection, doc, query, where, deleteDoc } from "firebase/firestore";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -24,6 +35,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -61,6 +73,45 @@ export default function DashboardPage() {
     const auth = getAuth();
     await signOut(auth);
     router.push("/");
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || !firestore) return;
+    setIsDeleting(true);
+    try {
+      // 1. Delete Firestore User Document
+      const userRef = doc(firestore, "users", user.uid);
+      await deleteDoc(userRef);
+
+      // 2. Delete Admin Role if exists
+      const adminRef = doc(firestore, "roles_admin", user.uid);
+      await deleteDoc(adminRef);
+
+      // 3. Delete Auth User
+      await deleteUser(user);
+      
+      toast({
+        title: language === 'hi' ? "सफलता" : "Success",
+        description: t.dashboardDeleteSuccess,
+      });
+      router.push("/");
+    } catch (error: any) {
+      if (error.code === 'auth/requires-recent-login') {
+        toast({
+          variant: "destructive",
+          title: language === 'hi' ? "सुरक्षा त्रुटि" : "Security Error",
+          description: t.dashboardDeleteRecentLogin,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: language === 'hi' ? "त्रुटि" : "Error",
+          description: error.message,
+        });
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleResendEmail = async () => {
@@ -190,6 +241,35 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 )}
+                
+                <div className="pt-4 border-t">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 w-full justify-start gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        {t.dashboardDeleteAccount}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t.dashboardDeleteConfirmDesc}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDeleteAccount} 
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? '...' : t.dashboardDeleteAccount}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </CardContent>
             </Card>
 
