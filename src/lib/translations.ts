@@ -124,6 +124,9 @@ export type TranslationKeys = {
   dashboardTotalContribution: string;
   dashboardMyRequests: string;
   dashboardNewRequest: string;
+  dashboardUnverifiedEmail: string;
+  dashboardResendVerification: string;
+  dashboardVerificationSent: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -138,6 +141,9 @@ export type TranslationKeys = {
   prayerStatusPending: string;
   prayerStatusViewed: string;
   prayerStatusCompleted: string;
+
+  // Signup
+  signupEmailSent: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -242,6 +248,9 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardTotalContribution: 'कुल योगदान',
     dashboardMyRequests: 'मेरे निवेदन',
     dashboardNewRequest: 'प्रार्थना या पूजा का निवेदन भेजें',
+    dashboardUnverifiedEmail: 'आपका ईमेल सत्यापित नहीं है।',
+    dashboardResendVerification: 'सत्यापन लिंक पुनः भेजें',
+    dashboardVerificationSent: 'सत्यापन लिंक भेज दिया गया!',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -254,6 +263,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     prayerStatusPending: 'लंबित (Pending)',
     prayerStatusViewed: 'देखा गया (Viewed)',
     prayerStatusCompleted: 'पूर्ण (Completed)',
+    signupEmailSent: 'सत्यापन ईमेल भेज दिया गया है। कृपया अपना इनबॉक्स जांचें।',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -356,5 +366,9 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardTotalContribution: 'Total Contribution',
     dashboardMyRequests: 'My Requests',
     dashboardNewRequest: 'Request Prayer or Puja',
+    dashboardUnverifiedEmail: 'Your email is not verified.',
+    dashboardResendVerification: 'Resend Verification Link',
+    dashboardVerificationSent: 'Verification link resent!',
+    signupEmailSent: 'Verification email sent. Please check your inbox.',
   },
 };

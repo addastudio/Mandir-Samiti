@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
@@ -11,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, setDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -30,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { sendEmailVerification } from "firebase/auth";
 
 // Define the hierarchy weight for roles
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -49,6 +49,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -116,6 +117,26 @@ export default function AdminPage() {
       }
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
+
+  const handleResendEmail = async () => {
+    if (!user) return;
+    setIsResending(true);
+    try {
+      await sendEmailVerification(user);
+      toast({
+        title: language === 'hi' ? "सफलता" : "Success",
+        description: t.dashboardVerificationSent,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
@@ -298,6 +319,29 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background pb-20 pt-28">
       <div className="container mx-auto px-4 md:px-8 space-y-8">
+        {!user?.emailVerified && (
+          <Alert variant="destructive" className="bg-amber-50 border-amber-200 text-amber-900">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardUnverifiedEmail}</AlertTitle>
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+              <span className={cn(language === 'hi' ? 'font-hindi' : '')}>
+                {language === 'hi' 
+                  ? 'आपका ईमेल सत्यापित नहीं है। कृपया पूर्ण सुरक्षा और पहुँच के लिए इसे सत्यापित करें।' 
+                  : 'Your email is not verified. Please verify it to ensure full account security and access.'}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleResendEmail} 
+                disabled={isResending}
+                className="bg-white border-amber-200 hover:bg-amber-100 text-amber-900"
+              >
+                {isResending ? '...' : t.dashboardResendVerification}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
             <div className="bg-primary/10 p-3 rounded-full">

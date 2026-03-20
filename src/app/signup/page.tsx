@@ -23,6 +23,7 @@ import {
   updateProfile,
   Auth,
   Firestore,
+  sendEmailVerification,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -67,6 +68,9 @@ export default function SignupPage() {
       const user = userCredential.user;
 
       await updateProfile(user, { displayName: name });
+      
+      // Send link-based email verification
+      await sendEmailVerification(user);
 
       await setDoc(doc(firestore, "users", user.uid), {
         id: user.uid,
@@ -76,7 +80,10 @@ export default function SignupPage() {
         language: language,
       });
 
-      toast({ title: language === "hi" ? "खाता सफलतापूर्वक बनाया गया" : "Account created successfully" });
+      toast({ 
+        title: language === "hi" ? "सफलता" : "Success",
+        description: t.signupEmailSent 
+      });
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);

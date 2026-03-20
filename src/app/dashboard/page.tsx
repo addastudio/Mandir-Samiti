@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
@@ -6,21 +5,25 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getAuth, signOut } from "firebase/auth";
+import { getAuth, signOut, sendEmailVerification } from "firebase/auth";
 import { collection, doc, query, where, orderBy } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, Eye } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, Eye, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const { t, language } = useLanguage();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -60,6 +63,26 @@ export default function DashboardPage() {
     router.push("/");
   };
 
+  const handleResendEmail = async () => {
+    if (!user) return;
+    setIsResending(true);
+    try {
+      await sendEmailVerification(user);
+      toast({
+        title: language === 'hi' ? "सफलता" : "Success",
+        description: t.dashboardVerificationSent,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -75,6 +98,29 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-28">
       <div className="container mx-auto px-4 md:px-8 space-y-8">
+        {!user.emailVerified && user.providerData[0]?.providerId === 'password' && (
+          <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive shadow-sm">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.dashboardUnverifiedEmail}</AlertTitle>
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+              <span className={cn(language === 'hi' ? 'font-hindi text-sm' : 'text-sm')}>
+                {language === 'hi' 
+                  ? 'कृपया अपना ईमेल सत्यापित करें। यदि आपको लिंक नहीं मिला है, तो आप नीचे दिए गए बटन पर क्लिक करके इसे पुनः प्राप्त कर सकते हैं।' 
+                  : 'Please verify your email to ensure full access to all features. If you haven\'t received the link, you can resend it below.'}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleResendEmail} 
+                disabled={isResending}
+                className="bg-white border-destructive/30 hover:bg-destructive/10 text-destructive h-8"
+              >
+                {isResending ? '...' : t.dashboardResendVerification}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
             <div className="bg-primary/10 p-3 rounded-full">
@@ -122,7 +168,16 @@ export default function DashboardPage() {
               <CardContent className="pt-6 space-y-5">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.dashboardEmail}</label>
-                  <p className="font-medium truncate">{user.email}</p>
+                  <p className="font-medium truncate flex items-center gap-2">
+                    {user.email}
+                    {user.emailVerified ? (
+                      <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 h-5 px-1.5">
+                        <CheckCircle2 className="h-3 w-3 mr-1" /> Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-destructive border-destructive/30 h-5 px-1.5">Unverified</Badge>
+                    )}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.dashboardMemberSince}</label>
