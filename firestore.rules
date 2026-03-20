@@ -6,63 +6,87 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper function to check if the request is from a designated administrator
     function isAdmin() {
       return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
+    // User Profile Rules
     match /users/{userId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
+      
+      // Allow reading profile if it's yours or if you are an admin
       allow get: if isOwner(userId) || isAdmin();
+      
+      // Listing all users is restricted to admins for management purposes
       allow list: if isAdmin();
+      
+      // Users can create their own profile upon signup
       allow create: if isOwner(userId);
+      
+      // Users can update their own info (language, phone, etc). Admins can update roles.
       allow update: if isOwner(userId) || isAdmin();
-      // Allow users to delete their own profile (e.g. during account deletion)
+      
+      // Critical: Allow users to delete their own record (e.g., account deletion)
+      // and allow admins to purge records.
       allow delete: if isOwner(userId) || isAdmin();
     }
 
+    // Donation Records
     match /users/{userId}/donations/{donationId} {
       function isOwner(userId) {
         return request.auth != null && request.auth.uid == userId;
       }
       allow get, list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      // Donations are permanent records, usually only deletable by high-level admins if at all
       allow update, delete: if isAdmin();
     }
 
+    // Events (Publicly Readable, Admin Managed)
     match /events/{eventId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
+    // Gallery (Publicly Readable, Admin Managed)
     match /gallery/{galleryId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
+    // Notices (Publicly Readable, Admin Managed)
     match /notices/{noticeId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
+    // Prayer Requests
     match /prayer_requests/{requestId} {
+      // Anyone can submit a request (devotees might not be logged in)
       allow create: if true;
-      // Users can read their own prayer requests. Admins can read all.
+      // Users read their own. Admins read all.
       allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
       allow update, delete: if isAdmin();
     }
 
+    // Admin Roles Management
     match /roles_admin/{userId} {
-      // Allow any logged-in user to check if they (or others) are admin for UI purposes
+      // Allow any logged-in user to check if they are an admin for UI routing
       allow get: if request.auth != null;
-      // Listing admins and managing roles is strictly for existing admins
+      
+      // Only existing admins can see the full list of other admins
       allow list: if isAdmin();
-      // Only existing admins can create/grant new admin roles
+      
+      // Only existing admins can grant new admin privileges
       allow create: if isAdmin();
-      // Admins can remove roles, and users can remove their own (Resign)
+      
+      // Users can resign (delete their own role) or admins can remove others
       allow delete: if isAdmin() || (request.auth != null && request.auth.uid == userId);
-      // Roles are managed by deletion and creation, no direct updates
+      
+      // Role metadata shouldn't be updated directly, only added/removed
       allow update: if false;
     }
   }
