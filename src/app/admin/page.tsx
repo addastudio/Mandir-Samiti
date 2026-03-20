@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle, Mail, RefreshCw, ArrowLeft } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle, Mail, RefreshCw, ArrowLeft, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -588,13 +588,19 @@ export default function AdminPage() {
                 <CardDescription>Manage administrative privileges based on hierarchical grades.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
-                <Alert className="bg-amber-50 border-amber-200">
-                  <Info className="h-4 w-4 text-amber-800" />
-                  <AlertTitle className="text-amber-800 font-bold">Hierarchical Rules</AlertTitle>
-                  <AlertDescription className="text-amber-700">
-                    - Each grade has a numeric weight. You can only manage users with a <strong>strictly lower</strong> grade than yours.<br/>
-                    - {isPresident ? <strong>You are the President. You have full oversight of all committee members.</strong> : "Only the President can remove members from the committee."}<br/>
-                    - No one can demote the <strong>President</strong> or remove their admin access.
+                <Alert className="bg-amber-50 border-amber-200 shadow-sm">
+                  <ShieldCheck className="h-4 w-4 text-amber-800" />
+                  <AlertTitle className="text-amber-800 font-bold">
+                    {language === 'hi' ? 'प्रशासनिक दिशानिर्देश' : 'Administrative Guidelines'}
+                  </AlertTitle>
+                  <AlertDescription className="text-amber-700 space-y-2 mt-2">
+                    <p>• {language === 'hi' ? 'समिति के भीतर आपके निर्धारित पद के आधार पर प्रबंधन अनुमतियां प्रदान की जाती हैं।' : 'Management permissions are assigned based on your designated position within the committee.'}</p>
+                    <p>• {language === 'hi' ? 'आपके पास अपने से निम्न पद वाले सदस्यों की भूमिकाओं को प्रबंधित करने का अधिकार है।' : 'You have the authority to manage the roles of members at a lower grade level than your own.'}</p>
+                    {isPresident ? (
+                      <p>• <strong>{language === 'hi' ? 'अध्यक्ष के रूप में, आपके पास सभी समिति सदस्यों का पूर्ण निरीक्षण और प्रबंधन अधिकार है।' : 'As President, you maintain full oversight and management authority of all committee members.'}</strong></p>
+                    ) : (
+                      <p>• {language === 'hi' ? 'समिति के मुख्य प्रशासनिक पदों को केवल अधिकृत वरिष्ठों द्वारा ही प्रबंधित किया जा सकता है।' : 'Core committee administrative positions are protected and managed only by authorized senior oversight.'}</p>
+                    )}
                   </AlertDescription>
                 </Alert>
 
