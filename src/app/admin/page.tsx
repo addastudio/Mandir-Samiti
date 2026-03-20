@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle, Mail, RefreshCw } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Clock, Info, Lock, LogOut, UserMinus as RemoveUserIcon, AlertTriangle, Mail, RefreshCw, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -199,6 +199,10 @@ export default function AdminPage() {
             </Button>
             <Button variant="outline" onClick={handleResendEmail} disabled={isResending} className="w-full">
               {isResending ? '...' : t.dashboardResendVerification}
+            </Button>
+            <Button variant="ghost" onClick={() => router.back()} className="w-full gap-2 text-muted-foreground border">
+              <ArrowLeft className="h-4 w-4" />
+              {language === 'hi' ? 'पीछे जाएं' : 'Go Back'}
             </Button>
             <Button variant="ghost" onClick={handleLogout} className="w-full text-muted-foreground">
               {t.dashboardLogout}

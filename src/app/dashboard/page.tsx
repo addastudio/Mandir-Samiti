@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -213,6 +213,10 @@ export default function DashboardPage() {
             </Button>
             <Button variant="outline" onClick={handleResendEmail} disabled={isResending} className="w-full">
               {isResending ? '...' : t.dashboardResendVerification}
+            </Button>
+            <Button variant="ghost" onClick={() => router.back()} className="w-full gap-2 text-muted-foreground border">
+              <ArrowLeft className="h-4 w-4" />
+              {language === 'hi' ? 'पीछे जाएं' : 'Go Back'}
             </Button>
             <Button variant="ghost" onClick={handleLogout} className="w-full text-muted-foreground">
               {t.dashboardLogout}
