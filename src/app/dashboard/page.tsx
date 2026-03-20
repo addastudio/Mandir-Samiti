@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where } from "firebase/firestore";
 import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw, ArrowLeft, Shield } from "lucide-react";
-import Link from "next/link";
+import Link from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -90,6 +90,46 @@ export default function DashboardPage() {
     const auth = getAuth();
     await signOut(auth);
     router.push("/");
+  };
+
+  const handleResendVerification = async () => {
+    if (!user) return;
+    setIsResending(true);
+    try {
+      await sendEmailVerification(user);
+      toast({
+        title: language === 'hi' ? "सफलता" : "Success",
+        description: t.dashboardVerificationSent,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleRefreshStatus = async () => {
+    if (!user) return;
+    setIsRefreshing(true);
+    try {
+      await user.reload();
+      toast({
+        title: language === 'hi' ? "सफलता" : "Success",
+        description: language === 'hi' ? "प्रोफ़ाइल अपडेट की गई।" : "Profile updated.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "त्रुटि" : "Error",
+        description: error.message,
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleUpdate2FA = async (enabled: boolean) => {
@@ -229,14 +269,40 @@ export default function DashboardPage() {
               <CardContent className="pt-6 space-y-5">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.dashboardEmail}</label>
-                  <div className="font-medium truncate flex items-center gap-2">
-                    {user.email}
-                    {user.emailVerified ? (
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 h-5 px-1.5">
-                        <CheckCircle2 className="h-3 w-3 mr-1" /> Verified
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-destructive border-destructive/30 h-5 px-1.5">Unverified</Badge>
+                  <div className="flex flex-col gap-2">
+                    <div className="font-medium truncate flex items-center gap-2">
+                      {user.email}
+                      {user.emailVerified ? (
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200 h-5 px-1.5">
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> Verified
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-destructive border-destructive/30 h-5 px-1.5">Unverified</Badge>
+                      )}
+                    </div>
+                    {!user.emailVerified && (
+                      <div className="flex flex-wrap gap-2">
+                        <Button 
+                          variant="link" 
+                          size="sm" 
+                          className="p-0 h-auto text-xs text-primary justify-start"
+                          onClick={handleResendVerification}
+                          disabled={isResending}
+                        >
+                          <Mail className="h-3 w-3 mr-1" />
+                          {isResending ? '...' : t.dashboardResendVerification}
+                        </Button>
+                        <Button 
+                          variant="link" 
+                          size="sm" 
+                          className="p-0 h-auto text-xs text-muted-foreground justify-start"
+                          onClick={handleRefreshStatus}
+                          disabled={isRefreshing}
+                        >
+                          <RefreshCw className={cn("h-3 w-3 mr-1", isRefreshing && "animate-spin")} />
+                          {isRefreshing ? '...' : t.dashboardVerifyRefresh}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
