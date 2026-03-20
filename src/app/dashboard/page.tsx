@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -10,14 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw, Shield } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
@@ -137,6 +137,18 @@ export default function DashboardPage(props: {
 
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
+
+    // Safety check: Prevent account deletion if the user has an active role
+    const role = userProfile?.role || 'devotee';
+    if (role !== 'devotee') {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "इस्तीफा आवश्यक है" : "Resignation Required",
+        description: t.dashboardDeleteResignFirst
+      });
+      return;
+    }
+
     setIsDeleting(true);
     try {
       if (isPasswordUser) {
@@ -152,8 +164,11 @@ export default function DashboardPage(props: {
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
-      await deleteDoc(userRef);
-      await deleteDoc(adminRef);
+      // Attempt cleanup first
+      await deleteDoc(userRef).catch(() => {});
+      await deleteDoc(adminRef).catch(() => {});
+      
+      // Finally delete the auth user
       await deleteUser(user);
       
       toast({ title: t.dashboardDeleteSuccess });

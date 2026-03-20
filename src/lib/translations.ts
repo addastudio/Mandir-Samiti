@@ -145,6 +145,7 @@ export type TranslationKeys = {
   dashboard2FASetPin: string;
   dashboard2FAPinPlaceholder: string;
   dashboard2FAUpdateSuccess: string;
+  dashboardDeleteResignFirst: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -296,6 +297,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboard2FASetPin: '6-अंकों का पिन सेट करें',
     dashboard2FAPinPlaceholder: '6-अंकों का पिन',
     dashboard2FAUpdateSuccess: 'सुरक्षा सेटिंग्स अपडेट की गईं।',
+    dashboardDeleteResignFirst: 'खाता हटाने से पहले कृपया अपने पद से इस्तीफा दें।',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -439,6 +441,8 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboard2FASetPin: 'Set 6-Digit PIN',
     dashboard2FAPinPlaceholder: '6-digit PIN',
     dashboard2FAUpdateSuccess: 'Security settings updated.',
+    dashboardDeleteResignFirst: 'Please resign from your position before deleting your account.',
+
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
     prayerFormType: 'Request Type',
