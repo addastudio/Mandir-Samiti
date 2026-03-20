@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where } from "firebase/firestore";
 import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, PlusCircle, CheckCircle2, Clock, AlertCircle, Trash2, Mail, RefreshCw, ArrowLeft, Shield } from "lucide-react";
-import Link from "next/navigation";
+import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
