@@ -68,10 +68,10 @@ export function Header() {
     if (user) {
       return (
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-          <Avatar className="h-10 w-10 border-2 border-primary/20 hover:border-primary transition-colors">
+          <Avatar className="h-10 w-10 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer">
             <AvatarImage src={user.photoURL || ""} />
-            <AvatarFallback className="bg-primary/10 text-primary font-bold">
-              {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase() || <UserIcon className="h-5 w-5" />}
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              <UserIcon className="h-6 w-6" />
             </AvatarFallback>
           </Avatar>
         </Link>
@@ -187,7 +187,7 @@ export function Header() {
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
-          <AuthButton className="hidden sm:flex" />
+          <AuthButton className="flex" />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-10 w-10">
@@ -235,7 +235,6 @@ export function Header() {
                   </span>
                   <LanguageSwitcher />
                 </div>
-                <AuthButton isMobile className="block sm:hidden" />
                 <Link href="#donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
                   <Button className="w-full gap-2 bg-accent text-accent-foreground">
                     <Heart className="h-4 w-4 fill-current" />
