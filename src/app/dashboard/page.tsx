@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, useAuth } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getAuth, signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
+import { signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
 import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -34,12 +34,12 @@ export default function DashboardPage(props: {
   params: Promise<any>;
   searchParams: Promise<any>;
 }) {
-  // Next.js 15: params and searchParams are Promises
   const params = React.use(props.params);
   const searchParams = React.use(props.searchParams);
 
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const auth = useAuth();
   const router = useRouter();
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -87,13 +87,11 @@ export default function DashboardPage(props: {
   }, [user, isUserLoading, router, mounted]);
 
   const handleLogout = async () => {
-    const auth = getAuth();
     await signOut(auth);
     router.push("/");
   };
 
   const handleResendVerification = async () => {
-    const auth = getAuth();
     const currentUser = auth.currentUser;
     if (!currentUser) {
       toast({ variant: "destructive", title: "Error", description: "User session not found. Please log in again." });
@@ -110,12 +108,15 @@ export default function DashboardPage(props: {
           : "Verification link sent to your email. Please check your inbox and spam folder."
       });
     } catch (error: any) {
-      console.error("Verification error:", error);
       let errorMessage = error.message;
       if (error.code === 'auth/too-many-requests') {
         errorMessage = language === 'hi' 
           ? "बहुत अधिक प्रयास। कृपया थोड़ी देर बाद फिर से प्रयास करें।" 
           : "Too many attempts. Please try again later.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = language === 'hi'
+          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें।"
+          : "Network error. Please check your internet connection.";
       }
       toast({ variant: "destructive", title: "Error", description: errorMessage });
     } finally {
@@ -124,7 +125,6 @@ export default function DashboardPage(props: {
   };
 
   const handleRefreshStatus = async () => {
-    const auth = getAuth();
     const currentUser = auth.currentUser;
     if (!currentUser) return;
 
@@ -135,7 +135,6 @@ export default function DashboardPage(props: {
         title: language === 'hi' ? "प्रोफ़ाइल अपडेट की गई" : "Profile Updated",
         description: language === 'hi' ? "ताज़ा स्थिति सफलतापूर्वक प्राप्त की गई।" : "Latest status fetched successfully."
       });
-      // Optionally force a refresh of the page to update the UI with fresh auth state
       router.refresh();
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
@@ -163,7 +162,6 @@ export default function DashboardPage(props: {
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
 
-    // Safety check: Prevent account deletion if the user has an active role
     const role = userProfile?.role || 'devotee';
     if (role !== 'devotee') {
       toast({
@@ -189,17 +187,13 @@ export default function DashboardPage(props: {
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
-      // Attempt cleanup first
       await deleteDoc(userRef).catch(() => {});
       await deleteDoc(adminRef).catch(() => {});
-      
-      // Finally delete the auth user
       await deleteUser(user);
       
       toast({ title: t.dashboardDeleteSuccess });
       router.push("/");
     } catch (error: any) {
-      console.error("Account deletion error:", error);
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
       setIsDeleting(false);

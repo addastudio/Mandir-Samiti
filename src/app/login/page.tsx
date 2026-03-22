@@ -33,7 +33,6 @@ export default function LoginPage(props: {
   params: Promise<any>;
   searchParams: Promise<any>;
 }) {
-  // Next.js 15: params and searchParams are Promises
   const params = React.use(props.params);
   const searchParams = React.use(props.searchParams);
 
@@ -47,22 +46,16 @@ export default function LoginPage(props: {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   
-  // 2FA state
   const [is2FAChallenge, setIs2FAChallenge] = useState(false);
   const [pin, setPin] = useState("");
   const [tempUserDoc, setTempUserDoc] = useState<any>(null);
   
-  const [auth, setAuth] = useState<Auth | null>(null);
-  const [firestore, setFirestore] = useState<Firestore | null>(null);
-  
-  const firebaseAuth = useAuth();
-  const firebaseFirestore = useFirestore();
+  const auth = useAuth();
+  const firestore = useFirestore();
 
   useEffect(() => {
     setMounted(true);
-    setAuth(firebaseAuth);
-    setFirestore(firebaseFirestore);
-  }, [firebaseAuth, firebaseFirestore]);
+  }, []);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +66,6 @@ export default function LoginPage(props: {
       const result = await signInWithEmailAndPassword(auth, email, password);
       const user = result.user;
 
-      // Check for 2FA in Firestore
       const userDocRef = doc(firestore, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
       const userData = userDoc.data();
@@ -88,7 +80,6 @@ export default function LoginPage(props: {
       toast({ title: language === "hi" ? "सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully" });
       router.push("/dashboard");
     } catch (err: any) {
-      // Map specific Firebase error codes to translated messages
       let errorMessage = err.message;
       
       if (err.code === 'auth/user-not-found') {
@@ -101,6 +92,10 @@ export default function LoginPage(props: {
         errorMessage = t.authErrorInvalidEmail;
       } else if (err.code === 'auth/too-many-requests') {
         errorMessage = language === 'hi' ? "बहुत अधिक प्रयास। कृपया बाद में पुनः प्रयास करें।" : "Too many attempts. Please try again later.";
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = language === 'hi'
+          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें।"
+          : "Network error. Please check your internet connection.";
       }
       
       setError(errorMessage);
@@ -154,11 +149,17 @@ export default function LoginPage(props: {
       toast({ title: language === "hi" ? "Google के साथ सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully with Google" });
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
+      let errorMessage = err.message;
+      if (err.code === 'auth/network-request-failed') {
+        errorMessage = language === 'hi'
+          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें।"
+          : "Network error. Please check your internet connection.";
+      }
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: language === "hi" ? "लॉगिन विफल" : "Login failed",
-        description: err.message,
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

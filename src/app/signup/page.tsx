@@ -36,7 +36,6 @@ export default function SignupPage(props: {
   params: Promise<any>;
   searchParams: Promise<any>;
 }) {
-  // Next.js 15: params and searchParams are Promises
   const params = React.use(props.params);
   const searchParams = React.use(props.searchParams);
 
@@ -51,17 +50,12 @@ export default function SignupPage(props: {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  const [auth, setAuth] = useState<Auth | null>(null);
-  const [firestore, setFirestore] = useState<Firestore | null>(null);
-  
-  const firebaseAuth = useAuth();
-  const firebaseFirestore = useFirestore();
+  const auth = useAuth();
+  const firestore = useFirestore();
 
   useEffect(() => {
     setMounted(true);
-    setAuth(firebaseAuth);
-    setFirestore(firebaseFirestore);
-  }, [firebaseAuth, firebaseFirestore]);
+  }, []);
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +97,10 @@ export default function SignupPage(props: {
         errorMessage = t.authErrorWeakPassword;
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = t.authErrorInvalidEmail;
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = language === 'hi'
+          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें।"
+          : "Network error. Please check your internet connection.";
       }
       
       setError(errorMessage);
@@ -139,11 +137,17 @@ export default function SignupPage(props: {
       toast({ title: language === "hi" ? "Google के साथ सफलतापूर्वक साइन अप किया गया" : "Signed up successfully with Google" });
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
+      let errorMessage = err.message;
+      if (err.code === 'auth/network-request-failed') {
+        errorMessage = language === 'hi'
+          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें।"
+          : "Network error. Please check your internet connection.";
+      }
+      setError(errorMessage);
       toast({
         variant: "destructive",
         title: language === "hi" ? "साइनअप विफल" : "Signup failed",
-        description: err.message,
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
