@@ -137,7 +137,11 @@ export default function SignupPage(props: {
       router.push("/dashboard");
     } catch (err: any) {
       let errorMessage = err.message;
-      if (err.code === 'auth/network-request-failed') {
+      if (err.code === 'auth/operation-not-allowed') {
+        errorMessage = language === 'hi' 
+          ? "Google लॉगिन सक्षम नहीं है। कृपया फ़ायरबेस कंसोल में इसे सक्षम करें।" 
+          : "Google login is not enabled. Please enable it in the Firebase Console.";
+      } else if (err.code === 'auth/network-request-failed') {
         errorMessage = language === 'hi'
           ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें या किसी अन्य ब्राउज़र का उपयोग करें।"
           : "Network error. Please check your internet connection or try a different browser.";
