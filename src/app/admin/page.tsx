@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -207,7 +207,9 @@ export default function AdminPage(props: {
         toast({ 
           variant: "destructive", 
           title: language === 'hi' ? "फ़ाइल बहुत बड़ी है" : "File too large", 
-          description: language === 'hi' ? "कृपया 750KB से छोटी फ़ाइल चुनें।" : "Please select a file smaller than 750KB for direct database upload." 
+          description: language === 'hi' 
+            ? "750KB से बड़ी फ़ाइलों के लिए कृपया बाहरी 'Media URL' का उपयोग करें।" 
+            : "For files larger than 750KB, please use an external 'Media URL' (e.g., Google Drive, Imgur)." 
         });
         return;
       }
@@ -607,14 +609,21 @@ export default function AdminPage(props: {
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5 p-4 sm:p-6">
                 <CardTitle className={cn("text-lg sm:text-xl", language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'नया गैलरी आइटम जोड़ें' : 'Add New Gallery Item'}</CardTitle>
-                <CardDescription className="text-xs">Supports images and small video files (Max 750KB).</CardDescription>
+                <CardDescription className="text-xs">
+                  {language === 'hi' 
+                    ? "स्थानीय फ़ाइलें (अधिकतम 750KB) या बड़े वीडियो के लिए बाहरी URL का उपयोग करें।" 
+                    : "Use local files (max 750KB) or external URLs for larger videos/images."}
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddGallery} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="imageURL">{language === 'hi' ? 'मीडिया URL (इमेज/वीडियो)' : 'Media URL'}</Label>
+                        <Label htmlFor="imageURL" className="flex items-center gap-2">
+                          {language === 'hi' ? 'मीडिया URL (बड़े फ़ाइलों के लिए)' : 'Media URL (for large files)'}
+                          <Info className="h-3 w-3 text-muted-foreground" title={language === 'hi' ? '1MB से बड़े वीडियो के लिए बाहरी होस्ट का उपयोग करें।' : 'Use an external host for videos/photos larger than 1MB.'} />
+                        </Label>
                         <Input id="imageURL" name="imageURL" placeholder="https://..." disabled={!!galleryMediaPreview} />
                       </div>
                       
@@ -628,7 +637,7 @@ export default function AdminPage(props: {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>{language === 'hi' ? 'फ़ाइल अपलोड करें (इमेज/वीडियो)' : 'Upload File'}</Label>
+                        <Label>{language === 'hi' ? 'फ़ाइल अपलोड करें (अधिकतम 750KB)' : 'Upload File (Max 750KB)'}</Label>
                         <div className="flex items-center gap-2">
                           <Input 
                             type="file" 
@@ -688,7 +697,7 @@ export default function AdminPage(props: {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
               {gallery?.map((item) => (
                 <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border shadow-sm bg-muted flex items-center justify-center">
-                  {item.imageURL.startsWith('data:video') ? (
+                  {item.imageURL.startsWith('data:video') || item.imageURL.match(/\.(mp4|webm|ogg)$/i) || item.imageURL.includes('drive.google.com') ? (
                     <div className="relative w-full h-full flex items-center justify-center">
                       <video src={item.imageURL} className="w-full h-full object-cover" muted />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">

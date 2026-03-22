@@ -45,7 +45,49 @@ export function GallerySection() {
   };
 
   const isVideo = (url: string) => {
-    return url.startsWith('data:video') || url.endsWith('.mp4') || url.endsWith('.webm');
+    return (
+      url.startsWith('data:video') || 
+      url.match(/\.(mp4|webm|ogg)$/i) || 
+      url.includes('drive.google.com') ||
+      url.includes('youtube.com') ||
+      url.includes('youtu.be')
+    );
+  };
+
+  const renderMedia = (url: string, title?: string) => {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
+      return (
+        <iframe
+          width="100%"
+          height="100%"
+          src={`https://www.youtube.com/embed/${videoId}`}
+          title={title || "Video player"}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="border-0 w-full h-full"
+        ></iframe>
+      );
+    }
+
+    if (isVideo(url)) {
+      return (
+        <video src={url} controls autoPlay className="max-w-full max-h-full" />
+      );
+    }
+
+    return (
+      <div className="relative w-full h-full">
+        <Image 
+          src={url} 
+          alt={title || "Gallery view"}
+          fill
+          className="object-contain"
+          priority
+        />
+      </div>
+    );
   };
 
   return (
@@ -76,7 +118,7 @@ export function GallerySection() {
                 onClick={() => openLightbox(item.imageURL)}
               >
                 {isVideo(item.imageURL) ? (
-                  <div className="relative w-full h-full flex items-center justify-center">
+                  <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
                     <video src={item.imageURL} className="w-full h-full object-cover" muted />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-colors">
                       <PlayCircle className="h-10 w-10 text-white opacity-80" />
@@ -91,7 +133,10 @@ export function GallerySection() {
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                 )}
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/40 transition-colors" />
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-black/30 transition-colors" />
+                <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform">
+                  <p className="text-[10px] text-white truncate">{item.caption}</p>
+                </div>
               </div>
             ))
           ) : (
@@ -109,7 +154,7 @@ export function GallerySection() {
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                   data-ai-hint={image.imageHint}
                 />
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors" />
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-black/30 transition-colors" />
               </div>
             ))
           )}
@@ -171,20 +216,10 @@ export function GallerySection() {
       </div>
       
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl p-1 bg-transparent border-0 shadow-none ring-0">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl p-1 bg-black/90 border-0 shadow-none ring-0">
           {selectedMedia && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center">
-              {isVideo(selectedMedia) ? (
-                <video src={selectedMedia} controls autoPlay className="max-w-full max-h-full" />
-              ) : (
-                <Image 
-                  src={selectedMedia} 
-                  alt="Lightbox view"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              )}
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center min-h-[300px]">
+              {renderMedia(selectedMedia)}
             </div>
           )}
         </DialogContent>
