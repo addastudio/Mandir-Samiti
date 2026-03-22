@@ -65,36 +65,36 @@ export function SevaSection() {
   ];
 
   return (
-    <section id="seva" className="bg-secondary py-20 md:py-28">
-      <div className="container mx-auto px-4">
+    <section id="seva" className="bg-secondary/50 py-16 sm:py-20 md:py-28">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-3",
+              "text-3xl xs:text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-2 sm:gap-3",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
-            <UtensilsCrossed className="h-8 w-8" />
+            <UtensilsCrossed className="h-7 w-7 sm:h-8 sm:w-8" />
             {t.sevaTitle}
           </h2>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
           {sevaPrograms.map((program, index) => (
-            <Card key={index} className="text-center shadow-lg">
-              <CardHeader>
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <program.icon className="h-8 w-8 text-primary" />
+            <Card key={index} className="text-center shadow-lg border-primary/5 hover:border-primary/20 transition-colors">
+              <CardHeader className="p-5 sm:p-6">
+                <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-primary/10 transition-transform group-hover:scale-110">
+                  <program.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                 </div>
                 <CardTitle
-                  className={cn("pt-4 text-2xl", language === "hi" ? "font-hindi" : "")}
+                  className={cn("pt-4 text-xl sm:text-2xl", language === "hi" ? "font-hindi" : "")}
                 >
                   {program.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-5 sm:p-6 pt-0">
                 <CardDescription
-                  className={cn("text-base", language === "hi" ? "font-hindi" : "")}
+                  className={cn("text-sm sm:text-base leading-relaxed", language === "hi" ? "font-hindi" : "")}
                 >
                   {program.description}
                 </CardDescription>
@@ -103,51 +103,51 @@ export function SevaSection() {
           ))}
         </div>
 
-        <div className="mt-20">
+        <div className="mt-16 sm:mt-20 md:mt-24">
           <h3
             className={cn(
-              "mb-8 text-center text-3xl font-bold",
+              "mb-8 sm:mb-12 text-center text-2xl sm:text-3xl font-bold",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
             {t.testimonialsTitle}
           </h3>
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full max-w-4xl mx-auto"
-          >
-            <CarouselContent>
-              {testimonials.map((testimonial, index) => {
-                const image = PlaceHolderImages.find(
-                  (img) => img.id === testimonial.imageId
-                );
-                return (
-                  <CarouselItem
-                    key={index}
-                    className="md:basis-1/2 lg:basis-1/3"
-                  >
-                    <div className="p-1 h-full">
-                      <Card className="h-full flex flex-col shadow-lg">
-                        <CardContent className="flex flex-col items-center justify-center p-6 text-center flex-grow">
+          <div className="relative px-8 sm:px-12 max-w-5xl mx-auto">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {testimonials.map((testimonial, index) => {
+                  const image = PlaceHolderImages.find(
+                    (img) => img.id === testimonial.imageId
+                  );
+                  return (
+                    <CarouselItem
+                      key={index}
+                      className="pl-4 basis-full xs:basis-1/2 lg:basis-1/3"
+                    >
+                      <Card className="h-full flex flex-col shadow-md border-primary/5">
+                        <CardContent className="flex flex-col h-full p-5 sm:p-6">
                           <p
                             className={cn(
-                              "italic text-muted-foreground mb-4 flex-grow",
+                              "italic text-muted-foreground text-sm sm:text-base mb-6 flex-grow",
                               language === "hi" ? "font-hindi" : ""
                             )}
                           >
                             &ldquo;{testimonial.quote}&rdquo;
                           </p>
-                           <div className="flex items-center gap-3 mt-auto">
-                             <Avatar>
+                           <div className="flex items-center gap-3 mt-auto border-t pt-4">
+                             <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                                 {image && <AvatarImage src={image.imageUrl} alt={testimonial.name} data-ai-hint={image.imageHint}/>}
                                <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
                              </Avatar>
                              <p
                                 className={cn(
-                                  "font-semibold",
+                                  "font-semibold text-xs sm:text-sm",
                                   language === "hi" ? "font-hindi" : ""
                                 )}
                               >
@@ -156,14 +156,14 @@ export function SevaSection() {
                            </div>
                         </CardContent>
                       </Card>
-                    </div>
-                  </CarouselItem>
-                );
-              })}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+              <CarouselPrevious className="-left-4 sm:-left-8" />
+              <CarouselNext className="-right-4 sm:-right-8" />
+            </Carousel>
+          </div>
         </div>
       </div>
     </section>

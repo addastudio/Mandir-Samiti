@@ -28,70 +28,76 @@ export function EventsSection() {
   ];
 
   return (
-    <section id="events" className="py-20 md:py-28">
-      <div className="container mx-auto px-4">
+    <section id="events" className="py-16 sm:py-20 md:py-28">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="mx-auto max-w-4xl text-center">
           <h2
             className={cn(
-              "text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-3",
+              "text-3xl xs:text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-2 sm:gap-3",
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
-            <Calendar className="h-8 w-8" />
+            <Calendar className="h-7 w-7 sm:h-8 sm:w-8" />
             {t.eventsTitle}
           </h2>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2">
-          <Card className="shadow-lg">
-            <CardHeader>
+        <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2">
+          <Card className="shadow-lg border-primary/10">
+            <CardHeader className="p-5 sm:p-6">
                 <CardTitle
                 className={cn(
-                    "mb-4 flex items-center gap-2 text-2xl font-semibold",
+                    "mb-2 flex items-center gap-2 text-xl sm:text-2xl font-semibold",
                     language === "hi" ? "font-hindi" : "font-headline"
                 )}
                 >
-                <Clock className="h-6 w-6 text-primary" /> {t.eventsDailyPuja}
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {t.eventsDailyPuja}
                 </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-5 sm:p-6 pt-0">
               <ul
                 className={cn(
-                  "space-y-2 text-muted-foreground text-lg",
+                  "space-y-2 text-muted-foreground text-base sm:text-lg",
                   language === "hi" ? "font-hindi" : ""
                 )}
               >
-                <li>{t.pujaTimeMorning}</li>
-                <li>{t.pujaTimeEvening}</li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  {t.pujaTimeMorning}
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  {t.pujaTimeEvening}
+                </li>
               </ul>
             </CardContent>
           </Card>
-          <Card className="shadow-lg">
-             <CardHeader>
+          <Card className="shadow-lg border-primary/10">
+             <CardHeader className="p-5 sm:p-6">
                 <CardTitle
                 className={cn(
-                    "mb-4 flex items-center gap-2 text-2xl font-semibold",
+                    "mb-2 flex items-center gap-2 text-xl sm:text-2xl font-semibold",
                     language === "hi" ? "font-hindi" : "font-headline"
                 )}
                 >
-                <Calendar className="h-6 w-6 text-primary" /> Upcoming Events
+                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {language === 'hi' ? 'आगामी कार्यक्रम' : 'Upcoming Events'}
                 </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-5 sm:p-6 pt-0">
               {isLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4 animate-spin" /> Loading live events...
+                <div className="flex items-center gap-2 text-muted-foreground py-4">
+                  <Clock className="h-4 w-4 animate-spin" /> {language === 'hi' ? 'कार्यक्रम लोड हो रहे हैं...' : 'Loading live events...'}
                 </div>
               ) : firebaseEvents && firebaseEvents.length > 0 ? (
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {firebaseEvents.slice(0, 3).map((event) => (
-                    <li key={event.id} className="flex flex-col border-b pb-2 last:border-0">
-                      <span className="font-bold text-foreground">{event.title}</span>
-                      <span className="text-sm text-muted-foreground">
+                    <li key={event.id} className="flex flex-col border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                      <span className="font-bold text-foreground text-sm sm:text-base">{event.title}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground mt-1">
                         {new Date(event.date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', {
-                          weekday: 'long',
+                          weekday: 'short',
                           year: 'numeric',
-                          month: 'long',
+                          month: 'short',
                           day: 'numeric'
                         })}
                       </span>
@@ -99,40 +105,41 @@ export function EventsSection() {
                   ))}
                 </ul>
               ) : (
-                <div className="flex items-center gap-2 text-muted-foreground italic">
-                  <AlertCircle className="h-4 w-4" /> No live events currently scheduled.
+                <div className="flex items-center gap-2 text-muted-foreground italic py-4 text-sm">
+                  <AlertCircle className="h-4 w-4" /> {language === 'hi' ? 'अभी कोई लाइव कार्यक्रम निर्धारित नहीं है।' : 'No live events currently scheduled.'}
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="mt-20">
-          <h3 className={cn("text-2xl font-bold text-center mb-10", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+        <div className="mt-16 sm:mt-20">
+          <h3 className={cn("text-xl sm:text-2xl font-bold text-center mb-8 sm:mb-10", language === 'hi' ? 'font-hindi' : 'font-headline')}>
             {t.eventsAnnual}
           </h3>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:gap-8 xs:grid-cols-2 lg:grid-cols-4">
             {festivals.map((festival) => {
               const image = PlaceHolderImages.find(
                 (img) => img.id === festival.imageId
               );
               return (
-                <Card key={festival.name} className="overflow-hidden group shadow-lg">
+                <Card key={festival.name} className="overflow-hidden group shadow-md border-primary/5">
                   <div className="relative aspect-[4/3]">
                     {image && (
                       <Image
                         src={image.imageUrl}
                         alt={language === 'hi' ? `${festival.name} उत्सव` : `${festival.name} festival`}
                         fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
                         data-ai-hint={image.imageHint}
                       />
                     )}
                   </div>
-                  <div className="p-4 bg-card">
+                  <div className="p-3 sm:p-4 bg-card">
                     <h4
                       className={cn(
-                        "text-center font-semibold text-lg",
+                        "text-center font-semibold text-sm sm:text-base md:text-lg",
                         language === "hi" ? "font-hindi" : ""
                       )}
                     >
