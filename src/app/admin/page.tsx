@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -11,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -65,7 +66,8 @@ export default function AdminPage(props: {
 
   const [resignPassword, setResignPassword] = useState("");
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
-  const [galleryImagePreview, setGalleryImagePreview] = useState<string | null>(null);
+  const [galleryMediaPreview, setGalleryMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -199,17 +201,22 @@ export default function AdminPage(props: {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 800 * 1024) { // Roughly 800KB to stay safe under 1MB Firestore limit
+      // 750KB limit to stay safe under 1MB Firestore limit after base64 conversion
+      const MAX_FILE_SIZE = 750 * 1024;
+      if (file.size > MAX_FILE_SIZE) {
         toast({ 
           variant: "destructive", 
           title: language === 'hi' ? "फ़ाइल बहुत बड़ी है" : "File too large", 
-          description: language === 'hi' ? "कृपया 1MB से छोटी फ़ाइल चुनें।" : "Please select a file smaller than 1MB for Firestore storage." 
+          description: language === 'hi' ? "कृपया 750KB से छोटी फ़ाइल चुनें।" : "Please select a file smaller than 750KB for direct database upload." 
         });
         return;
       }
+      
+      const type = file.type.startsWith('video') ? 'video' : 'image';
       const reader = new FileReader();
       reader.onloadend = () => {
-        setGalleryImagePreview(reader.result as string);
+        setGalleryMediaPreview(reader.result as string);
+        setMediaType(type);
       };
       reader.readAsDataURL(file);
     }
@@ -221,13 +228,13 @@ export default function AdminPage(props: {
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     
-    const imageURL = galleryImagePreview || (formData.get("imageURL") as string);
+    const imageURL = galleryMediaPreview || (formData.get("imageURL") as string);
     
     if (!imageURL) {
       toast({ 
         variant: "destructive", 
-        title: language === 'hi' ? "इमेज आवश्यक है" : "Image Required", 
-        description: language === 'hi' ? "कृपया इमेज URL दर्ज करें या फ़ाइल अपलोड करें।" : "Please enter an image URL or upload a file." 
+        title: language === 'hi' ? "मीडिया आवश्यक है" : "Media Required", 
+        description: language === 'hi' ? "कृपया URL दर्ज करें या फ़ाइल अपलोड करें।" : "Please enter a URL or upload a file." 
       });
       setIsSubmitting(false);
       return;
@@ -242,7 +249,8 @@ export default function AdminPage(props: {
     addDocumentNonBlocking(galleryRef, galleryData);
     toast({ title: language === 'hi' ? "गैलरी आइटम सफलतापूर्वक जोड़ा गया" : "Gallery Item Added Successfully" });
     (e.target as HTMLFormElement).reset();
-    setGalleryImagePreview(null);
+    setGalleryMediaPreview(null);
+    setMediaType(null);
     setIsSubmitting(false);
   };
 
@@ -599,14 +607,15 @@ export default function AdminPage(props: {
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5 p-4 sm:p-6">
                 <CardTitle className={cn("text-lg sm:text-xl", language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'नया गैलरी आइटम जोड़ें' : 'Add New Gallery Item'}</CardTitle>
+                <CardDescription className="text-xs">Supports images and small video files (Max 750KB).</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddGallery} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="imageURL">{language === 'hi' ? 'इमेज URL' : 'Image URL'}</Label>
-                        <Input id="imageURL" name="imageURL" placeholder="https://..." disabled={!!galleryImagePreview} />
+                        <Label htmlFor="imageURL">{language === 'hi' ? 'मीडिया URL (इमेज/वीडियो)' : 'Media URL'}</Label>
+                        <Input id="imageURL" name="imageURL" placeholder="https://..." disabled={!!galleryMediaPreview} />
                       </div>
                       
                       <div className="relative">
@@ -619,11 +628,11 @@ export default function AdminPage(props: {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>{language === 'hi' ? 'फ़ाइल अपलोड करें' : 'Upload File'}</Label>
+                        <Label>{language === 'hi' ? 'फ़ाइल अपलोड करें (इमेज/वीडियो)' : 'Upload File'}</Label>
                         <div className="flex items-center gap-2">
                           <Input 
                             type="file" 
-                            accept="image/*" 
+                            accept="image/*,video/mp4,video/webm" 
                             onChange={handleFileChange} 
                             className="hidden" 
                             id="gallery-file-upload" 
@@ -633,14 +642,14 @@ export default function AdminPage(props: {
                             className="flex flex-1 items-center justify-center gap-2 h-10 px-4 border-2 border-dashed border-primary/30 rounded-md cursor-pointer hover:bg-primary/5 transition-colors"
                           >
                             <Upload className="h-4 w-4" />
-                            <span className="text-xs">{language === 'hi' ? 'इमेज चुनें' : 'Choose Image'}</span>
+                            <span className="text-xs">{language === 'hi' ? 'फ़ाइल चुनें' : 'Choose File'}</span>
                           </Label>
-                          {galleryImagePreview && (
+                          {galleryMediaPreview && (
                             <Button 
                               type="button" 
                               variant="ghost" 
                               size="icon" 
-                              onClick={() => setGalleryImagePreview(null)}
+                              onClick={() => { setGalleryMediaPreview(null); setMediaType(null); }}
                               className="text-destructive h-10 w-10"
                             >
                               <X className="h-4 w-4" />
@@ -651,9 +660,13 @@ export default function AdminPage(props: {
                     </div>
 
                     <div className="space-y-4">
-                      {galleryImagePreview && (
-                        <div className="relative aspect-video w-full rounded-lg overflow-hidden border bg-muted">
-                          <img src={galleryImagePreview} alt="Preview" className="object-cover w-full h-full" />
+                      {galleryMediaPreview && (
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                          {mediaType === 'image' ? (
+                            <img src={galleryMediaPreview} alt="Preview" className="object-cover w-full h-full" />
+                          ) : (
+                            <video src={galleryMediaPreview} className="w-full h-full object-contain" autoPlay muted loop />
+                          )}
                           <div className="absolute top-2 right-2">
                             <Badge className="bg-primary text-white text-[10px]">Preview</Badge>
                           </div>
@@ -674,8 +687,17 @@ export default function AdminPage(props: {
             </Card>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
               {gallery?.map((item) => (
-                <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border shadow-sm">
-                  <img src={item.imageURL} alt={item.caption} className="object-cover w-full h-full" />
+                <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border shadow-sm bg-muted flex items-center justify-center">
+                  {item.imageURL.startsWith('data:video') ? (
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <video src={item.imageURL} className="w-full h-full object-cover" muted />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <FileVideo className="h-8 w-8 text-white opacity-80" />
+                      </div>
+                    </div>
+                  ) : (
+                    <img src={item.imageURL} alt={item.caption} className="object-cover w-full h-full" />
+                  )}
                   <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center p-3 sm:p-4">
                     <div className="text-center">
                       <p className="text-white text-[10px] sm:text-xs mb-2 line-clamp-2">{item.caption}</p>

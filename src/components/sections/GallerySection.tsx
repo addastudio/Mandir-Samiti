@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -5,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Youtube, Play, Loader2 } from "lucide-react";
+import { Camera, Youtube, Play, Loader2, PlayCircle } from "lucide-react";
 import React from "react";
 import {
   Dialog,
@@ -36,11 +37,15 @@ export function GallerySection() {
   );
   
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
-  const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = React.useState<string | null>(null);
 
-  const openLightbox = (imageUrl: string) => {
-    setSelectedImage(imageUrl);
+  const openLightbox = (mediaUrl: string) => {
+    setSelectedMedia(mediaUrl);
     setLightboxOpen(true);
+  };
+
+  const isVideo = (url: string) => {
+    return url.startsWith('data:video') || url.endsWith('.mp4') || url.endsWith('.webm');
   };
 
   return (
@@ -64,20 +69,29 @@ export function GallerySection() {
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
           ) : firebaseGallery && firebaseGallery.length > 0 ? (
-            firebaseGallery.map((image) => (
+            firebaseGallery.map((item) => (
               <div 
-                key={image.id} 
-                className="group overflow-hidden rounded-xl shadow-md border border-primary/5 cursor-pointer aspect-[3/2] relative transition-transform hover:scale-[1.02] active:scale-[0.98]" 
-                onClick={() => openLightbox(image.imageURL)}
+                key={item.id} 
+                className="group overflow-hidden rounded-xl shadow-md border border-primary/5 cursor-pointer aspect-[3/2] relative transition-transform hover:scale-[1.02] active:scale-[0.98] bg-muted flex items-center justify-center" 
+                onClick={() => openLightbox(item.imageURL)}
               >
-                <Image
-                  src={image.imageURL}
-                  alt={image.caption || "Gallery image"}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                {isVideo(item.imageURL) ? (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <video src={item.imageURL} className="w-full h-full object-cover" muted />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-colors">
+                      <PlayCircle className="h-10 w-10 text-white opacity-80" />
+                    </div>
+                  </div>
+                ) : (
+                  <Image
+                    src={item.imageURL}
+                    alt={item.caption || "Gallery item"}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/40 transition-colors" />
               </div>
             ))
           ) : (
@@ -158,17 +172,21 @@ export function GallerySection() {
       
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-4xl p-1 bg-transparent border-0 shadow-none ring-0">
-          {selectedImage && 
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-              <Image 
-                src={selectedImage} 
-                alt="Lightbox view"
-                fill
-                className="object-contain"
-                priority
-              />
+          {selectedMedia && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center">
+              {isVideo(selectedMedia) ? (
+                <video src={selectedMedia} controls autoPlay className="max-w-full max-h-full" />
+              ) : (
+                <Image 
+                  src={selectedMedia} 
+                  alt="Lightbox view"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              )}
             </div>
-          }
+          )}
         </DialogContent>
       </Dialog>
     </section>
