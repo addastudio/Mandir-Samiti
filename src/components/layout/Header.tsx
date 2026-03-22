@@ -180,14 +180,14 @@ export function Header() {
           <div className="h-6 w-px bg-border/60" />
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
+            <AuthButton />
             {adminDoc && (
               <Link href="/admin">
-                <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 h-10 w-10" title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}>
+                <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/20 h-10 w-10 border border-primary/20 shadow-sm" title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}>
                   <ShieldCheck className="h-6 w-6" />
                 </Button>
               </Link>
             )}
-            <AuthButton />
             <Link href="#donate">
               <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
                 <Heart className="h-4 w-4 fill-current" />
@@ -204,14 +204,14 @@ export function Header() {
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
+          <AuthButton className="flex" />
           {adminDoc && (
             <Link href="/admin">
-              <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 h-10 w-10">
+              <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/20 h-10 w-10 border border-primary/20 shadow-sm" title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}>
                 <ShieldCheck className="h-6 w-6" />
               </Button>
             </Link>
           )}
-          <AuthButton className="flex" />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-10 w-10">
