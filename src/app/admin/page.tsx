@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -33,7 +33,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 
-// Define the hierarchy weight for roles
 const ROLE_HIERARCHY: Record<string, number> = {
   'president': 100,
   'secretary': 90,
@@ -48,7 +47,6 @@ export default function AdminPage(props: {
   params: Promise<any>;
   searchParams: Promise<any>;
 }) {
-  // Next.js 15: params and searchParams are Promises
   const params = React.use(props.params);
   const searchParams = React.use(props.searchParams);
 
@@ -67,12 +65,12 @@ export default function AdminPage(props: {
 
   const [resignPassword, setResignPassword] = useState("");
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
+  const [galleryImagePreview, setGalleryImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Fetch current user's profile
   const currentUserRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -151,13 +149,9 @@ export default function AdminPage(props: {
 
   const canManageUser = (targetUserId: string, targetRole: string) => {
     if (user?.uid === targetUserId) return false;
-    
-    // President has absolute oversight
     if (isPresident) return true;
-
     const myPower = ROLE_HIERARCHY[currentRole] || 0;
     const targetPower = ROLE_HIERARCHY[targetRole || 'devotee'] || 0;
-    
     return myPower > targetPower;
   };
 
@@ -172,7 +166,6 @@ export default function AdminPage(props: {
       description: formData.get("description") as string,
       image: formData.get("image") as string || "https://picsum.photos/seed/event/600/400",
     };
-
     addDocumentNonBlocking(eventsRef, eventData);
     toast({ title: language === 'hi' ? "ईवेंट सफलतापूर्वक जोड़ा गया" : "Event Added Successfully" });
     (e.target as HTMLFormElement).reset();
@@ -190,7 +183,6 @@ export default function AdminPage(props: {
       importance: formData.get("importance") as string || "normal",
       createdAt: new Date().toISOString(),
     };
-
     addDocumentNonBlocking(noticesRef, noticeData);
     toast({ title: language === 'hi' ? "सूचना सफलतापूर्वक जोड़ी गई" : "Notice Added Successfully" });
     (e.target as HTMLFormElement).reset();
@@ -204,13 +196,45 @@ export default function AdminPage(props: {
     toast({ title: language === 'hi' ? "स्थिति अपडेट की गई" : "Status updated" });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({ 
+          variant: "destructive", 
+          title: language === 'hi' ? "फ़ाइल बहुत बड़ी है" : "File too large", 
+          description: language === 'hi' ? "कृपया 2MB से छोटी फ़ाइल चुनें।" : "Please select a file smaller than 2MB." 
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setGalleryImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddGallery = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!galleryRef || !user) return;
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
+    
+    const imageURL = galleryImagePreview || (formData.get("imageURL") as string);
+    
+    if (!imageURL) {
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "इमेज आवश्यक है" : "Image Required", 
+        description: language === 'hi' ? "कृपया इमेज URL दर्ज करें या फ़ाइल अपलोड करें।" : "Please enter an image URL or upload a file." 
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const galleryData = {
-      imageURL: formData.get("imageURL") as string,
+      imageURL,
       caption: formData.get("caption") as string,
       uploadedBy: user.uid,
     };
@@ -218,6 +242,7 @@ export default function AdminPage(props: {
     addDocumentNonBlocking(galleryRef, galleryData);
     toast({ title: language === 'hi' ? "गैलरी आइटम सफलतापूर्वक जोड़ा गया" : "Gallery Item Added Successfully" });
     (e.target as HTMLFormElement).reset();
+    setGalleryImagePreview(null);
     setIsSubmitting(false);
   };
 
@@ -230,7 +255,6 @@ export default function AdminPage(props: {
 
   const toggleAdmin = (userId: string, isCurrentAdmin: boolean, targetRole: string) => {
     if (!firestore) return;
-    
     if (!canManageUser(userId, targetRole)) {
       toast({ 
         variant: "destructive", 
@@ -239,7 +263,6 @@ export default function AdminPage(props: {
       });
       return;
     }
-
     const roleRef = doc(firestore, "roles_admin", userId);
     if (isCurrentAdmin) {
       deleteDoc(roleRef);
@@ -252,7 +275,6 @@ export default function AdminPage(props: {
 
   const handleUpdateUserRole = (userId: string, targetCurrentRole: string, newRole: string, userName: string) => {
     if (!firestore) return;
-    
     if (!canManageUser(userId, targetCurrentRole)) {
       toast({ 
         variant: "destructive", 
@@ -261,7 +283,6 @@ export default function AdminPage(props: {
       });
       return;
     }
-
     setPendingRoleUpdate({ userId, targetCurrentRole, newRole, userName });
   };
 
@@ -270,17 +291,13 @@ export default function AdminPage(props: {
     const { userId, newRole } = pendingRoleUpdate;
     const userRef = doc(firestore, "users", userId);
     updateDocumentNonBlocking(userRef, { role: newRole });
-    toast({ 
-      title: language === 'hi' ? "भूमिका अपडेट की गई" : "Role Updated",
-      description: language === 'hi' ? `उपयोगकर्ता को '${newRole}' के रूप में सेट किया गया है।` : `User set as '${newRole}'.`
-    });
+    toast({ title: language === 'hi' ? "भूमिका अपडेट की गई" : "Role Updated" });
     setPendingRoleUpdate(null);
   };
 
   const handleResign = async () => {
     if (!firestore || !user) return;
     setIsResigningInProgress(true);
-    
     try {
       if (isPasswordUser) {
         if (!resignPassword) {
@@ -291,18 +308,13 @@ export default function AdminPage(props: {
         const credential = EmailAuthProvider.credential(user.email!, resignPassword);
         await reauthenticateWithCredential(user, credential);
       }
-
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
-      
-      // Atomic resign: Clear role and delete admin status
       await updateDoc(userRef, { role: "devotee" });
       await deleteDoc(adminRef);
-      
       toast({ title: language === 'hi' ? "इस्तीफा स्वीकार किया गया" : "Resignation Accepted" });
-      router.push("/dashboard");
+      router.push("/");
     } catch (error: any) {
-      console.error("Resignation error:", error);
       toast({ variant: "destructive", title: language === 'hi' ? "त्रुटि" : "Error", description: error.message });
     } finally {
       setIsResigningInProgress(false);
@@ -312,12 +324,9 @@ export default function AdminPage(props: {
 
   const handleHardDeleteUser = async (targetUserId: string) => {
     if (!firestore || !isPresident) return;
-    
     const userRef = doc(firestore, "users", targetUserId);
     const adminRef = doc(firestore, "roles_admin", targetUserId);
-    
     try {
-      // President can purge any user record to fix duplicates or orphaned entries
       await deleteDoc(userRef);
       await deleteDoc(adminRef);
       toast({ title: language === 'hi' ? "रिकॉर्ड हटाया गया" : "Record Purged" });
@@ -331,9 +340,9 @@ export default function AdminPage(props: {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-24 sm:pt-28 scroll-smooth">
+    <div className="min-h-screen bg-background pb-20 pt-16 sm:pt-20 scroll-smooth">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6 sm:space-y-8">
-        <div className="flex items-center -mb-2">
+        <div className="flex items-center pt-4">
           <Button 
             variant="ghost" 
             size="icon" 
@@ -512,7 +521,7 @@ export default function AdminPage(props: {
                     return (
                       <Card key={u.id} className={cn("overflow-hidden border shadow-sm hover:shadow-md", !canIManage && !isTargetMe && "bg-muted/30")}>
                         <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                          <div className="flex items-center gap-4 min-w-0">
+                          <div className="flex items-center gap-4 min-w-0 flex-1">
                             <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-base sm:text-xl text-primary border shadow-inner shrink-0">
                               {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
                             </div>
@@ -565,7 +574,7 @@ export default function AdminPage(props: {
                                       <AlertDialogContent className="w-[95%] max-w-md mx-auto">
                                         <AlertDialogHeader>
                                           <AlertDialogTitle>{language === 'hi' ? 'रिकॉर्ड साफ़ करें?' : 'Purge User Record?'}</AlertDialogTitle>
-                                          <AlertDialogDescription>{language === 'hi' ? `यह डेटाबेस से ${u.name || 'उपयोगकर्ता'} के रिकॉर्ड को स्थायी रूप से हटा देगा। यह क्रिया तभी करें जब उपयोगकर्ता के कई रिकॉर्ड हों या उनका खाता हटा दिया गया हो।` : `Permanently delete the database record for ${u.name || 'this user'}. Use this only if the user has duplicate records or their account has been deleted.`}</AlertDialogDescription>
+                                          <AlertDialogDescription>{language === 'hi' ? `यह डेटाबेस से ${u.name || 'उपयोगकर्ता'} के रिकॉर्ड को स्थायी रूप से हटा देगा।` : `Permanently delete the database record for ${u.name || 'this user'}.`}</AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -593,16 +602,72 @@ export default function AdminPage(props: {
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddGallery} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="imageURL">{language === 'hi' ? 'इमेज URL' : 'Image URL'}</Label>
-                    <Input id="imageURL" name="imageURL" required />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="imageURL">{language === 'hi' ? 'इमेज URL' : 'Image URL'}</Label>
+                        <Input id="imageURL" name="imageURL" placeholder="https://..." disabled={!!galleryImagePreview} />
+                      </div>
+                      
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">{language === 'hi' ? 'या' : 'OR'}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>{language === 'hi' ? 'फ़ाइल अपलोड करें' : 'Upload File'}</Label>
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleFileChange} 
+                            className="hidden" 
+                            id="gallery-file-upload" 
+                          />
+                          <Label 
+                            htmlFor="gallery-file-upload" 
+                            className="flex flex-1 items-center justify-center gap-2 h-10 px-4 border-2 border-dashed border-primary/30 rounded-md cursor-pointer hover:bg-primary/5 transition-colors"
+                          >
+                            <Upload className="h-4 w-4" />
+                            <span className="text-xs">{language === 'hi' ? 'इमेज चुनें' : 'Choose Image'}</span>
+                          </Label>
+                          {galleryImagePreview && (
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setGalleryImagePreview(null)}
+                              className="text-destructive h-10 w-10"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {galleryImagePreview && (
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden border bg-muted">
+                          <img src={galleryImagePreview} alt="Preview" className="object-cover w-full h-full" />
+                          <div className="absolute top-2 right-2">
+                            <Badge className="bg-primary text-white text-[10px]">Preview</Badge>
+                          </div>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <Label htmlFor="caption">{language === 'hi' ? 'कैप्शन' : 'Caption'}</Label>
+                        <Input id="caption" name="caption" required />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="caption">{language === 'hi' ? 'कैप्शन' : 'Caption'}</Label>
-                    <Input id="caption" name="caption" required />
-                  </div>
-                  <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
-                    {isSubmitting ? '...' : (language === 'hi' ? 'गैलरी में जोड़ें' : 'Add to Gallery')}
+                  <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto gap-2">
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                    {language === 'hi' ? 'गैलरी में जोड़ें' : 'Add to Gallery'}
                   </Button>
                 </form>
               </CardContent>
@@ -736,7 +801,6 @@ export default function AdminPage(props: {
                     ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?` 
                     : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position from '${pendingRoleUpdate?.targetCurrentRole}' to '${pendingRoleUpdate?.newRole}'?`}
                 </div>
-                <div className="bg-amber-50 border border-amber-200 p-3 sm:p-4 rounded-lg text-amber-900 text-xs sm:text-sm italic">{language === 'hi' ? 'अस्वीकरण: यह एक महत्वपूर्ण प्रशासनिक कार्य है।' : 'Disclaimer: This is a significant administrative action.'}</div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
