@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -183,7 +182,12 @@ export function Header() {
             <AuthButton />
             {adminDoc && (
               <Link href="/admin">
-                <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/20 h-10 w-10 border border-primary/20 shadow-sm" title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-primary hover:bg-primary/20 h-10 w-10 border-2 border-primary rounded-full bg-primary/5 shadow-sm hover:scale-110 transition-all" 
+                  title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
+                >
                   <ShieldCheck className="h-6 w-6" />
                 </Button>
               </Link>
@@ -207,7 +211,12 @@ export function Header() {
           <AuthButton className="flex" />
           {adminDoc && (
             <Link href="/admin">
-              <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/20 h-10 w-10 border border-primary/20 shadow-sm" title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-primary hover:bg-primary/20 h-10 w-10 border-2 border-primary rounded-full bg-primary/5 shadow-sm active:scale-95 transition-all" 
+                title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
+              >
                 <ShieldCheck className="h-6 w-6" />
               </Button>
             </Link>
