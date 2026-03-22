@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -128,6 +127,9 @@ export default function LoginPage(props: {
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
+      // Ensure custom parameters if needed
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
@@ -148,18 +150,27 @@ export default function LoginPage(props: {
       toast({ title: language === "hi" ? "Google के साथ सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully with Google" });
       router.push("/dashboard");
     } catch (err: any) {
+      console.error("Google Auth Error:", err);
       let errorMessage = err.message;
+      
       if (err.code === 'auth/operation-not-allowed') {
         errorMessage = language === 'hi' 
           ? "Google लॉगिन सक्षम नहीं है। कृपया फ़ायरबेस कंसोल में इसे सक्षम करें।" 
           : "Google login is not enabled. Please enable it in the Firebase Console.";
       } else if (err.code === 'auth/network-request-failed') {
         errorMessage = language === 'hi'
-          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें या किसी अन्य ब्राउज़र का उपयोग करें।"
-          : "Network error. Please check your internet connection or try a different browser.";
+          ? "नेटवर्क त्रुटि। कृपया सुनिश्चित करें कि आपने फ़ायरबेस में 'Authorized Domains' में इस डोमेन को जोड़ा है।"
+          : "Network error. Please ensure this domain is added to 'Authorized Domains' in your Firebase Authentication settings.";
       } else if (err.code === 'auth/popup-closed-by-user') {
         errorMessage = language === 'hi' ? "लॉगिन विंडो बंद कर दी गई।" : "Login popup closed by user.";
+      } else if (err.code === 'auth/popup-blocked') {
+        errorMessage = language === 'hi' ? "पॉपअप ब्लॉक कर दिया गया। कृपया अनुमति दें।" : "Popup blocked by browser. Please allow popups for this site.";
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = language === 'hi' 
+          ? "अनधिकृत डोमेन। कृपया फ़ायरबेस कंसोल में इस डोमेन को अधिकृत करें।" 
+          : "Unauthorized domain. Please add this workspace URL to Authorized Domains in Firebase Console.";
       }
+      
       setError(errorMessage);
       toast({
         variant: "destructive",
@@ -299,7 +310,7 @@ export default function LoginPage(props: {
                 </Button>
               </div>
             </div>
-            {error && <p className="text-sm text-destructive font-medium">{error}</p>}
+            {error && <p className="text-sm text-destructive font-medium border border-destructive/20 p-2 rounded bg-destructive/5">{error}</p>}
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
               {isLoading
                 ? language === "hi"
