@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -21,13 +22,12 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  Auth,
-  Firestore,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function LoginPage(props: {
   params: Promise<any>;
@@ -137,12 +137,11 @@ export default function LoginPage(props: {
       if (!userDoc.exists()) {
         const userData = {
           id: user.uid,
-          name: user.displayName,
+          name: user.displayName || user.email?.split('@')[0] || 'User',
           email: user.email,
           role: "user",
           language: language,
         };
-        const { setDocumentNonBlocking } = await import("@/firebase/non-blocking-updates");
         setDocumentNonBlocking(userDocRef, userData, { merge: true });
       }
 
@@ -152,8 +151,10 @@ export default function LoginPage(props: {
       let errorMessage = err.message;
       if (err.code === 'auth/network-request-failed') {
         errorMessage = language === 'hi'
-          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें।"
-          : "Network error. Please check your internet connection.";
+          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें या किसी अन्य ब्राउज़र का उपयोग करें।"
+          : "Network error. Please check your internet connection or try a different browser.";
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        errorMessage = language === 'hi' ? "लॉगिन विंडो बंद कर दी गई।" : "Login popup closed by user.";
       }
       setError(errorMessage);
       toast({

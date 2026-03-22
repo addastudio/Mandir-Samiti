@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -22,8 +23,6 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
-  Auth,
-  Firestore,
   sendEmailVerification,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -126,7 +125,7 @@ export default function SignupPage(props: {
       const userDocRef = doc(firestore, "users", user.uid);
       const userData = {
         id: user.uid,
-        name: user.displayName,
+        name: user.displayName || user.email?.split('@')[0] || 'User',
         email: user.email,
         role: "user",
         language: language,
@@ -140,8 +139,10 @@ export default function SignupPage(props: {
       let errorMessage = err.message;
       if (err.code === 'auth/network-request-failed') {
         errorMessage = language === 'hi'
-          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें।"
-          : "Network error. Please check your internet connection.";
+          ? "नेटवर्क त्रुटि। कृपया अपने इंटरनेट कनेक्शन की जांच करें या किसी अन्य ब्राउज़र का उपयोग करें।"
+          : "Network error. Please check your internet connection or try a different browser.";
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        errorMessage = language === 'hi' ? "साइनअप विंडो बंद कर दी गई।" : "Signup popup closed by user.";
       }
       setError(errorMessage);
       toast({
