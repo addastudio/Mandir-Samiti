@@ -127,7 +127,6 @@ export default function LoginPage(props: {
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
-      // Ensure custom parameters if needed
       provider.setCustomParameters({ prompt: 'select_account' });
       
       const result = await signInWithPopup(auth, provider);
@@ -150,6 +149,11 @@ export default function LoginPage(props: {
       toast({ title: language === "hi" ? "Google के साथ सफलतापूर्वक लॉगिन किया गया" : "Logged in successfully with Google" });
       router.push("/dashboard");
     } catch (err: any) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        setIsLoading(false);
+        return; // Silent cancellation
+      }
+      
       console.error("Google Auth Error:", err);
       let errorMessage = err.message;
       
@@ -161,8 +165,6 @@ export default function LoginPage(props: {
         errorMessage = language === 'hi'
           ? "नेटवर्क त्रुटि। कृपया सुनिश्चित करें कि आपने फ़ायरबेस में 'Authorized Domains' में इस डोमेन को जोड़ा है।"
           : "Network error. Please ensure this domain is added to 'Authorized Domains' in your Firebase Authentication settings.";
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        errorMessage = language === 'hi' ? "लॉगिन विंडो बंद कर दी गई।" : "Login popup closed by user.";
       } else if (err.code === 'auth/popup-blocked') {
         errorMessage = language === 'hi' ? "पॉपअप ब्लॉक कर दिया गया। कृपया अनुमति दें।" : "Popup blocked by browser. Please allow popups for this site.";
       } else if (err.code === 'auth/unauthorized-domain') {

@@ -140,6 +140,11 @@ export default function SignupPage(props: {
       toast({ title: language === "hi" ? "Google के साथ सफलतापूर्वक साइन अप किया गया" : "Signed up successfully with Google" });
       router.push("/dashboard");
     } catch (err: any) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        setIsLoading(false);
+        return; // Silent cancellation
+      }
+      
       console.error("Google Auth Error:", err);
       let errorMessage = err.message;
       
@@ -151,10 +156,8 @@ export default function SignupPage(props: {
         errorMessage = language === 'hi'
           ? "नेटवर्क त्रुटि। कृपया सुनिश्चित करें कि आपने फ़ायरबेस में 'Authorized Domains' में इस डोमेन को जोड़ा है।"
           : "Network error. Please ensure this domain is added to 'Authorized Domains' in your Firebase Authentication settings.";
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        errorMessage = language === 'hi' ? "साइनअप विंडो बंद कर दी गई।" : "Signup popup closed by user.";
       } else if (err.code === 'auth/popup-blocked') {
-        errorMessage = language === 'hi' ? "पॉपअप ब्लॉक कर दिया गया। कृपया अनुमति दें।" : "Popup blocked by browser. Please allow popups for this site.";
+        errorMessage = language === 'hi' ? "साइनअप विंडो बंद कर दी गई।" : "Signup popup closed by user.";
       } else if (err.code === 'auth/unauthorized-domain') {
         errorMessage = language === 'hi' 
           ? "अनधिकृत डोमेन। कृपया फ़ायरबेस कंसोल में इस डोमेन को अधिकृत करें।" 
