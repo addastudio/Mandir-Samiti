@@ -93,24 +93,43 @@ export default function DashboardPage(props: {
   };
 
   const handleResendVerification = async () => {
-    if (!user) return;
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    
     setIsResending(true);
     try {
-      await sendEmailVerification(user);
-      toast({ title: t.dashboardVerificationSent });
+      await sendEmailVerification(currentUser);
+      toast({ 
+        title: language === 'hi' ? "सत्यापन लिंक भेजा गया" : "Verification Link Sent",
+        description: t.dashboardVerificationSent 
+      });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      console.error("Verification error:", error);
+      let errorMessage = error.message;
+      if (error.code === 'auth/too-many-requests') {
+        errorMessage = language === 'hi' 
+          ? "बहुत अधिक प्रयास। कृपया थोड़ी देर बाद फिर से प्रयास करें।" 
+          : "Too many attempts. Please try again later.";
+      }
+      toast({ variant: "destructive", title: "Error", description: errorMessage });
     } finally {
       setIsResending(false);
     }
   };
 
   const handleRefreshStatus = async () => {
-    if (!user) return;
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
     setIsRefreshing(true);
     try {
-      await user.reload();
-      toast({ title: "Profile updated." });
+      await currentUser.reload();
+      toast({ 
+        title: language === 'hi' ? "प्रोफ़ाइल अपडेट की गई" : "Profile Updated",
+        description: language === 'hi' ? "ताज़ा स्थिति सफलतापूर्वक प्राप्त की गई।" : "Latest status fetched successfully."
+      });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
@@ -254,8 +273,25 @@ export default function DashboardPage(props: {
                   </div>
                   {!user.emailVerified && (
                     <div className="flex flex-wrap gap-x-3 gap-y-1">
-                      <Button variant="link" size="sm" className="p-0 h-auto text-[10px]" onClick={handleResendVerification} disabled={isResending}>{isResending ? '...' : t.dashboardResendVerification}</Button>
-                      <Button variant="link" size="sm" className="p-0 h-auto text-[10px] text-muted-foreground" onClick={handleRefreshStatus} disabled={isRefreshing}><RefreshCw className={cn("h-3 w-3 mr-1", isRefreshing && "animate-spin")} />{isRefreshing ? '...' : 'Refresh'}</Button>
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        className="p-0 h-auto text-[10px]" 
+                        onClick={handleResendVerification} 
+                        disabled={isResending}
+                      >
+                        {isResending ? '...' : t.dashboardResendVerification}
+                      </Button>
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        className="p-0 h-auto text-[10px] text-muted-foreground" 
+                        onClick={handleRefreshStatus} 
+                        disabled={isRefreshing}
+                      >
+                        <RefreshCw className={cn("h-3 w-3 mr-1", isRefreshing && "animate-spin")} />
+                        {isRefreshing ? '...' : 'Refresh Status'}
+                      </Button>
                     </div>
                   )}
                 </div>
