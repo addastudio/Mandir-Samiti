@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -61,14 +60,14 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [navItems]);
 
-  const AuthButton = ({ className }: { className?: string }) => {
+  const AuthButton = ({ className, isMobile = false }: { className?: string; isMobile?: boolean }) => {
     if (isUserLoading) {
       return <div className={cn("h-9 w-24 animate-pulse rounded-md bg-muted", className)} />;
     }
     if (user) {
       return (
-        <Link href="/dashboard" className={className}>
-          <Button variant="ghost" size="sm" className="gap-2">
+        <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
+          <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:justify-center">
             <LayoutDashboard className="h-4 w-4" />
             <span className={cn(language === "hi" ? "font-hindi" : "")}>
               {language === "hi" ? "डैशबोर्ड" : "Dashboard"}
@@ -78,8 +77,8 @@ export function Header() {
       );
     }
     return (
-      <Link href="/login" className={className}>
-        <Button variant="ghost" size="sm" className="gap-2">
+      <Link href="/login" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
+        <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:justify-center">
           <LogIn className="h-4 w-4" />
           <span className={cn(language === "hi" ? "font-hindi" : "")}>
             {language === "hi" ? "लॉग इन" : "Login"}
@@ -133,10 +132,10 @@ export function Header() {
           : "bg-transparent"
       )}
     >
-      <div className="container mx-auto flex h-20 items-center justify-between px-4 lg:px-8">
-        <Link href="/" className="flex items-center gap-3 transition-transform hover:scale-105 active:scale-95 group">
-          <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
-            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
+      <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group">
+          <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-2 py-1.5 sm:px-3 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
               <Image 
                 src="/logo.png" 
                 alt="Logo" 
@@ -146,18 +145,18 @@ export function Header() {
                   (e.target as any).style.opacity = '0';
                 }}
               />
-              <TempleIcon className="h-6 w-6 text-primary absolute" />
+              <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary absolute" />
             </div>
             <div className="flex flex-col items-start leading-none">
               <span
                 className={cn(
-                  "text-lg font-bold text-foreground",
+                  "text-base sm:text-lg font-bold text-foreground",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
                 {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
               </span>
-              <span className="text-[9px] uppercase tracking-wider text-muted-foreground">
+              <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground">
                 {language === "hi" ? "बहपुरा" : "Bahpura"}
               </span>
             </div>
@@ -165,7 +164,7 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden items-center gap-6 lg:flex">
+        <div className="hidden items-center gap-4 lg:flex">
           <NavLinks />
           <div className="h-6 w-px bg-border/60" />
           <div className="flex items-center gap-4">
@@ -183,11 +182,11 @@ export function Header() {
         </div>
 
         {/* Mobile Navigation Trigger */}
-        <div className="flex items-center gap-2 lg:hidden">
-          <div className="hidden sm:block">
+        <div className="flex items-center gap-1 sm:gap-2 lg:hidden">
+          <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
-          <AuthButton className="mr-1" />
+          <AuthButton className="hidden sm:flex" />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-10 w-10">
@@ -221,7 +220,7 @@ export function Header() {
                 </Link>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-6 py-8">
+              <div className="flex-1 overflow-y-auto px-6 py-4">
                 <NavLinks
                   className="flex-col items-start gap-0"
                   isMobile
@@ -229,12 +228,13 @@ export function Header() {
               </div>
 
               <div className="border-t bg-secondary/30 p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
+                <div className="flex items-center justify-between xs:hidden">
+                   <span className="text-sm font-medium text-muted-foreground">
                     {language === 'hi' ? 'भाषा' : 'Language'}
                   </span>
                   <LanguageSwitcher />
                 </div>
+                <AuthButton isMobile className="block sm:hidden" />
                 <Link href="#donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
                   <Button className="w-full gap-2 bg-accent text-accent-foreground">
                     <Heart className="h-4 w-4 fill-current" />

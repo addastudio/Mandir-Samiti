@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -332,19 +331,19 @@ export default function AdminPage(props: {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-28">
-      <div className="container mx-auto px-4 md:px-8 space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-xl border shadow-sm">
+    <div className="min-h-screen bg-background pb-20 pt-24 sm:pt-28">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6 sm:space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-5 sm:p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <ShieldAlert className="h-8 w-8 text-primary" />
+            <div className="bg-primary/10 p-2 sm:p-3 rounded-full">
+              <ShieldAlert className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
             <div>
-              <h1 className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+              <h1 className={cn("text-xl sm:text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                 {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
               </h1>
-              <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-[10px] py-0 h-4 bg-primary/5">{currentRole}</Badge>
+              <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="text-[9px] sm:text-[10px] py-0 h-4 bg-primary/5">{currentRole}</Badge>
                 <div className="flex items-center gap-1">
                   <span className="opacity-60">{language === 'hi' ? 'ग्रेड स्तर' : 'Grade Level'}:</span>
                   <span className="font-bold text-primary">{ROLE_HIERARCHY[currentRole] || 0}</span>
@@ -352,35 +351,35 @@ export default function AdminPage(props: {
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/">
-              <Button variant="outline" className="gap-2">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            <Link href="/" className="flex-1 sm:flex-none">
+              <Button variant="outline" className="w-full gap-2 text-xs sm:text-sm h-9">
                 <Globe className="h-4 w-4" />
                 {language === 'hi' ? 'वेबसाइट देखें' : 'View Website'}
               </Button>
             </Link>
-            <Link href="/dashboard">
-              <Button variant="outline" className="gap-2">
+            <Link href="/dashboard" className="flex-1 sm:flex-none">
+              <Button variant="outline" className="w-full gap-2 text-xs sm:text-sm h-9">
                 <LayoutDashboard className="h-4 w-4" />
                 {language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}
               </Button>
             </Link>
             {currentRole !== 'devotee' && (
               <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="gap-2">
+                <AlertDialogTrigger asChild className="flex-1 sm:flex-none">
+                  <Button variant="destructive" className="w-full gap-2 text-xs sm:text-sm h-9">
                     <LogOut className="h-4 w-4" />
                     {language === 'hi' ? 'पद त्यागें' : 'Resign Post'}
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="w-[95%] max-w-md mx-auto">
                   <AlertDialogHeader>
                     <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
                     <AlertDialogDescription asChild>
                       <div className="space-y-4 pt-2">
                         <p>{language === 'hi' ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप एक भक्त के रूप में लॉग इन रहेंगे।' : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}</p>
                         {isPasswordUser && (
-                          <div className="space-y-2 pt-2">
+                          <div className="space-y-2 pt-2 text-left">
                             <Label htmlFor="resign-password">{language === 'hi' ? 'पुष्टि के लिए अपना पासवर्ड दर्ज करें' : 'Enter your password to confirm'}</Label>
                             <Input id="resign-password" type="password" value={resignPassword} onChange={(e) => setResignPassword(e.target.value)} placeholder="Password" />
                           </div>
@@ -388,8 +387,8 @@ export default function AdminPage(props: {
                       </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setResignPassword("")}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                  <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
+                    <AlertDialogCancel onClick={() => setResignPassword("")} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
                     <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground" disabled={isResigningInProgress || (isPasswordUser && !resignPassword)}>
                       {isResigningInProgress ? '...' : (language === 'hi' ? 'पुष्टि करें' : 'Confirm')}
                     </AlertDialogAction>
@@ -401,28 +400,28 @@ export default function AdminPage(props: {
         </div>
 
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 mb-8 h-auto gap-2 bg-transparent p-0">
-            <TabsTrigger value="events" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
+          <TabsList className="flex flex-wrap h-auto w-full gap-1 sm:gap-2 bg-transparent p-0 mb-6 sm:mb-8">
+            <TabsTrigger value="events" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
               <Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}
             </TabsTrigger>
-            <TabsTrigger value="gallery" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
+            <TabsTrigger value="gallery" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
               <ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}
             </TabsTrigger>
-            <TabsTrigger value="notices" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
+            <TabsTrigger value="notices" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
               <Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}
             </TabsTrigger>
-            <TabsTrigger value="requests" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
+            <TabsTrigger value="requests" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
               <MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}
             </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3">
+            <TabsTrigger value="users" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
               <Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="events" className="space-y-6">
             <Card className="border-primary/20 shadow-md">
-              <CardHeader className="bg-primary/5">
-                <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'नया कार्यक्रम जोड़ें' : 'Add New Event'}</CardTitle>
+              <CardHeader className="bg-primary/5 p-4 sm:p-6">
+                <CardTitle className={cn("text-lg sm:text-xl", language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'नया कार्यक्रम जोड़ें' : 'Add New Event'}</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddEvent} className="space-y-4">
@@ -451,19 +450,19 @@ export default function AdminPage(props: {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
               {events?.map((event) => (
                 <Card key={event.id} className="group overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <div className="relative h-48 bg-muted">
+                  <div className="relative h-40 sm:h-48 bg-muted">
                     <img src={event.image} alt={event.title} className="object-cover w-full h-full" />
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="destructive" size="icon" className="h-10 w-10 shadow-lg" onClick={() => handleDelete("events", event.id)}>
-                        <Trash2 className="h-5 w-5" />
+                    <div className="absolute top-3 right-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <Button variant="destructive" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 shadow-lg" onClick={() => handleDelete("events", event.id)}>
+                        <Trash2 className="h-4 w-4 sm:h-5 w-5" />
                       </Button>
                     </div>
                   </div>
-                  <CardHeader className="p-5">
-                    <CardTitle className="text-xl">{event.title}</CardTitle>
+                  <CardHeader className="p-4 sm:p-5">
+                    <CardTitle className="text-lg sm:text-xl">{event.title}</CardTitle>
                     <CardDescription className="flex items-center gap-2 mt-1"><Calendar className="h-3 w-3" /> {new Date(event.date).toLocaleString()}</CardDescription>
                   </CardHeader>
                 </Card>
@@ -473,15 +472,15 @@ export default function AdminPage(props: {
 
           <TabsContent value="users" className="space-y-6">
             <Card className="border-primary/20 shadow-md">
-              <CardHeader className="bg-primary/5">
-                <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'उपयोगकर्ता एवं पद प्रबंधन' : 'User & Position Management'}</CardTitle>
-                <CardDescription>Manage administrative privileges based on hierarchical grades.</CardDescription>
+              <CardHeader className="bg-primary/5 p-4 sm:p-6">
+                <CardTitle className={cn("text-lg sm:text-xl", language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'उपयोगकर्ता एवं पद प्रबंधन' : 'User & Position Management'}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Manage administrative privileges based on hierarchical grades.</CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
-                <Alert className="bg-amber-50 border-amber-200 shadow-sm">
+                <Alert className="bg-amber-50 border-amber-200 shadow-sm p-3 sm:p-4">
                   <ShieldCheck className="h-4 w-4 text-amber-800" />
-                  <AlertTitle className="text-amber-800 font-bold">{language === 'hi' ? 'प्रशासनिक दिशानिर्देश' : 'Administrative Guidelines'}</AlertTitle>
-                  <AlertDescription className="text-amber-700 space-y-2 mt-2">
+                  <AlertTitle className="text-amber-800 font-bold text-xs sm:text-sm">{language === 'hi' ? 'प्रशासनिक दिशानिर्देश' : 'Administrative Guidelines'}</AlertTitle>
+                  <AlertDescription className="text-amber-700 space-y-2 mt-2 text-[10px] sm:text-xs">
                     <p>• {language === 'hi' ? 'समिति के भीतर आपके निर्धारित पद के आधार पर प्रबंधन अनुमतियां प्रदान की जाती हैं।' : 'Management permissions are assigned based on your designated position within the committee.'}</p>
                     <p>• {language === 'hi' ? 'आपके पास अपने से निम्न पद वाले सदस्यों की भूमिकाओं को प्रबंधित करने का अधिकार है।' : 'You have the authority to manage the roles of members at a lower grade level than your own.'}</p>
                     <p>• {language === 'hi' ? 'कोर समिति के प्रशासनिक पदों को सुरक्षित रखा गया है और केवल अधिकृत वरिष्ठ निरीक्षण द्वारा प्रबंधित किया जाता है।' : 'Core committee administrative positions are protected and managed only by authorized senior oversight.'}</p>
@@ -490,7 +489,6 @@ export default function AdminPage(props: {
 
                 <div className="space-y-4">
                   {allUsers?.slice().sort((a, b) => {
-                    // Refined sorting: users with no role (unspecified) go to the very bottom
                     const weightA = a.role ? (ROLE_HIERARCHY[a.role] || 0) : 0;
                     const weightB = b.role ? (ROLE_HIERARCHY[b.role] || 0) : 0;
                     if (weightB !== weightA) return weightB - weightA;
@@ -502,32 +500,32 @@ export default function AdminPage(props: {
                     
                     return (
                       <Card key={u.id} className={cn("overflow-hidden border shadow-sm hover:shadow-md", !canIManage && !isTargetMe && "bg-muted/30")}>
-                        <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                           <div className="flex items-center gap-4">
-                            <div className="h-14 w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-xl text-primary border shadow-inner">
+                            <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-base sm:text-xl text-primary border shadow-inner shrink-0">
                               {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
                             </div>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-lg">{u.name || 'User'}</span>
-                                {isTargetMe && <Badge variant="outline" className="text-[10px]">{language === 'hi' ? 'आप' : 'You'}</Badge>}
+                                <span className="font-bold text-sm sm:text-lg truncate">{u.name || 'User'}</span>
+                                {isTargetMe && <Badge variant="outline" className="text-[9px] h-4 py-0">{language === 'hi' ? 'आप' : 'You'}</Badge>}
                               </div>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Mail className="h-3 w-3" /> {u.email}
+                              <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground truncate">
+                                <Mail className="h-3 w-3 shrink-0" /> {u.email}
                               </div>
-                              <span className="text-[10px] font-mono text-muted-foreground/60 mb-1">UID: {u.id}</span>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {isUserAdmin && <Badge className="bg-primary/10 text-primary border-primary/20">{language === 'hi' ? 'व्यवस्थापक' : 'Admin'}</Badge>}
-                                <Badge variant="secondary" className="bg-secondary/50 font-medium">{u.role || (language === 'hi' ? 'भक्त' : 'Devotee')}</Badge>
+                              <span className="text-[9px] sm:text-[10px] font-mono text-muted-foreground/60 mb-1 truncate">UID: {u.id}</span>
+                              <div className="flex flex-wrap gap-1 sm:gap-2 mt-1">
+                                {isUserAdmin && <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] sm:text-[10px] h-5 py-0">{language === 'hi' ? 'व्यवस्थापक' : 'Admin'}</Badge>}
+                                <Badge variant="secondary" className="bg-secondary/50 font-medium text-[9px] sm:text-[10px] h-5 py-0">{u.role || (language === 'hi' ? 'भक्त' : 'Devotee')}</Badge>
                               </div>
                             </div>
                           </div>
 
-                          <div className="flex flex-col sm:flex-row items-center gap-4">
-                            <div className="flex flex-col gap-2 w-full sm:w-48">
-                              <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'पद / ग्रेड असाइन करें' : 'Assign Grade'}</Label>
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                            <div className="flex flex-col gap-1.5 sm:w-48">
+                              <Label className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'पद / ग्रेड असाइन करें' : 'Assign Grade'}</Label>
                               <Select disabled={!canIManage} defaultValue={u.role || 'devotee'} onValueChange={(val) => handleUpdateUserRole(u.id, u.role || 'devotee', val, u.name || 'User')}>
-                                <SelectTrigger className="h-9"><SelectValue placeholder="Select Grade" /></SelectTrigger>
+                                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select Grade" /></SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="devotee">{language === 'hi' ? 'भक्त' : 'Devotee'}</SelectItem>
                                   <SelectItem value="member">{language === 'hi' ? 'सदस्य' : 'Member'}</SelectItem>
@@ -540,10 +538,10 @@ export default function AdminPage(props: {
                               </Select>
                             </div>
 
-                            <div className="flex flex-col gap-2 w-full sm:w-auto">
-                               <Label className="text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'प्रबंधन पहुँच' : 'Management'}</Label>
+                            <div className="flex flex-col gap-1.5">
+                               <Label className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'प्रबंधन पहुँच' : 'Management'}</Label>
                                <div className="flex gap-2">
-                                  <Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role || 'devotee')} className={cn("gap-2 h-9", isUserAdmin && "text-destructive border-destructive hover:bg-destructive/10")}>
+                                  <Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role || 'devotee')} className={cn("flex-1 sm:flex-none gap-2 h-9 text-xs", isUserAdmin && "text-destructive border-destructive hover:bg-destructive/10")}>
                                     {isUserAdmin ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
                                     {isUserAdmin ? (language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin') : (language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin')}
                                   </Button>
@@ -553,7 +551,7 @@ export default function AdminPage(props: {
                                       <AlertDialogTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button>
                                       </AlertDialogTrigger>
-                                      <AlertDialogContent>
+                                      <AlertDialogContent className="w-[95%] max-w-md">
                                         <AlertDialogHeader>
                                           <AlertDialogTitle>{language === 'hi' ? 'रिकॉर्ड साफ़ करें?' : 'Purge User Record?'}</AlertDialogTitle>
                                           <AlertDialogDescription>{language === 'hi' ? `यह डेटाबेस से ${u.name || 'उपयोगकर्ता'} के रिकॉर्ड को स्थायी रूप से हटा देगा। यह क्रिया तभी करें जब उपयोगकर्ता के कई रिकॉर्ड हों या उनका खाता हटा दिया गया हो।` : `Permanently delete the database record for ${u.name || 'this user'}. Use this only if the user has duplicate records or their account has been deleted.`}</AlertDialogDescription>
@@ -576,10 +574,11 @@ export default function AdminPage(props: {
               </CardContent>
             </Card>
           </TabsContent>
+          
           <TabsContent value="gallery" className="space-y-6">
             <Card className="border-primary/20 shadow-md">
-              <CardHeader className="bg-primary/5">
-                <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'नया गैलरी आइटम जोड़ें' : 'Add New Gallery Item'}</CardTitle>
+              <CardHeader className="bg-primary/5 p-4 sm:p-6">
+                <CardTitle className={cn("text-lg sm:text-xl", language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'नया गैलरी आइटम जोड़ें' : 'Add New Gallery Item'}</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddGallery} className="space-y-4">
@@ -597,15 +596,15 @@ export default function AdminPage(props: {
                 </form>
               </CardContent>
             </Card>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-6">
               {gallery?.map((item) => (
                 <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border shadow-sm">
                   <img src={item.imageURL} alt={item.caption} className="object-cover w-full h-full" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center p-3 sm:p-4">
                     <div className="text-center">
-                      <p className="text-white text-xs mb-2 line-clamp-2">{item.caption}</p>
-                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete("gallery", item.id)}>
-                        <Trash2 className="h-4 w-4" />
+                      <p className="text-white text-[10px] sm:text-xs mb-2 line-clamp-2">{item.caption}</p>
+                      <Button variant="destructive" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => handleDelete("gallery", item.id)}>
+                        <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                   </div>
@@ -613,10 +612,11 @@ export default function AdminPage(props: {
               ))}
             </div>
           </TabsContent>
+
           <TabsContent value="notices" className="space-y-6">
              <Card className="border-primary/20 shadow-md">
-              <CardHeader className="bg-primary/5">
-                <CardTitle className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.noticesAdd}</CardTitle>
+              <CardHeader className="bg-primary/5 p-4 sm:p-6">
+                <CardTitle className={cn("text-lg sm:text-xl", language === 'hi' ? 'font-hindi' : '')}>{t.noticesAdd}</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddNotice} className="space-y-4">
@@ -648,19 +648,19 @@ export default function AdminPage(props: {
                 </form>
               </CardContent>
             </Card>
-            <div className="space-y-4 mt-10">
+            <div className="space-y-4 mt-6">
               {notices?.map((notice) => (
                 <Card key={notice.id} className={cn("border-l-4", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
-                  <CardContent className="p-4 flex justify-between items-start gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold">{notice.title}</h4>
-                        <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'}>{notice.importance}</Badge>
+                  <CardContent className="p-3 sm:p-4 flex justify-between items-start gap-3">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-bold text-sm sm:text-base truncate">{notice.title}</h4>
+                        <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'} className="text-[9px] h-4 py-0">{notice.importance}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{notice.content}</p>
-                      <p className="text-[10px] text-muted-foreground/60">{new Date(notice.createdAt).toLocaleString()}</p>
+                      <p className="text-[11px] sm:text-sm text-muted-foreground line-clamp-3">{notice.content}</p>
+                      <p className="text-[9px] text-muted-foreground/60">{new Date(notice.createdAt).toLocaleString()}</p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete("notices", notice.id)} className="text-destructive">
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete("notices", notice.id)} className="text-destructive shrink-0 h-8 w-8">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </CardContent>
@@ -668,40 +668,42 @@ export default function AdminPage(props: {
               ))}
             </div>
           </TabsContent>
+
           <TabsContent value="requests" className="space-y-6">
              <div className="grid grid-cols-1 gap-4">
                {requests?.map((req) => (
                  <Card key={req.id} className="overflow-hidden">
-                   <CardHeader className="bg-secondary/20 py-3 flex flex-row items-center justify-between">
+                   <CardHeader className="bg-secondary/20 py-2 sm:py-3 flex flex-row items-center justify-between px-4">
                      <div className="flex items-center gap-2">
                        <MessageSquare className="h-4 w-4 text-primary" />
-                       <CardTitle className="text-sm font-bold uppercase tracking-wider">{req.requestType}</CardTitle>
+                       <CardTitle className="text-[10px] sm:text-sm font-bold uppercase tracking-wider">{req.requestType}</CardTitle>
                      </div>
                      <Badge className={cn(
+                       "text-[9px] sm:text-xs",
                        req.status === 'completed' ? 'bg-green-100 text-green-700' : 
                        req.status === 'viewed' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
                      )}>
                        {req.status}
                      </Badge>
                    </CardHeader>
-                   <CardContent className="pt-4 space-y-3">
+                   <CardContent className="pt-4 space-y-3 px-4">
                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
-                       <div>
-                         <p className="font-bold">{req.name}</p>
-                         <p className="text-xs text-muted-foreground">{req.email} | {req.phone}</p>
+                       <div className="min-w-0">
+                         <p className="font-bold text-sm sm:text-base truncate">{req.name}</p>
+                         <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{req.email} | {req.phone}</p>
                        </div>
-                       <p className="text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleString()}</p>
+                       <p className="text-[9px] sm:text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleString()}</p>
                      </div>
-                     <p className="text-sm italic p-3 bg-muted/30 rounded-lg">"{req.message}"</p>
+                     <p className="text-[11px] sm:text-sm italic p-2 sm:p-3 bg-muted/30 rounded-lg">"{req.message}"</p>
                      <div className="flex flex-wrap gap-2 pt-2">
-                       <Button size="sm" variant="outline" onClick={() => updateRequestStatus(req.id, 'viewed')} disabled={req.status === 'viewed' || req.status === 'completed'}>
+                       <Button size="sm" variant="outline" className="h-8 text-[10px] sm:text-xs" onClick={() => updateRequestStatus(req.id, 'viewed')} disabled={req.status === 'viewed' || req.status === 'completed'}>
                          <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Viewed
                        </Button>
-                       <Button size="sm" variant="outline" onClick={() => updateRequestStatus(req.id, 'completed')} disabled={req.status === 'completed'}>
+                       <Button size="sm" variant="outline" className="h-8 text-[10px] sm:text-xs" onClick={() => updateRequestStatus(req.id, 'completed')} disabled={req.status === 'completed'}>
                          <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Completed
                        </Button>
-                       <Button size="sm" variant="ghost" onClick={() => handleDelete("prayer_requests", req.id)} className="text-destructive ml-auto">
-                         <Trash2 className="h-3 w-3" />
+                       <Button size="sm" variant="ghost" onClick={() => handleDelete("prayer_requests", req.id)} className="text-destructive ml-auto h-8 w-8 p-0">
+                         <Trash2 className="h-4 w-4" />
                        </Button>
                      </div>
                    </CardContent>
@@ -713,22 +715,22 @@ export default function AdminPage(props: {
       </div>
 
       <AlertDialog open={!!pendingRoleUpdate} onOpenChange={() => setPendingRoleUpdate(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[95%] max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'ग्रेड परिवर्तन की पुष्टि' : 'Confirm Grade Change'}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4 pt-2">
-                <div className="font-semibold text-foreground">
+                <div className="font-semibold text-foreground text-sm sm:text-base">
                   {language === 'hi' 
                     ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?` 
                     : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position from '${pendingRoleUpdate?.targetCurrentRole}' to '${pendingRoleUpdate?.newRole}'?`}
                 </div>
-                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-amber-900 text-sm italic">{language === 'hi' ? 'अस्वीकरण: यह एक महत्वपूर्ण प्रशासनिक कार्य है।' : 'Disclaimer: This is a significant administrative action.'}</div>
+                <div className="bg-amber-50 border border-amber-200 p-3 sm:p-4 rounded-lg text-amber-900 text-xs sm:text-sm italic">{language === 'hi' ? 'अस्वीकरण: यह एक महत्वपूर्ण प्रशासनिक कार्य है।' : 'Disclaimer: This is a significant administrative action.'}</div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingRoleUpdate(null)}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <AlertDialogCancel onClick={() => setPendingRoleUpdate(null)} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRoleUpdate}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
