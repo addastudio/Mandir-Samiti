@@ -95,14 +95,19 @@ export default function DashboardPage(props: {
   const handleResendVerification = async () => {
     const auth = getAuth();
     const currentUser = auth.currentUser;
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast({ variant: "destructive", title: "Error", description: "User session not found. Please log in again." });
+      return;
+    }
     
     setIsResending(true);
     try {
       await sendEmailVerification(currentUser);
       toast({ 
         title: language === 'hi' ? "सत्यापन लिंक भेजा गया" : "Verification Link Sent",
-        description: t.dashboardVerificationSent 
+        description: language === 'hi' 
+          ? "सत्यापन लिंक आपके ईमेल पर भेज दिया गया है। कृपया अपना स्पैम फोल्डर भी जांचें।" 
+          : "Verification link sent to your email. Please check your inbox and spam folder."
       });
     } catch (error: any) {
       console.error("Verification error:", error);
@@ -130,6 +135,8 @@ export default function DashboardPage(props: {
         title: language === 'hi' ? "प्रोफ़ाइल अपडेट की गई" : "Profile Updated",
         description: language === 'hi' ? "ताज़ा स्थिति सफलतापूर्वक प्राप्त की गई।" : "Latest status fetched successfully."
       });
+      // Optionally force a refresh of the page to update the UI with fresh auth state
+      router.refresh();
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
@@ -272,25 +279,26 @@ export default function DashboardPage(props: {
                     )}
                   </div>
                   {!user.emailVerified && (
-                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                       <Button 
-                        variant="link" 
+                        variant="default" 
                         size="sm" 
-                        className="p-0 h-auto text-[10px]" 
+                        className="h-8 text-[10px] px-3" 
                         onClick={handleResendVerification} 
                         disabled={isResending}
                       >
-                        {isResending ? '...' : t.dashboardResendVerification}
+                        {isResending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                        {t.dashboardResendVerification}
                       </Button>
                       <Button 
-                        variant="link" 
+                        variant="outline" 
                         size="sm" 
-                        className="p-0 h-auto text-[10px] text-muted-foreground" 
+                        className="h-8 text-[10px] px-3" 
                         onClick={handleRefreshStatus} 
                         disabled={isRefreshing}
                       >
                         <RefreshCw className={cn("h-3 w-3 mr-1", isRefreshing && "animate-spin")} />
-                        {isRefreshing ? '...' : 'Refresh Status'}
+                        {isRefreshing ? '...' : (language === 'hi' ? 'ताज़ा करें' : 'Refresh')}
                       </Button>
                     </div>
                   )}
