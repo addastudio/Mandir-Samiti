@@ -79,7 +79,7 @@ export function Header() {
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
           <Avatar className="h-10 w-10 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer">
             <AvatarImage src={user.photoURL || ""} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
+            <AvatarFallback className="bg-primary text-primary-foreground font-bold">
               <UserIcon className="h-6 w-6" />
             </AvatarFallback>
           </Avatar>
@@ -183,12 +183,12 @@ export function Header() {
             {adminDoc && (
               <Link href="/admin">
                 <Button 
-                  variant="ghost" 
+                  variant="default" 
                   size="icon" 
-                  className="text-primary hover:bg-primary/20 h-10 w-10 border-2 border-primary rounded-full bg-primary/5 shadow-sm hover:scale-110 transition-all" 
+                  className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white" 
                   title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
                 >
-                  <ShieldCheck className="h-6 w-6" />
+                  <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
                 </Button>
               </Link>
             )}
@@ -212,12 +212,12 @@ export function Header() {
           {adminDoc && (
             <Link href="/admin">
               <Button 
-                variant="ghost" 
+                variant="default" 
                 size="icon" 
-                className="text-primary hover:bg-primary/20 h-10 w-10 border-2 border-primary rounded-full bg-primary/5 shadow-sm active:scale-95 transition-all" 
+                className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
                 title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
               >
-                <ShieldCheck className="h-6 w-6" />
+                <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
               </Button>
             </Link>
           )}
