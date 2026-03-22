@@ -387,7 +387,7 @@ export default function DashboardPage(props: {
                     ) : userRequests && userRequests.length > 0 ? (
                       <div className="divide-y">
                         <div className="p-4 bg-muted/20 flex justify-end">
-                          <Link href="/#prayer">
+                          <Link href="/prayer-request">
                             <Button size="sm" className="gap-2 h-8 text-xs">
                               <Plus className="h-3 w-3" />
                               {t.dashboardNewRequest}
@@ -415,7 +415,7 @@ export default function DashboardPage(props: {
                       <div className="py-20 sm:py-24 text-center text-muted-foreground px-4 flex flex-col items-center gap-4">
                         <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
                         <p className="text-sm">{language === 'hi' ? 'कोई निवेदन नहीं मिला।' : 'No requests found.'}</p>
-                        <Link href="/#prayer">
+                        <Link href="/prayer-request">
                           <Button variant="default" className="gap-2">
                             <Plus className="h-4 w-4" />
                             {t.dashboardNewRequest}

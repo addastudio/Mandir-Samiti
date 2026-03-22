@@ -20,11 +20,13 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import TempleIcon from "@/components/icons/TempleIcon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { doc } from "firebase/firestore";
+import { usePathname } from "next/navigation";
 
 export function Header() {
   const { t, language } = useLanguage();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
@@ -37,38 +39,42 @@ export function Header() {
   const { data: adminDoc } = useDoc(adminRoleRef);
 
   const navItems = [
-    { href: "#home", label: t.navHome },
-    { href: "#about", label: t.navAbout },
-    { href: "#events", label: t.navEvents },
-    { href: "#seva", label: t.navSeva },
-    { href: "#prayer", label: t.navPrayer },
-    { href: "#gallery", label: t.navGallery },
-    { href: "#contact", label: t.navContact },
+    { href: "/#home", label: t.navHome, isAnchor: true },
+    { href: "/#about", label: t.navAbout, isAnchor: true },
+    { href: "/#events", label: t.navEvents, isAnchor: true },
+    { href: "/#seva", label: t.navSeva, isAnchor: true },
+    { href: "/prayer-request", label: t.navPrayer, isAnchor: false },
+    { href: "/#gallery", label: t.navGallery, isAnchor: true },
+    { href: "/#contact", label: t.navContact, isAnchor: true },
   ];
 
   React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
 
-      const sections = navItems.map((item) =>
-        document.querySelector(item.href)
-      );
-      let currentSection = "home";
-
-      sections.forEach((section) => {
-        if (section) {
-          const sectionTop = (section as HTMLElement).offsetTop;
-          if (window.scrollY >= sectionTop - 120) {
-            currentSection = section.id;
+      if (pathname === '/') {
+        const sections = navItems
+          .filter(item => item.isAnchor)
+          .map((item) => document.querySelector(item.href.replace('/', '')));
+        
+        let currentSection = "home";
+        sections.forEach((section) => {
+          if (section) {
+            const sectionTop = (section as HTMLElement).offsetTop;
+            if (window.scrollY >= sectionTop - 120) {
+              currentSection = section.id;
+            }
           }
-        }
-      });
-      setActiveSection(currentSection);
+        });
+        setActiveSection(currentSection);
+      } else {
+        setActiveSection(pathname.replace('/', ''));
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [navItems]);
+  }, [navItems, pathname]);
 
   const AuthButton = ({ className, isMobile = false }: { className?: string; isMobile?: boolean }) => {
     if (isUserLoading) {
@@ -108,28 +114,31 @@ export function Header() {
     isMobile?: boolean;
   }) => (
     <nav className={cn("flex items-center gap-1", className)}>
-      {navItems.map((item) => (
-        <a
-          key={item.label}
-          href={item.href}
-          onClick={() => setIsMobileMenuOpen(false)}
-          data-active={activeSection === item.href.substring(1)}
-          className={cn(
-            "relative px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
-            activeSection === item.href.substring(1)
-              ? "text-primary"
-              : "text-muted-foreground",
-            isMobile && "w-full py-4 text-lg border-b border-border/50",
-            itemClassName,
-            language === "hi" ? "font-hindi" : ""
-          )}
-        >
-          {item.label}
-          {!isMobile && activeSection === item.href.substring(1) && (
-            <span className="absolute bottom-0 left-0 h-0.5 w-full bg-primary animate-in fade-in slide-in-from-bottom-1" />
-          )}
-        </a>
-      ))}
+      {navItems.map((item) => {
+        const isActive = pathname === '/' 
+          ? (item.isAnchor && activeSection === item.href.replace('/#', ''))
+          : (pathname === item.href);
+
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={cn(
+              "relative px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
+              isActive ? "text-primary" : "text-muted-foreground",
+              isMobile && "w-full py-4 text-lg border-b border-border/50",
+              itemClassName,
+              language === "hi" ? "font-hindi" : ""
+            )}
+          >
+            {item.label}
+            {!isMobile && isActive && (
+              <span className="absolute bottom-0 left-0 h-0.5 w-full bg-primary animate-in fade-in slide-in-from-bottom-1" />
+            )}
+          </Link>
+        );
+      })}
     </nav>
   );
 
@@ -137,7 +146,7 @@ export function Header() {
     <header
       className={cn(
         "fixed top-0 z-50 w-full transition-all duration-500",
-        isScrolled
+        isScrolled || pathname !== '/'
           ? "border-b border-border/40 bg-background/80 shadow-sm backdrop-blur-md"
           : "bg-transparent"
       )}
@@ -179,20 +188,22 @@ export function Header() {
           <div className="h-6 w-px bg-border/60" />
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
-            <AuthButton />
-            {adminDoc && (
-              <Link href="/admin">
-                <Button 
-                  variant="default" 
-                  size="icon" 
-                  className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white" 
-                  title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
-                >
-                  <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
-                </Button>
-              </Link>
-            )}
-            <Link href="#donate">
+            <div className="flex items-center gap-2">
+              {adminDoc && (
+                <Link href="/admin">
+                  <Button 
+                    variant="default" 
+                    size="icon" 
+                    className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white" 
+                    title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
+                  >
+                    <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
+                  </Button>
+                </Link>
+              )}
+              <AuthButton />
+            </div>
+            <Link href="/#donate">
               <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
                 <Heart className="h-4 w-4 fill-current" />
                 <span className={cn(language === "hi" ? "font-hindi" : "")}>
@@ -208,19 +219,21 @@ export function Header() {
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
-          <AuthButton className="flex" />
-          {adminDoc && (
-            <Link href="/admin">
-              <Button 
-                variant="default" 
-                size="icon" 
-                className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
-                title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
-              >
-                <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
-              </Button>
-            </Link>
-          )}
+          <div className="flex items-center gap-1">
+            {adminDoc && (
+              <Link href="/admin">
+                <Button 
+                  variant="default" 
+                  size="icon" 
+                  className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
+                  title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
+                >
+                  <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
+                </Button>
+              </Link>
+            )}
+            <AuthButton className="flex" />
+          </div>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-10 w-10">
@@ -281,7 +294,7 @@ export function Header() {
                   </span>
                   <LanguageSwitcher />
                 </div>
-                <Link href="#donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
+                <Link href="/#donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
                   <Button className="w-full gap-2 bg-accent text-accent-foreground">
                     <Heart className="h-4 w-4 fill-current" />
                     {t.navDonate}
