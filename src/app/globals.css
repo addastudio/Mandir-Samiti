@@ -4,6 +4,7 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @layer base {
@@ -85,9 +86,32 @@ html {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden antialiased;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
   p {
     @apply leading-relaxed;
   }
+}
+
+/* Utilities for smooth scrolling in sub-containers */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Webkit touch scrolling for horizontal scrollables */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }

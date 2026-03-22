@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, Lock, LogOut, ShieldCheck, UserX, Mail } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -152,7 +152,7 @@ export default function AdminPage(props: {
   const canManageUser = (targetUserId: string, targetRole: string) => {
     if (user?.uid === targetUserId) return false;
     
-    // As President, you have full oversight to resolve duplicates or issues
+    // President has absolute oversight
     if (isPresident) return true;
 
     const myPower = ROLE_HIERARCHY[currentRole] || 0;
@@ -331,21 +331,21 @@ export default function AdminPage(props: {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-24 sm:pt-28">
+    <div className="min-h-screen bg-background pb-20 pt-24 sm:pt-28 scroll-smooth">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6 sm:space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-5 sm:p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="bg-primary/10 p-2 sm:p-3 rounded-full">
+            <div className="bg-primary/10 p-2 sm:p-3 rounded-full shrink-0">
               <ShieldAlert className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <div>
-              <h1 className={cn("text-xl sm:text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+            <div className="min-w-0">
+              <h1 className={cn("text-xl sm:text-2xl font-bold truncate", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                 {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
               </h1>
               <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-[9px] sm:text-[10px] py-0 h-4 bg-primary/5">{currentRole}</Badge>
-                <div className="flex items-center gap-1">
-                  <span className="opacity-60">{language === 'hi' ? 'ग्रेड स्तर' : 'Grade Level'}:</span>
+                <Badge variant="outline" className="text-[9px] sm:text-[10px] py-0 h-4 bg-primary/5 shrink-0">{currentRole}</Badge>
+                <div className="flex items-center gap-1 truncate">
+                  <span className="opacity-60 hidden xs:inline">{language === 'hi' ? 'ग्रेड स्तर' : 'Grade Level'}:</span>
                   <span className="font-bold text-primary">{ROLE_HIERARCHY[currentRole] || 0}</span>
                 </div>
               </div>
@@ -355,13 +355,13 @@ export default function AdminPage(props: {
             <Link href="/" className="flex-1 sm:flex-none">
               <Button variant="outline" className="w-full gap-2 text-xs sm:text-sm h-9">
                 <Globe className="h-4 w-4" />
-                {language === 'hi' ? 'वेबसाइट देखें' : 'View Website'}
+                <span className="hidden xs:inline">{language === 'hi' ? 'वेबसाइट देखें' : 'View Website'}</span>
               </Button>
             </Link>
             <Link href="/dashboard" className="flex-1 sm:flex-none">
               <Button variant="outline" className="w-full gap-2 text-xs sm:text-sm h-9">
                 <LayoutDashboard className="h-4 w-4" />
-                {language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}
+                <span className="hidden xs:inline">{language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}</span>
               </Button>
             </Link>
             {currentRole !== 'devotee' && (
@@ -369,7 +369,7 @@ export default function AdminPage(props: {
                 <AlertDialogTrigger asChild className="flex-1 sm:flex-none">
                   <Button variant="destructive" className="w-full gap-2 text-xs sm:text-sm h-9">
                     <LogOut className="h-4 w-4" />
-                    {language === 'hi' ? 'पद त्यागें' : 'Resign Post'}
+                    <span className="hidden xs:inline">{language === 'hi' ? 'पद त्यागें' : 'Resign Post'}</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="w-[95%] max-w-md mx-auto">
@@ -400,20 +400,20 @@ export default function AdminPage(props: {
         </div>
 
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="flex flex-wrap h-auto w-full gap-1 sm:gap-2 bg-transparent p-0 mb-6 sm:mb-8">
-            <TabsTrigger value="events" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
+          <TabsList className="flex w-full overflow-x-auto no-scrollbar justify-start h-auto gap-1 sm:gap-2 bg-transparent p-0 mb-6 sm:mb-8 pb-1 touch-scroll scroll-smooth">
+            <TabsTrigger value="events" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0">
               <Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}
             </TabsTrigger>
-            <TabsTrigger value="gallery" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
+            <TabsTrigger value="gallery" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0">
               <ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}
             </TabsTrigger>
-            <TabsTrigger value="notices" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
+            <TabsTrigger value="notices" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0">
               <Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}
             </TabsTrigger>
-            <TabsTrigger value="requests" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
+            <TabsTrigger value="requests" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0">
               <MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}
             </TabsTrigger>
-            <TabsTrigger value="users" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm">
+            <TabsTrigger value="users" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0">
               <Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}
             </TabsTrigger>
           </TabsList>
@@ -462,7 +462,7 @@ export default function AdminPage(props: {
                     </div>
                   </div>
                   <CardHeader className="p-4 sm:p-5">
-                    <CardTitle className="text-lg sm:text-xl">{event.title}</CardTitle>
+                    <CardTitle className="text-lg sm:text-xl truncate">{event.title}</CardTitle>
                     <CardDescription className="flex items-center gap-2 mt-1"><Calendar className="h-3 w-3" /> {new Date(event.date).toLocaleString()}</CardDescription>
                   </CardHeader>
                 </Card>
@@ -501,14 +501,14 @@ export default function AdminPage(props: {
                     return (
                       <Card key={u.id} className={cn("overflow-hidden border shadow-sm hover:shadow-md", !canIManage && !isTargetMe && "bg-muted/30")}>
                         <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-4 min-w-0">
                             <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-base sm:text-xl text-primary border shadow-inner shrink-0">
                               {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
                             </div>
                             <div className="flex flex-col min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-sm sm:text-lg truncate">{u.name || 'User'}</span>
-                                {isTargetMe && <Badge variant="outline" className="text-[9px] h-4 py-0">{language === 'hi' ? 'आप' : 'You'}</Badge>}
+                                {isTargetMe && <Badge variant="outline" className="text-[9px] h-4 py-0 shrink-0">{language === 'hi' ? 'आप' : 'You'}</Badge>}
                               </div>
                               <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground truncate">
                                 <Mail className="h-3 w-3 shrink-0" /> {u.email}
@@ -549,9 +549,9 @@ export default function AdminPage(props: {
                                   {isPresident && !isTargetMe && (
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10 shrink-0"><Trash2 className="h-4 w-4" /></Button>
                                       </AlertDialogTrigger>
-                                      <AlertDialogContent className="w-[95%] max-w-md">
+                                      <AlertDialogContent className="w-[95%] max-w-md mx-auto">
                                         <AlertDialogHeader>
                                           <AlertDialogTitle>{language === 'hi' ? 'रिकॉर्ड साफ़ करें?' : 'Purge User Record?'}</AlertDialogTitle>
                                           <AlertDialogDescription>{language === 'hi' ? `यह डेटाबेस से ${u.name || 'उपयोगकर्ता'} के रिकॉर्ड को स्थायी रूप से हटा देगा। यह क्रिया तभी करें जब उपयोगकर्ता के कई रिकॉर्ड हों या उनका खाता हटा दिया गया हो।` : `Permanently delete the database record for ${u.name || 'this user'}. Use this only if the user has duplicate records or their account has been deleted.`}</AlertDialogDescription>
@@ -650,14 +650,14 @@ export default function AdminPage(props: {
             </Card>
             <div className="space-y-4 mt-6">
               {notices?.map((notice) => (
-                <Card key={notice.id} className={cn("border-l-4", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
+                <Card key={notice.id} className={cn("border-l-4 rounded-xl", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
                   <CardContent className="p-3 sm:p-4 flex justify-between items-start gap-3">
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-bold text-sm sm:text-base truncate">{notice.title}</h4>
-                        <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'} className="text-[9px] h-4 py-0">{notice.importance}</Badge>
+                        <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'} className="text-[9px] h-4 py-0 shrink-0">{notice.importance}</Badge>
                       </div>
-                      <p className="text-[11px] sm:text-sm text-muted-foreground line-clamp-3">{notice.content}</p>
+                      <p className="text-[11px] sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed">{notice.content}</p>
                       <p className="text-[9px] text-muted-foreground/60">{new Date(notice.createdAt).toLocaleString()}</p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => handleDelete("notices", notice.id)} className="text-destructive shrink-0 h-8 w-8">
@@ -672,14 +672,14 @@ export default function AdminPage(props: {
           <TabsContent value="requests" className="space-y-6">
              <div className="grid grid-cols-1 gap-4">
                {requests?.map((req) => (
-                 <Card key={req.id} className="overflow-hidden">
+                 <Card key={req.id} className="overflow-hidden rounded-xl">
                    <CardHeader className="bg-secondary/20 py-2 sm:py-3 flex flex-row items-center justify-between px-4">
-                     <div className="flex items-center gap-2">
-                       <MessageSquare className="h-4 w-4 text-primary" />
-                       <CardTitle className="text-[10px] sm:text-sm font-bold uppercase tracking-wider">{req.requestType}</CardTitle>
+                     <div className="flex items-center gap-2 min-w-0">
+                       <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+                       <CardTitle className="text-[10px] sm:text-sm font-bold uppercase tracking-wider truncate">{req.requestType}</CardTitle>
                      </div>
                      <Badge className={cn(
-                       "text-[9px] sm:text-xs",
+                       "text-[9px] sm:text-xs shrink-0",
                        req.status === 'completed' ? 'bg-green-100 text-green-700' : 
                        req.status === 'viewed' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
                      )}>
@@ -692,7 +692,7 @@ export default function AdminPage(props: {
                          <p className="font-bold text-sm sm:text-base truncate">{req.name}</p>
                          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{req.email} | {req.phone}</p>
                        </div>
-                       <p className="text-[9px] sm:text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleString()}</p>
+                       <p className="text-[9px] sm:text-xs text-muted-foreground shrink-0">{new Date(req.createdAt).toLocaleString()}</p>
                      </div>
                      <p className="text-[11px] sm:text-sm italic p-2 sm:p-3 bg-muted/30 rounded-lg">"{req.message}"</p>
                      <div className="flex flex-wrap gap-2 pt-2">
@@ -702,7 +702,7 @@ export default function AdminPage(props: {
                        <Button size="sm" variant="outline" className="h-8 text-[10px] sm:text-xs" onClick={() => updateRequestStatus(req.id, 'completed')} disabled={req.status === 'completed'}>
                          <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Completed
                        </Button>
-                       <Button size="sm" variant="ghost" onClick={() => handleDelete("prayer_requests", req.id)} className="text-destructive ml-auto h-8 w-8 p-0">
+                       <Button size="sm" variant="ghost" onClick={() => handleDelete("prayer_requests", req.id)} className="text-destructive ml-auto h-8 w-8 p-0 shrink-0">
                          <Trash2 className="h-4 w-4" />
                        </Button>
                      </div>
@@ -715,7 +715,7 @@ export default function AdminPage(props: {
       </div>
 
       <AlertDialog open={!!pendingRoleUpdate} onOpenChange={() => setPendingRoleUpdate(null)}>
-        <AlertDialogContent className="w-[95%] max-w-md">
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'ग्रेड परिवर्तन की पुष्टि' : 'Confirm Grade Change'}</AlertDialogTitle>
             <AlertDialogDescription asChild>
