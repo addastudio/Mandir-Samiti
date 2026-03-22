@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, sendEmailVerification, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield, ArrowLeft } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield, ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -386,6 +386,14 @@ export default function DashboardPage(props: {
                       <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : userRequests && userRequests.length > 0 ? (
                       <div className="divide-y">
+                        <div className="p-4 bg-muted/20 flex justify-end">
+                          <Link href="/#prayer">
+                            <Button size="sm" className="gap-2 h-8 text-xs">
+                              <Plus className="h-3 w-3" />
+                              {t.dashboardNewRequest}
+                            </Button>
+                          </Link>
+                        </div>
                         {userRequests.map(r => (
                           <div key={r.id} className="p-4 sm:p-5 hover:bg-muted/30 transition-colors">
                             <div className="flex justify-between items-start gap-2 mb-2">
@@ -404,9 +412,15 @@ export default function DashboardPage(props: {
                         ))}
                       </div>
                     ) : (
-                      <div className="py-20 sm:py-24 text-center text-muted-foreground px-4">
+                      <div className="py-20 sm:py-24 text-center text-muted-foreground px-4 flex flex-col items-center gap-4">
                         <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                        <p className="text-sm">No requests found.</p>
+                        <p className="text-sm">{language === 'hi' ? 'कोई निवेदन नहीं मिला।' : 'No requests found.'}</p>
+                        <Link href="/#prayer">
+                          <Button variant="default" className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            {t.dashboardNewRequest}
+                          </Button>
+                        </Link>
                       </div>
                     )}
                   </CardContent>
