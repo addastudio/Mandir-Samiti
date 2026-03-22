@@ -1,9 +1,10 @@
+
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, LogIn, LayoutDashboard, Heart, User as UserIcon } from "lucide-react";
+import { Menu, X, LogIn, LayoutDashboard, Heart, User as UserIcon, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -16,16 +17,25 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import TempleIcon from "@/components/icons/TempleIcon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { doc } from "firebase/firestore";
 
 export function Header() {
   const { t, language } = useLanguage();
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
+
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "roles_admin", user.uid);
+  }, [firestore, user]);
+
+  const { data: adminDoc } = useDoc(adminRoleRef);
 
   const navItems = [
     { href: "#home", label: t.navHome },
@@ -170,6 +180,13 @@ export function Header() {
           <div className="h-6 w-px bg-border/60" />
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
+            {adminDoc && (
+              <Link href="/admin">
+                <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 h-10 w-10" title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}>
+                  <ShieldCheck className="h-6 w-6" />
+                </Button>
+              </Link>
+            )}
             <AuthButton />
             <Link href="#donate">
               <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
@@ -187,6 +204,13 @@ export function Header() {
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
+          {adminDoc && (
+            <Link href="/admin">
+              <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 h-10 w-10">
+                <ShieldCheck className="h-6 w-6" />
+              </Button>
+            </Link>
+          )}
           <AuthButton className="flex" />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -226,6 +250,19 @@ export function Header() {
                   className="flex-col items-start gap-0"
                   isMobile
                 />
+                {adminDoc && (
+                   <Link 
+                    href="/admin" 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 w-full py-4 text-lg border-b border-border/50 text-primary font-bold",
+                      language === "hi" ? "font-hindi" : ""
+                    )}
+                   >
+                     <ShieldCheck className="h-6 w-6" />
+                     {language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
+                   </Link>
+                )}
               </div>
 
               <div className="border-t bg-secondary/30 p-6 space-y-4">
