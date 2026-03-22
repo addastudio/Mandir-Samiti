@@ -200,7 +200,7 @@ export default function DashboardPage(props: {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => router.back()}
+            onClick={() => router.push("/")}
             className="h-10 w-10 rounded-full hover:bg-primary/10 text-primary shrink-0"
           >
             <ArrowLeft className="h-6 w-6" />

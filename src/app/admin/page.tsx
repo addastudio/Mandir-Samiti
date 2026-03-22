@@ -337,7 +337,7 @@ export default function AdminPage(props: {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => router.back()}
+            onClick={() => router.push("/")}
             className="h-10 w-10 rounded-full hover:bg-primary/10 text-primary shrink-0"
           >
             <ArrowLeft className="h-6 w-6" />
@@ -728,7 +728,7 @@ export default function AdminPage(props: {
       <AlertDialog open={!!pendingRoleUpdate} onOpenChange={() => setPendingRoleUpdate(null)}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'ग्रेड परिवर्तन की पुष्टि' : 'Confirm Grade Change'}</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'GRADE CHANGE CONFIRMATION' : 'Confirm Grade Change'}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4 pt-2">
                 <div className="font-semibold text-foreground text-sm sm:text-base">

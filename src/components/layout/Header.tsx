@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, LogIn, LayoutDashboard, Heart } from "lucide-react";
+import { Menu, X, LogIn, LayoutDashboard, Heart, User as UserIcon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { useUser } from "@/firebase";
 import TempleIcon from "@/components/icons/TempleIcon";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Header() {
   const { t, language } = useLanguage();
@@ -62,17 +63,17 @@ export function Header() {
 
   const AuthButton = ({ className, isMobile = false }: { className?: string; isMobile?: boolean }) => {
     if (isUserLoading) {
-      return <div className={cn("h-9 w-24 animate-pulse rounded-md bg-muted", className)} />;
+      return <div className={cn("h-10 w-10 animate-pulse rounded-full bg-muted", className)} />;
     }
     if (user) {
       return (
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-          <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:justify-center">
-            <LayoutDashboard className="h-4 w-4" />
-            <span className={cn(language === "hi" ? "font-hindi" : "")}>
-              {language === "hi" ? "डैशबोर्ड" : "Dashboard"}
-            </span>
-          </Button>
+          <Avatar className="h-10 w-10 border-2 border-primary/20 hover:border-primary transition-colors">
+            <AvatarImage src={user.photoURL || ""} />
+            <AvatarFallback className="bg-primary/10 text-primary font-bold">
+              {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase() || <UserIcon className="h-5 w-5" />}
+            </AvatarFallback>
+          </Avatar>
         </Link>
       );
     }
