@@ -199,11 +199,11 @@ export default function AdminPage(props: {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 800 * 1024) { // Roughly 800KB to stay safe under 1MB Firestore limit
         toast({ 
           variant: "destructive", 
           title: language === 'hi' ? "फ़ाइल बहुत बड़ी है" : "File too large", 
-          description: language === 'hi' ? "कृपया 2MB से छोटी फ़ाइल चुनें।" : "Please select a file smaller than 2MB." 
+          description: language === 'hi' ? "कृपया 1MB से छोटी फ़ाइल चुनें।" : "Please select a file smaller than 1MB for Firestore storage." 
         });
         return;
       }
