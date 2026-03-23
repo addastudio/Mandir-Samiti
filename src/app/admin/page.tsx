@@ -355,11 +355,12 @@ export default function AdminPage(props: {
         <div className="flex items-center pt-4">
           <Button 
             variant="ghost" 
-            size="icon" 
+            size="sm" 
             onClick={() => router.push("/")}
-            className="h-10 w-10 rounded-full hover:bg-primary/10 text-primary shrink-0"
+            className="gap-2 text-muted-foreground hover:text-primary transition-colors"
           >
-            <ArrowLeft className="h-6 w-6" />
+            <ArrowLeft className="h-4 w-4" />
+            <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.backToHome}</span>
           </Button>
         </div>
 
