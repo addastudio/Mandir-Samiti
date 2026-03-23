@@ -555,18 +555,20 @@ export default function AdminPage(props: {
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                             <div className="flex flex-col gap-1.5 sm:w-48">
                               <Label className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'पद / ग्रेड असाइन करें' : 'Assign Grade'}</Label>
-                              <Select disabled={!canIManage} defaultValue={u.role || 'devotee'} onValueChange={(val) => handleUpdateUserRole(u.id, u.role || 'devotee', val, u.name || 'User')}>
-                                <SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select Grade" /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="devotee">{language === 'hi' ? 'भक्त' : 'Devotee'}</SelectItem>
-                                  <SelectItem value="member">{language === 'hi' ? 'सदस्य' : 'Member'}</SelectItem>
-                                  <SelectItem value="committee_member">{language === 'hi' ? 'समिति सदस्य' : 'Committee Member'}</SelectItem>
-                                  <SelectItem value="official">{language === 'hi' ? 'अधिकारी' : 'Official'}</SelectItem>
-                                  <SelectItem value="president">{language === 'hi' ? 'अध्यक्ष' : 'President'}</SelectItem>
-                                  <SelectItem value="secretary">{language === 'hi' ? 'सचिव' : 'Secretary'}</SelectItem>
-                                  <SelectItem value="treasurer">{language === 'hi' ? 'कोषाध्यक्ष' : 'Treasurer'}</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <select 
+                                disabled={!canIManage} 
+                                className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm"
+                                value={u.role || 'devotee'} 
+                                onChange={(e) => handleUpdateUserRole(u.id, u.role || 'devotee', e.target.value, u.name || 'User')}
+                              >
+                                <option value="devotee">{language === 'hi' ? 'भक्त' : 'Devotee'}</option>
+                                <option value="member">{language === 'hi' ? 'सदस्य' : 'Member'}</option>
+                                <option value="committee_member">{language === 'hi' ? 'समिति सदस्य' : 'Committee Member'}</option>
+                                <option value="official">{language === 'hi' ? 'अधिकारी' : 'Official'}</option>
+                                <option value="president">{language === 'hi' ? 'अध्यक्ष' : 'President'}</option>
+                                <option value="secretary">{language === 'hi' ? 'सचिव' : 'Secretary'}</option>
+                                <option value="treasurer">{language === 'hi' ? 'कोषाध्यक्ष' : 'Treasurer'}</option>
+                              </select>
                             </div>
 
                             <div className="flex flex-col gap-1.5">
@@ -577,19 +579,35 @@ export default function AdminPage(props: {
                                     {isUserAdmin ? (language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin') : (language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin')}
                                   </Button>
                                   
-                                  {isPresident && !isTargetMe && (
+                                  {isPresident && !isTargetMe && !isUserAdmin && (
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10 shrink-0"><Trash2 className="h-4 w-4" /></Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent className="w-[95%] max-w-md mx-auto">
                                         <AlertDialogHeader>
-                                          <AlertDialogTitle>{language === 'hi' ? 'रिकॉर्ड साफ़ करें?' : 'Purge User Record?'}</AlertDialogTitle>
-                                          <AlertDialogDescription>{language === 'hi' ? `यह डेटाबेस से ${u.name || 'उपयोगकर्ता'} के रिकॉर्ड को स्थायी रूप से हटा देगा।` : `Permanently delete the database record for ${u.name || 'this user'}.`}</AlertDialogDescription>
+                                          <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                                            <ShieldAlert className="h-5 w-5" />
+                                            {language === 'hi' ? 'स्थायी रूप से हटाएं?' : 'Permanently Delete?'}
+                                          </AlertDialogTitle>
+                                          <AlertDialogDescription className="space-y-3 pt-2 text-left">
+                                            <p className="font-bold text-foreground">
+                                              {language === 'hi' 
+                                                ? `क्या आप वाकई ${u.name || 'इस उपयोगकर्ता'} का सारा डेटा हटाना चाहते हैं?` 
+                                                : `Are you sure you want to delete all data for ${u.name || 'this user'}?`}
+                                            </p>
+                                            <p className="text-xs">
+                                              {language === 'hi' 
+                                                ? "यह कार्रवाई अपरिवर्तनीय है। उपयोगकर्ता का प्रोफ़ाइल और प्रशासनिक रिकॉर्ड पूरी तरह से साफ़ कर दिया जाएगा।" 
+                                                : "This action is irreversible. The user's profile and administrative records will be completely purged."}
+                                            </p>
+                                          </AlertDialogDescription>
                                         </AlertDialogHeader>
-                                        <AlertDialogFooter>
+                                        <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleHardDeleteUser(u.id)} className="bg-destructive text-destructive-foreground">Purge</AlertDialogAction>
+                                          <AlertDialogAction onClick={() => handleHardDeleteUser(u.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                            {language === 'hi' ? 'पूरी तरह से हटाएं' : 'Confirm Purge'}
+                                          </AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>
                                     </AlertDialog>
@@ -735,15 +753,14 @@ export default function AdminPage(props: {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="importance">{language === 'hi' ? 'महत्व' : 'Importance'}</Label>
-                      <Select name="importance" defaultValue="normal">
-                        <SelectTrigger id="importance">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="normal">{t.noticesNormal}</SelectItem>
-                          <SelectItem value="urgent">{t.noticesUrgent}</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <select 
+                        name="importance" 
+                        defaultValue="normal"
+                        className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      >
+                        <option value="normal">{t.noticesNormal}</option>
+                        <option value="urgent">{t.noticesUrgent}</option>
+                      </select>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -827,7 +844,7 @@ export default function AdminPage(props: {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'GRADE CHANGE CONFIRMATION' : 'Confirm Grade Change'}</AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <div className="space-y-4 pt-2">
+              <div className="space-y-4 pt-2 text-left">
                 <div className="font-semibold text-foreground text-sm sm:text-base">
                   {language === 'hi' 
                     ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?` 
