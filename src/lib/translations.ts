@@ -1,4 +1,3 @@
-
 export type TranslationKeys = {
   // Language Selector
   languagePopupTitle: string;
@@ -173,6 +172,11 @@ export type TranslationKeys = {
 
   // Signup
   signupEmailSent: string;
+  signupOtpTitle: string;
+  signupOtpDescription: string;
+  signupVerifyBtn: string;
+  signupOtpSent: string;
+  signupOtpError: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -319,6 +323,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     authError2FAPin: 'अमान्य पिन। कृपया पुनः प्रयास करें।',
     authErrorInvalidCredential: 'अमान्य ईमेल या पासवर्ड। कृपया पुनः प्रयास करें।',
     signupEmailSent: 'सत्यापन ईमेल भेज दिया गया है। कृपया अपना इनबॉक्स जांचें।',
+    signupOtpTitle: 'खाता सत्यापन',
+    signupOtpDescription: 'कृपया आपके ईमेल पर भेजा गया 6-अंकीय सत्यापन कोड (OTP) दर्ज करें।',
+    signupVerifyBtn: 'सत्यापित करें',
+    signupOtpSent: 'सत्यापन कोड भेज दिया गया है!',
+    signupOtpError: 'गलत सत्यापन कोड। कृपया पुनः प्रयास करें।',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -464,5 +473,10 @@ export const translations: { [key: string]: TranslationKeys } = {
     authError2FAPin: 'Invalid PIN. Please try again.',
     authErrorInvalidCredential: 'Invalid email or password. Please try again.',
     signupEmailSent: 'Verification email sent. Please check your inbox.',
+    signupOtpTitle: 'Account Verification',
+    signupOtpDescription: 'Please enter the 6-digit verification code (OTP) sent to your email.',
+    signupVerifyBtn: 'Verify Account',
+    signupOtpSent: 'Verification code sent successfully!',
+    signupOtpError: 'Invalid verification code. Please try again.',
   },
 };
