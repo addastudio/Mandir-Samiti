@@ -24,8 +24,9 @@ import {
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw } from "lucide-react";
+import { sendVerificationOtp } from "@/app/actions";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -42,6 +43,7 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [storedOtp, setStoredOtp] = useState("");
   const [tempUserId, setTempUserId] = useState("");
+  const [isResending, setIsResending] = useState(false);
   
   const auth = useAuth();
   const firestore = useFirestore();
@@ -66,13 +68,22 @@ export default function LoginPage() {
       // Check if verified via custom OTP flow
       if (userData && userData.isVerified === false) {
         setTempUserId(user.uid);
-        setStoredOtp(userData.verificationOtp || "");
+        const currentOtp = userData.verificationOtp || Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // If no OTP exists, generate and save one
+        if (!userData.verificationOtp) {
+          await updateDoc(userDocRef, { verificationOtp: currentOtp });
+        }
+        
+        setStoredOtp(currentOtp);
         setIsVerificationStep(true);
         
-        // Simulation: Dev-mode OTP reminder
+        // Call server action to "send" the email
+        await sendVerificationOtp(email, currentOtp);
+        
         toast({
           title: language === 'hi' ? 'खाता सत्यापन आवश्यक' : 'Verification Required',
-          description: `Dev OTP: ${userData.verificationOtp}`,
+          description: language === 'hi' ? 'एक नया कोड आपके ईमेल पर भेजा गया है।' : 'A verification code has been sent to your email.',
         });
         
         setIsLoading(false);
@@ -92,6 +103,27 @@ export default function LoginPage() {
     }
   };
 
+  const handleResendOtp = async () => {
+    if (!firestore || !tempUserId || !email) return;
+    setIsResending(true);
+    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    try {
+      const userDocRef = doc(firestore, "users", tempUserId);
+      await updateDoc(userDocRef, { verificationOtp: newOtp });
+      setStoredOtp(newOtp);
+      await sendVerificationOtp(email, newOtp);
+      
+      toast({
+        title: t.signupOtpSent,
+        description: language === 'hi' ? 'एक नया कोड आपके ईमेल पर भेजा गया है।' : 'A new verification code has been sent to your email.',
+      });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleVerifyOtp = async () => {
     if (!firestore || !tempUserId) return;
     setIsLoading(true);
@@ -99,7 +131,10 @@ export default function LoginPage() {
     if (otp === storedOtp) {
       try {
         const userDocRef = doc(firestore, "users", tempUserId);
-        await setDoc(userDocRef, { isVerified: true }, { merge: true });
+        await updateDoc(userDocRef, { 
+          isVerified: true,
+          verificationOtp: null // Clear OTP after success
+        });
         toast({ title: "Success", description: "Verification successful!" });
         router.push("/dashboard");
       } catch (err: any) {
@@ -146,7 +181,7 @@ export default function LoginPage() {
             </CardTitle>
             <CardDescription>{t.signupOtpDescription}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <Input 
               type="text"
               maxLength={6}
@@ -156,13 +191,29 @@ export default function LoginPage() {
               className="text-center text-3xl tracking-[0.5em] font-bold h-14"
               autoFocus
             />
-            <Button onClick={handleVerifyOtp} className="w-full h-12" disabled={otp.length !== 6 || isLoading}>
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
-              {t.signupVerifyBtn}
-            </Button>
-            <Button variant="ghost" onClick={() => setIsVerificationStep(false)} className="w-full">
-              {language === 'hi' ? 'पीछे जाएँ' : 'Go Back'}
-            </Button>
+            
+            <div className="space-y-3">
+              <Button onClick={handleVerifyOtp} className="w-full h-12" disabled={otp.length !== 6 || isLoading}>
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                {t.signupVerifyBtn}
+              </Button>
+              
+              <div className="flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleResendOtp} 
+                  className="w-full h-12 gap-2" 
+                  disabled={isResending}
+                >
+                  {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  {language === 'hi' ? 'नया कोड भेजें' : 'Resend Code'}
+                </Button>
+                
+                <Button variant="ghost" onClick={() => setIsVerificationStep(false)} className="w-full h-12">
+                  {language === 'hi' ? 'पीछे जाएँ' : 'Go Back'}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

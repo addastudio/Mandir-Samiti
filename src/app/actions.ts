@@ -25,7 +25,6 @@ export async function submitContactForm(prevState: any, formData: FormData) {
 
   try {
     // Here you would typically send an email, save to a database, etc.
-    // For this example, we'll just log the data.
     console.log("Contact Form Submitted:");
     console.log(validatedFields.data);
 
@@ -40,4 +39,19 @@ export async function submitContactForm(prevState: any, formData: FormData) {
       success: false,
     };
   }
+}
+
+/**
+ * Simulates sending a verification OTP to the user's email.
+ * In production, this would use a service like SendGrid, Mailgun, or AWS SES.
+ */
+export async function sendVerificationOtp(email: string, otp: string) {
+  console.log("------------------------------------------");
+  console.log(`[SIMULATED EMAIL SERVICE]`);
+  console.log(`TO: ${email}`);
+  console.log(`SUBJECT: Your Mandir Samiti Bahpura Verification Code`);
+  console.log(`BODY: Your verification code is: ${otp}`);
+  console.log("------------------------------------------");
+  
+  return { success: true };
 }
