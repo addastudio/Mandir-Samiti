@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -24,7 +25,7 @@ import {
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -66,20 +67,17 @@ export default function LoginPage() {
       const userDoc = await getDoc(userDocRef);
       const userData = userDoc.data();
 
-      // Check if verified via custom OTP flow
+      // Check for legacy users who were created but not verified
       if (userData && userData.isVerified === false) {
         setTempUserId(user.uid);
         const currentOtp = userData.verificationOtp || Math.floor(100000 + Math.random() * 900000).toString();
         
-        // If no OTP exists, generate and save one
         if (!userData.verificationOtp) {
           await updateDoc(userDocRef, { verificationOtp: currentOtp });
         }
         
         setStoredOtp(currentOtp);
         setIsVerificationStep(true);
-        
-        // Call server action to "send" the email (simulated)
         await sendVerificationOtp(email, currentOtp);
         
         toast({

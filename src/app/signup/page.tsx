@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -25,7 +26,7 @@ import {
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -42,10 +43,10 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
+  // OTP Step State
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otp, setOtp] = useState("");
   const [generatedOtp, setGeneratedOtp] = useState("");
-  const [tempUserId, setTempUserId] = useState("");
   const [isResending, setIsResending] = useState(false);
 
   const auth = useAuth();
@@ -59,24 +60,25 @@ export default function SignupPage() {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
-  const handleEmailSignup = async (e: React.FormEvent) => {
+  /**
+   * First step of signup: Validate local inputs and "send" OTP.
+   * Account is NOT created yet.
+   */
+  const handleInitiateSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth || !firestore) return;
     setIsLoading(true);
     setError(null);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
 
-      await updateProfile(user, { displayName: name });
-      
+    // Basic password strength check before OTP
+    if (password.length < 6) {
+      setError(t.authErrorWeakPassword);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
       const newOtp = generateRandomOtp();
       setGeneratedOtp(newOtp);
-      setTempUserId(user.uid);
 
       // Call server action to "send" the email (simulated)
       await sendVerificationOtp(email, newOtp);
@@ -86,51 +88,18 @@ export default function SignupPage() {
         description: language === 'hi' ? 'कृपया अपना ईमेल (सिमुलेशन) जांचें।' : 'Please check your email (simulated).',
       });
 
-      const userDocRef = doc(firestore, "users", user.uid);
-      const userData = {
-        id: user.uid,
-        name: name,
-        email: user.email,
-        role: "devotee",
-        language: language,
-        isVerified: false,
-        verificationOtp: newOtp,
-        twoFactorEnabled: false,
-      };
-
-      await setDoc(userDocRef, userData, { merge: true });
       setIsOtpStep(true);
     } catch (err: any) {
-      let errorMessage = err.message;
-      if (err.code === 'auth/email-already-in-use') {
-        errorMessage = t.authErrorEmailInUse;
-      } else if (err.code === 'auth/weak-password') {
-        errorMessage = t.authErrorWeakPassword;
-      } else if (err.code === 'auth/invalid-email') {
-        errorMessage = t.authErrorInvalidEmail;
-      } else if (err.code === 'auth/network-request-failed') {
-        errorMessage = language === 'hi' 
-          ? "नेटवर्क त्रुटि: कृपया अपना इंटरनेट कनेक्शन जांचें।" 
-          : "Network error: Please check your internet connection.";
-      }
-      setError(errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Signup failed",
-        description: errorMessage,
-      });
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    if (!firestore || !tempUserId || !email) return;
     setIsResending(true);
     const newOtp = generateRandomOtp();
     try {
-      const userDocRef = doc(firestore, "users", tempUserId);
-      await updateDoc(userDocRef, { verificationOtp: newOtp });
       setGeneratedOtp(newOtp);
       await sendVerificationOtp(email, newOtp);
       
@@ -145,34 +114,73 @@ export default function SignupPage() {
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (!firestore || !tempUserId) return;
+  /**
+   * Second step of signup: Verify OTP and then CREATE account.
+   */
+  const handleVerifyAndCreateAccount = async () => {
+    if (!auth || !firestore) return;
     setIsLoading(true);
     
-    if (otp === generatedOtp) {
-      try {
-        const userDocRef = doc(firestore, "users", tempUserId);
-        await updateDoc(userDocRef, { 
-          isVerified: true,
-          verificationOtp: null 
-        });
-        
-        toast({ 
-          title: language === "hi" ? "सफलता" : "Success",
-          description: language === 'hi' ? 'आपका खाता सफलतापूर्वक सत्यापित हो गया है!' : 'Your account has been successfully verified!' 
-        });
-        router.push("/dashboard");
-      } catch (err: any) {
-        toast({ variant: "destructive", title: "Error", description: err.message });
-      }
-    } else {
+    if (otp !== generatedOtp) {
       toast({
         variant: "destructive",
         title: t.signupOtpError,
         description: language === 'hi' ? 'कृपया सही कोड दर्ज करें।' : 'Please enter the correct code.',
       });
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
+
+    try {
+      // Step 1: Create the Auth User
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // Step 2: Set Display Name
+      await updateProfile(user, { displayName: name });
+      
+      // Step 3: Create Firestore Document
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userData = {
+        id: user.uid,
+        name: name,
+        email: user.email,
+        role: "devotee",
+        language: language,
+        isVerified: true, // They verified before creation
+        twoFactorEnabled: false,
+      };
+
+      await setDoc(userDocRef, userData, { merge: true });
+      
+      toast({ 
+        title: language === "hi" ? "सफलता" : "Success",
+        description: language === 'hi' ? 'आपका खाता सफलतापूर्वक बनाया गया है!' : 'Your account has been successfully created!' 
+      });
+      
+      router.push("/dashboard");
+    } catch (err: any) {
+      let errorMessage = err.message;
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = t.authErrorEmailInUse;
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = t.authErrorWeakPassword;
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = t.authErrorInvalidEmail;
+      }
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Signup failed",
+        description: errorMessage,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignup = async () => {
@@ -205,15 +213,6 @@ export default function SignupPage() {
       router.push("/dashboard");
     } catch (err: any) {
       if (err.code === 'auth/popup-closed-by-user') {
-        setIsLoading(false);
-        return;
-      }
-      if (err.code === 'auth/operation-not-allowed') {
-        const msg = language === 'hi' 
-          ? "Google लॉगिन सक्षम नहीं है। कृपया व्यवस्थापक से संपर्क करें।" 
-          : "Google login is not enabled. Please check Authorized Domains in Firebase Console.";
-        setError(msg);
-        toast({ variant: "destructive", title: "Configuration Error", description: msg });
         setIsLoading(false);
         return;
       }
@@ -272,9 +271,9 @@ export default function SignupPage() {
             </div>
             
             <div className="space-y-3">
-              <Button onClick={handleVerifyOtp} className="w-full h-12" disabled={otp.length !== 6 || isLoading}>
+              <Button onClick={handleVerifyAndCreateAccount} className="w-full h-12" disabled={otp.length !== 6 || isLoading}>
                 {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
-                {t.signupVerifyBtn}
+                {language === 'hi' ? 'सत्यापित करें और खाता बनाएं' : 'Verify & Create Account'}
               </Button>
               
               <div className="flex flex-col gap-2">
@@ -318,7 +317,7 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleEmailSignup} className="space-y-4">
+          <form onSubmit={handleInitiateSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name" className={cn(language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'पूरा नाम' : 'Full Name'}</Label>
               <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required className="border-primary/20" />
@@ -338,7 +337,7 @@ export default function SignupPage() {
             </div>
             {error && <p className="text-sm text-destructive font-medium p-2 rounded bg-destructive/5">{error}</p>}
             <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading}>
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : (language === 'hi' ? "साइन अप करें" : "Sign Up")}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : (language === 'hi' ? "साइन अप शुरू करें" : "Start Signup")}
             </Button>
           </form>
           
