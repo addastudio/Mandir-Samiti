@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -46,6 +45,7 @@ export default function LoginPage() {
   const [storedOtp, setStoredOtp] = useState("");
   const [tempUserId, setTempUserId] = useState("");
   const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   
   const auth = useAuth();
   const firestore = useFirestore();
@@ -53,6 +53,14 @@ export default function LoginPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +86,7 @@ export default function LoginPage() {
         
         setStoredOtp(currentOtp);
         setIsVerificationStep(true);
+        setResendCooldown(60);
         await sendVerificationOtp(email, currentOtp);
         
         toast({
@@ -103,7 +112,7 @@ export default function LoginPage() {
   };
 
   const handleResendOtp = async () => {
-    if (!firestore || !tempUserId || !email) return;
+    if (!firestore || !tempUserId || !email || resendCooldown > 0) return;
     setIsResending(true);
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
     try {
@@ -116,6 +125,7 @@ export default function LoginPage() {
         title: t.signupOtpSent,
         description: language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been sent (simulated).',
       });
+      setResendCooldown(60);
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
@@ -219,10 +229,11 @@ export default function LoginPage() {
                   variant="outline" 
                   onClick={handleResendOtp} 
                   className="w-full h-12 gap-2" 
-                  disabled={isResending}
+                  disabled={isResending || resendCooldown > 0}
                 >
                   {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                   {language === 'hi' ? 'नया कोड भेजें' : 'Resend Code'}
+                  {resendCooldown > 0 && ` (${resendCooldown}s)`}
                 </Button>
                 
                 <Button variant="ghost" onClick={() => setIsVerificationStep(false)} className="w-full h-12">

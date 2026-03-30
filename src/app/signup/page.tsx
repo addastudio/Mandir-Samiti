@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -48,6 +47,7 @@ export default function SignupPage() {
   const [otp, setOtp] = useState("");
   const [generatedOtp, setGeneratedOtp] = useState("");
   const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const auth = useAuth();
   const firestore = useFirestore();
@@ -55,6 +55,14 @@ export default function SignupPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const generateRandomOtp = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -89,6 +97,7 @@ export default function SignupPage() {
       });
 
       setIsOtpStep(true);
+      setResendCooldown(60);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -97,6 +106,7 @@ export default function SignupPage() {
   };
 
   const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
     setIsResending(true);
     const newOtp = generateRandomOtp();
     try {
@@ -107,6 +117,7 @@ export default function SignupPage() {
         title: t.signupOtpSent,
         description: language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been sent (simulated).',
       });
+      setResendCooldown(60);
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
@@ -281,10 +292,11 @@ export default function SignupPage() {
                   variant="outline" 
                   onClick={handleResendOtp} 
                   className="w-full h-12 gap-2" 
-                  disabled={isResending}
+                  disabled={isResending || resendCooldown > 0}
                 >
                   {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                   {language === 'hi' ? 'नया कोड भेजें' : 'Resend Code'}
+                  {resendCooldown > 0 && ` (${resendCooldown}s)`}
                 </Button>
                 
                 <Button variant="ghost" onClick={() => setIsOtpStep(false)} className="w-full h-12">
