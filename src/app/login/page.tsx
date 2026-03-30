@@ -25,7 +25,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -75,7 +75,6 @@ export default function LoginPage() {
       const userDoc = await getDoc(userDocRef);
       const userData = userDoc.data();
 
-      // Check for legacy users who were created but not verified
       if (userData && userData.isVerified === false) {
         setTempUserId(user.uid);
         const currentOtp = userData.verificationOtp || Math.floor(100000 + Math.random() * 900000).toString();
@@ -91,7 +90,7 @@ export default function LoginPage() {
         
         toast({
           title: language === 'hi' ? 'सत्यापन आवश्यक' : 'Verification Required',
-          description: language === 'hi' ? 'कृपया अपना ईमेल सिमुलेशन जांचें।' : 'Please check your email simulation.',
+          description: language === 'hi' ? 'कृपया अपना ईमेल सिमुलेशन कोड देखें।' : 'Please see the verification code log.',
         });
         
         setIsLoading(false);
@@ -123,7 +122,7 @@ export default function LoginPage() {
       
       toast({
         title: t.signupOtpSent,
-        description: language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been sent (simulated).',
+        description: language === 'hi' ? 'एक नया कोड सिम्युलेट किया गया है।' : 'A new code has been simulated.',
       });
       setResendCooldown(60);
     } catch (err: any) {
@@ -192,18 +191,21 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             
-            {/* Development Hint Alert */}
-            <Alert variant="default" className="bg-amber-50 border-amber-200">
-              <Info className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-amber-800 text-xs font-bold">DEVELOPMENT MODE</AlertTitle>
-              <AlertDescription className="text-amber-700 text-xs mt-1">
-                {language === 'hi' 
-                  ? `ईमेल सिमुलेशन कोड: ${storedOtp}` 
-                  : `Simulated Email Code: ${storedOtp}`}
-                <p className="mt-1 opacity-70">
+            <Alert variant="default" className="bg-amber-100 border-amber-300 ring-4 ring-amber-500/20">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <AlertTitle className="text-amber-800 text-sm font-black uppercase tracking-tighter">
+                {language === 'hi' ? 'महत्वपूर्ण: विकास मोड' : 'PROTOTYPE MODE: READ THIS'}
+              </AlertTitle>
+              <AlertDescription className="text-amber-900 font-medium mt-2">
+                <p className="text-base font-bold bg-white/50 p-2 rounded border border-amber-400">
                   {language === 'hi' 
-                    ? "(वास्तविक उत्पादन में यह कोड केवल ईमेल पर भेजा जाएगा)" 
-                    : "(In production, this code is sent privately via email)"}
+                    ? `सत्यापन कोड: ${storedOtp}` 
+                    : `Your Verification Code: ${storedOtp}`}
+                </p>
+                <p className="mt-2 text-[10px] leading-tight opacity-80">
+                  {language === 'hi' 
+                    ? "चूंकि यह एक प्रोटोटाइप है, असली ईमेल नहीं भेजा गया है। ऊपर दिया गया कोड उपयोग करें।" 
+                    : "Real emails are not sent in this sandbox. Use the code above to proceed."}
                 </p>
               </AlertDescription>
             </Alert>

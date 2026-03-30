@@ -26,7 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -68,16 +68,11 @@ export default function SignupPage() {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
-  /**
-   * First step of signup: Validate local inputs and "send" OTP.
-   * Account is NOT created yet.
-   */
   const handleInitiateSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    // Basic password strength check before OTP
     if (password.length < 6) {
       setError(t.authErrorWeakPassword);
       setIsLoading(false);
@@ -87,13 +82,11 @@ export default function SignupPage() {
     try {
       const newOtp = generateRandomOtp();
       setGeneratedOtp(newOtp);
-
-      // Call server action to "send" the email (simulated)
       await sendVerificationOtp(email, newOtp);
 
       toast({
         title: language === 'hi' ? 'सत्यापन संदेश भेजा गया' : 'Verification Sent',
-        description: language === 'hi' ? 'कृपया अपना ईमेल (सिमुलेशन) जांचें।' : 'Please check your email (simulated).',
+        description: language === 'hi' ? 'कृपया अपना ईमेल सिमुलेशन जांचें।' : 'Please check your simulated email log.',
       });
 
       setIsOtpStep(true);
@@ -115,7 +108,7 @@ export default function SignupPage() {
       
       toast({
         title: t.signupOtpSent,
-        description: language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been sent (simulated).',
+        description: language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been simulated.',
       });
       setResendCooldown(60);
     } catch (err: any) {
@@ -125,9 +118,6 @@ export default function SignupPage() {
     }
   };
 
-  /**
-   * Second step of signup: Verify OTP and then CREATE account.
-   */
   const handleVerifyAndCreateAccount = async () => {
     if (!auth || !firestore) return;
     setIsLoading(true);
@@ -143,18 +133,10 @@ export default function SignupPage() {
     }
 
     try {
-      // Step 1: Create the Auth User
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
-      // Step 2: Set Display Name
       await updateProfile(user, { displayName: name });
       
-      // Step 3: Create Firestore Document
       const userDocRef = doc(firestore, "users", user.uid);
       const userData = {
         id: user.uid,
@@ -162,7 +144,7 @@ export default function SignupPage() {
         email: user.email,
         role: "devotee",
         language: language,
-        isVerified: true, // They verified before creation
+        isVerified: true,
         twoFactorEnabled: false,
       };
 
@@ -180,15 +162,9 @@ export default function SignupPage() {
         errorMessage = t.authErrorEmailInUse;
       } else if (err.code === 'auth/weak-password') {
         errorMessage = t.authErrorWeakPassword;
-      } else if (err.code === 'auth/invalid-email') {
-        errorMessage = t.authErrorInvalidEmail;
       }
       setError(errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Signup failed",
-        description: errorMessage,
-      });
+      toast({ variant: "destructive", title: "Signup failed", description: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +177,6 @@ export default function SignupPage() {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
@@ -253,18 +228,21 @@ export default function SignupPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             
-            {/* Development Hint Alert */}
-            <Alert variant="default" className="bg-amber-50 border-amber-200">
-              <Info className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-amber-800 text-xs font-bold">DEVELOPMENT MODE</AlertTitle>
-              <AlertDescription className="text-amber-700 text-xs mt-1">
-                {language === 'hi' 
-                  ? `ईमेल सिमुलेशन कोड: ${generatedOtp}` 
-                  : `Simulated Email Code: ${generatedOtp}`}
-                <p className="mt-1 opacity-70">
+            <Alert variant="default" className="bg-amber-100 border-amber-300 ring-4 ring-amber-500/20">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <AlertTitle className="text-amber-800 text-sm font-black uppercase tracking-tighter">
+                {language === 'hi' ? 'महत्वपूर्ण: विकास मोड' : 'PROTOTYPE MODE: READ THIS'}
+              </AlertTitle>
+              <AlertDescription className="text-amber-900 font-medium mt-2">
+                <p className="text-base font-bold bg-white/50 p-2 rounded border border-amber-400">
                   {language === 'hi' 
-                    ? "(वास्तविक उत्पादन में यह कोड केवल ईमेल पर भेजा जाएगा)" 
-                    : "(In production, this code is sent privately via email)"}
+                    ? `सत्यापन कोड: ${generatedOtp}` 
+                    : `Your Verification Code: ${generatedOtp}`}
+                </p>
+                <p className="mt-2 text-[10px] leading-tight opacity-80">
+                  {language === 'hi' 
+                    ? "चूंकि यह एक प्रोटोटाइप है, असली ईमेल नहीं भेजा गया है। ऊपर दिया गया कोड उपयोग करें।" 
+                    : "Real emails are not sent in this sandbox. Use the code above to proceed."}
                 </p>
               </AlertDescription>
             </Alert>
