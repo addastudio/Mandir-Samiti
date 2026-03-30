@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -12,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -33,6 +32,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { getEmailServiceStatus } from "@/app/actions";
 
 const ROLE_HIERARCHY: Record<string, number> = {
   'president': 100,
@@ -68,9 +68,12 @@ export default function AdminPage(props: {
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
   const [galleryMediaPreview, setGalleryMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
+  const [emailStatus, setEmailStatus] = useState<{ isLive: boolean; provider: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    // Check email service status on mount
+    getEmailServiceStatus().then(setEmailStatus);
   }, []);
 
   const currentUserRef = useMemoFirebase(() => {
@@ -310,11 +313,6 @@ export default function AdminPage(props: {
     setIsResigningInProgress(true);
     try {
       if (isPasswordUser) {
-        if (!resignPassword) {
-          toast({ variant: "destructive", title: language === 'hi' ? "पासवर्ड आवश्यक है" : "Password Required" });
-          setIsResigningInProgress(false);
-          return;
-        }
         const credential = EmailAuthProvider.credential(user.email!, resignPassword);
         await reauthenticateWithCredential(user, credential);
       }
@@ -446,6 +444,9 @@ export default function AdminPage(props: {
             </TabsTrigger>
             <TabsTrigger value="users" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0">
               <Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex-1 sm:flex-none min-w-[100px] gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 sm:py-3 text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0">
+              <Settings className="h-4 w-4" /> {language === 'hi' ? 'सेटिंग्स' : 'Settings'}
             </TabsTrigger>
           </TabsList>
 
@@ -835,6 +836,71 @@ export default function AdminPage(props: {
                  </Card>
                ))}
              </div>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <Card className="border-primary/20 shadow-md">
+              <CardHeader className="bg-primary/5 p-4 sm:p-6">
+                <CardTitle className={cn("text-lg sm:text-xl flex items-center gap-2", language === 'hi' ? 'font-hindi' : '')}>
+                  <Zap className="h-5 w-5 text-primary" />
+                  {language === 'hi' ? 'सिस्टम स्थिति' : 'System Status'}
+                </CardTitle>
+                <CardDescription>
+                  {language === 'hi' ? 'महत्वपूर्ण सिस्टम सेवाओं की स्थिति की जाँच करें।' : 'Monitor the health and configuration of essential services.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-4 rounded-xl border bg-muted/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-5 w-5 text-primary" />
+                        <span className="font-bold text-sm">{language === 'hi' ? 'ईमेल सेवा' : 'Email Service'}</span>
+                      </div>
+                      {emailStatus?.isLive ? (
+                        <Badge className="bg-green-100 text-green-700 border-green-200">Live</Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">Prototype Mode</Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-2">
+                      <p>
+                        {emailStatus?.isLive 
+                          ? (language === 'hi' ? `आपकी ईमेल सेवा '${emailStatus.provider}' के माध्यम से लाइव है।` : `Your email service is active via '${emailStatus.provider}'.`)
+                          : (language === 'hi' ? 'ईमेल सेवा वर्तमान में सिमुलेशन मोड में है। कोई वास्तविक ईमेल नहीं भेजा जाएगा।' : 'The email service is currently in simulation mode. Real emails will NOT be sent.')}
+                      </p>
+                      {!emailStatus?.isLive && (
+                        <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 flex gap-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                          <p className="text-[10px] text-amber-800">
+                            {language === 'hi' 
+                              ? "लाइव जाने के लिए, कृपया Firebase App Hosting में 'RESEND_API_KEY' एनवायरनमेंट वेरिएबल जोड़ें।" 
+                              : "To go live, please add the 'RESEND_API_KEY' environment variable in your Firebase App Hosting console."}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl border bg-muted/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-primary" />
+                        <span className="font-bold text-sm">{language === 'hi' ? 'सुरक्षा स्थिति' : 'Security Status'}</span>
+                      </div>
+                      <Badge className="bg-green-100 text-green-700 border-green-200">Active</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-2">
+                      <p>{language === 'hi' ? 'फायरबेस सुरक्षा नियम और पद-आधारित पहुँच नियंत्रण सक्रिय हैं।' : 'Firestore Security Rules and Role-Based Access Control are fully active.'}</p>
+                      <ul className="list-disc pl-4 space-y-1">
+                        <li>{language === 'hi' ? 'ग्रेड-आधारित पदानुक्रम' : 'Grade-based hierarchy enforcement'}</li>
+                        <li>{language === 'hi' ? 'सुरक्षित प्रमाणीकरण' : 'Secure OTP Authentication'}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

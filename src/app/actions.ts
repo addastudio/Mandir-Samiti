@@ -11,6 +11,17 @@ const contactSchema = z.object({
   message: z.string().min(10, { message: "Message must be at least 10 characters." }),
 });
 
+/**
+ * Checks if the live email service is configured.
+ * This is used by the admin panel to show the system status.
+ */
+export async function getEmailServiceStatus() {
+  return {
+    isLive: !!process.env.RESEND_API_KEY,
+    provider: "Resend",
+  };
+}
+
 export async function submitContactForm(prevState: any, formData: FormData) {
   const validatedFields = contactSchema.safeParse({
     name: formData.get("name"),
