@@ -25,8 +25,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -78,12 +79,12 @@ export default function LoginPage() {
         setStoredOtp(currentOtp);
         setIsVerificationStep(true);
         
-        // Call server action to "send" the email
+        // Call server action to "send" the email (simulated)
         await sendVerificationOtp(email, currentOtp);
         
         toast({
-          title: language === 'hi' ? 'खाता सत्यापन आवश्यक' : 'Verification Required',
-          description: language === 'hi' ? 'एक नया कोड आपके ईमेल पर भेजा गया है।' : 'A verification code has been sent to your email.',
+          title: language === 'hi' ? 'सत्यापन आवश्यक' : 'Verification Required',
+          description: language === 'hi' ? 'कृपया अपना ईमेल सिमुलेशन जांचें।' : 'Please check your email simulation.',
         });
         
         setIsLoading(false);
@@ -115,7 +116,7 @@ export default function LoginPage() {
       
       toast({
         title: t.signupOtpSent,
-        description: language === 'hi' ? 'एक नया कोड आपके ईमेल पर भेजा गया है।' : 'A new verification code has been sent to your email.',
+        description: language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been sent (simulated).',
       });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
@@ -133,7 +134,7 @@ export default function LoginPage() {
         const userDocRef = doc(firestore, "users", tempUserId);
         await updateDoc(userDocRef, { 
           isVerified: true,
-          verificationOtp: null // Clear OTP after success
+          verificationOtp: null 
         });
         toast({ title: "Success", description: "Verification successful!" });
         router.push("/dashboard");
@@ -182,6 +183,23 @@ export default function LoginPage() {
             <CardDescription>{t.signupOtpDescription}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            
+            {/* Development Hint Alert */}
+            <Alert variant="default" className="bg-amber-50 border-amber-200">
+              <Info className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800 text-xs font-bold">DEVELOPMENT MODE</AlertTitle>
+              <AlertDescription className="text-amber-700 text-xs mt-1">
+                {language === 'hi' 
+                  ? `ईमेल सिमुलेशन कोड: ${storedOtp}` 
+                  : `Simulated Email Code: ${storedOtp}`}
+                <p className="mt-1 opacity-70">
+                  {language === 'hi' 
+                    ? "(वास्तविक उत्पादन में यह कोड केवल ईमेल पर भेजा जाएगा)" 
+                    : "(In production, this code is sent privately via email)"}
+                </p>
+              </AlertDescription>
+            </Alert>
+
             <Input 
               type="text"
               maxLength={6}

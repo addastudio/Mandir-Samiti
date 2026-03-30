@@ -26,8 +26,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function SignupPage() {
   const { t, language } = useLanguage();
@@ -77,12 +78,12 @@ export default function SignupPage() {
       setGeneratedOtp(newOtp);
       setTempUserId(user.uid);
 
-      // Call server action to "send" the email
+      // Call server action to "send" the email (simulated)
       await sendVerificationOtp(email, newOtp);
 
       toast({
-        title: language === 'hi' ? 'सत्यापन ईमेल भेजा गया' : 'Verification Email Sent',
-        description: language === 'hi' ? 'कृपया अपना ईमेल इनबॉक्स और स्पैम फ़ोल्डर जांचें।' : 'Please check your email inbox and spam folder.',
+        title: language === 'hi' ? 'सत्यापन संदेश भेजा गया' : 'Verification Sent',
+        description: language === 'hi' ? 'कृपया अपना ईमेल (सिमुलेशन) जांचें।' : 'Please check your email (simulated).',
       });
 
       const userDocRef = doc(firestore, "users", user.uid);
@@ -135,7 +136,7 @@ export default function SignupPage() {
       
       toast({
         title: t.signupOtpSent,
-        description: language === 'hi' ? 'एक नया कोड आपके ईमेल पर भेजा गया है।' : 'A new code has been sent to your email.',
+        description: language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been sent (simulated).',
       });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
@@ -153,7 +154,7 @@ export default function SignupPage() {
         const userDocRef = doc(firestore, "users", tempUserId);
         await updateDoc(userDocRef, { 
           isVerified: true,
-          verificationOtp: null // Clear the OTP after verification
+          verificationOtp: null 
         });
         
         toast({ 
@@ -195,7 +196,7 @@ export default function SignupPage() {
           email: user.email,
           role: "devotee",
           language: language,
-          isVerified: true, // Google users are pre-verified
+          isVerified: true, 
         };
         await setDoc(userDocRef, userData, { merge: true });
       }
@@ -241,6 +242,23 @@ export default function SignupPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            
+            {/* Development Hint Alert */}
+            <Alert variant="default" className="bg-amber-50 border-amber-200">
+              <Info className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800 text-xs font-bold">DEVELOPMENT MODE</AlertTitle>
+              <AlertDescription className="text-amber-700 text-xs mt-1">
+                {language === 'hi' 
+                  ? `ईमेल सिमुलेशन कोड: ${generatedOtp}` 
+                  : `Simulated Email Code: ${generatedOtp}`}
+                <p className="mt-1 opacity-70">
+                  {language === 'hi' 
+                    ? "(वास्तविक उत्पादन में यह कोड केवल ईमेल पर भेजा जाएगा)" 
+                    : "(In production, this code is sent privately via email)"}
+                </p>
+              </AlertDescription>
+            </Alert>
+
             <div className="space-y-2">
               <Input 
                 type="text"
