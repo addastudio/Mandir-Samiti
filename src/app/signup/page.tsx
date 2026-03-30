@@ -90,7 +90,7 @@ export default function SignupPage() {
         id: user.uid,
         name: name,
         email: user.email,
-        role: "user",
+        role: "devotee",
         language: language,
         isVerified: false,
         verificationOtp: newOtp,
@@ -107,6 +107,10 @@ export default function SignupPage() {
         errorMessage = t.authErrorWeakPassword;
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = t.authErrorInvalidEmail;
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = language === 'hi' 
+          ? "नेटवर्क त्रुटि: कृपया अपना इंटरनेट कनेक्शन जांचें।" 
+          : "Network error: Please check your internet connection.";
       }
       setError(errorMessage);
       toast({
@@ -189,7 +193,7 @@ export default function SignupPage() {
           id: user.uid,
           name: user.displayName || user.email?.split('@')[0] || 'User',
           email: user.email,
-          role: "user",
+          role: "devotee",
           language: language,
           isVerified: true, // Google users are pre-verified
         };
@@ -200,6 +204,15 @@ export default function SignupPage() {
       router.push("/dashboard");
     } catch (err: any) {
       if (err.code === 'auth/popup-closed-by-user') {
+        setIsLoading(false);
+        return;
+      }
+      if (err.code === 'auth/operation-not-allowed') {
+        const msg = language === 'hi' 
+          ? "Google लॉगिन सक्षम नहीं है। कृपया व्यवस्थापक से संपर्क करें।" 
+          : "Google login is not enabled. Please check Authorized Domains in Firebase Console.";
+        setError(msg);
+        toast({ variant: "destructive", title: "Configuration Error", description: msg });
         setIsLoading(false);
         return;
       }

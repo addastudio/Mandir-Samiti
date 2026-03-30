@@ -42,8 +42,6 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
-  const [isUpdating2FA, setIsUpdating2FA] = useState(false);
-  const [newPin, setNewPin] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -86,10 +84,11 @@ export default function DashboardPage() {
   };
 
   const handleRefreshStatus = async () => {
-    if (!user) return;
+    if (!user || !auth) return;
     setIsRefreshing(true);
     try {
-      // In a real app, this would re-fetch the userDoc to check for isVerified status
+      // Force reload the user's token and properties from the server
+      await auth.currentUser?.reload();
       router.refresh();
       toast({ title: "Updated", description: "Profile status refreshed successfully." });
     } catch (error: any) {
@@ -99,26 +98,12 @@ export default function DashboardPage() {
     }
   };
 
-  const handleUpdate2FA = async (enabled: boolean) => {
-    if (!userDocRef) return;
-    setIsUpdating2FA(true);
-    try {
-      const updateData: any = { twoFactorEnabled: enabled };
-      if (enabled && newPin.length === 6) updateData.twoFactorPin = newPin;
-      await updateDoc(userDocRef, updateData);
-      toast({ title: t.dashboard2FAUpdateSuccess });
-      setNewPin("");
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
-    } finally {
-      setIsUpdating2FA(false);
-    }
-  };
-
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
 
-    if (userProfile?.role && userProfile?.role !== 'devotee') {
+    // Standard 'devotee' or 'user' roles are allowed to delete directly.
+    // Higher committee roles must resign first to ensure records are handled properly.
+    if (userProfile?.role && !['devotee', 'user'].includes(userProfile.role)) {
       toast({ variant: "destructive", title: "Resignation Required", description: t.dashboardDeleteResignFirst });
       return;
     }
@@ -145,7 +130,13 @@ export default function DashboardPage() {
       toast({ title: "Account Deleted", description: "Your account has been successfully removed." });
       router.push("/");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      let msg = error.message;
+      if (error.code === 'auth/network-request-failed') {
+        msg = language === 'hi' 
+          ? "नेटवर्क त्रुटि: कृपया अपना इंटरनेट कनेक्शन जांचें।" 
+          : "Network error: Please check your internet connection.";
+      }
+      toast({ variant: "destructive", title: "Error", description: msg });
     } finally {
       setIsDeleting(false);
       setDeletePassword("");
@@ -180,7 +171,10 @@ export default function DashboardPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>{language === 'hi' ? 'खाता सत्यापित नहीं है' : 'Account Not Verified'}</AlertTitle>
             <AlertDescription className="flex items-center justify-between mt-2">
-              <span className="text-sm">{language === 'hi' ? 'कृपया अपनी लॉगिन स्क्रीन पर जाकर खाता सत्यापित करें।' : 'Please complete your account verification to access all features.'}</span>
+              <div className="space-y-1">
+                <p className="text-sm">{language === 'hi' ? 'कृपया अपनी लॉगिन स्क्रीन पर जाकर खाता सत्यापित करें।' : 'Please complete your account verification to access all features.'}</p>
+                <p className="text-[10px] opacity-80">{language === 'hi' ? 'सत्यापन कोड के लिए अपना ईमेल जांचें।' : 'Check your email for the verification code.'}</p>
+              </div>
               <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => router.push('/login')}>
                 {language === 'hi' ? 'अभी सत्यापित करें' : 'Verify Now'}
               </Button>
@@ -208,7 +202,12 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 space-y-6">
             <Card className="border-primary/20 shadow-md">
-              <CardHeader className="bg-primary/5 py-4 px-5"><CardTitle className="text-lg">{t.dashboardProfileInfo}</CardTitle></CardHeader>
+              <CardHeader className="bg-primary/5 py-4 px-5 flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">{t.dashboardProfileInfo}</CardTitle>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleRefreshStatus} disabled={isRefreshing}>
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                </Button>
+              </CardHeader>
               <CardContent className="pt-6 px-5 space-y-5">
                 <div className="space-y-1">
                   <label className="text-[10px] font-semibold text-muted-foreground uppercase">{t.dashboardEmail}</label>
@@ -303,7 +302,16 @@ export default function DashboardPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="py-20 text-center text-muted-foreground px-4"><MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-20" /><p>{language === 'hi' ? 'कोई निवेदन नहीं मिला।' : 'No requests found.'}</p></div>
+                      <div className="py-20 sm:py-24 text-center text-muted-foreground px-4">
+                        <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                        <p className="mb-4">{language === 'hi' ? 'कोई निवेदन नहीं मिला।' : 'No requests found.'}</p>
+                        <Link href="/prayer-request">
+                          <Button size="sm" variant="outline" className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            {t.dashboardNewRequest}
+                          </Button>
+                        </Link>
+                      </div>
                     )}
                   </CardContent>
                 </TabsContent>
