@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -135,6 +135,36 @@ export default function AdminPage(props: {
       }
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
+
+  const combinedUserList = React.useMemo(() => {
+    const userMap = new Map<string, any>();
+    
+    // Add all users from the profiles collection
+    allUsers?.forEach(u => {
+      userMap.set(u.id, { ...u, hasProfile: true, isGhost: false });
+    });
+    
+    // Add all admins, identifying those without profiles (Ghost records)
+    allAdmins?.forEach(a => {
+      if (userMap.has(a.id)) {
+        const existing = userMap.get(a.id);
+        userMap.set(a.id, { ...existing, isAdminRecord: true });
+      } else {
+        // This is a GHOST admin record (No profile doc but has admin doc)
+        userMap.set(a.id, {
+          id: a.id,
+          name: language === 'hi' ? 'हटाया गया खाता (अधूरी सफ़ाई)' : 'Deleted Account (Ghost Record)',
+          email: 'N/A',
+          role: 'devotee',
+          hasProfile: false,
+          isGhost: true,
+          isAdminRecord: true
+        });
+      }
+    });
+    
+    return Array.from(userMap.values());
+  }, [allUsers, allAdmins, language]);
 
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
@@ -514,67 +544,76 @@ export default function AdminPage(props: {
                 </Alert>
 
                 <div className="space-y-4">
-                  {allUsers?.slice().sort((a, b) => {
+                  {combinedUserList?.slice().sort((a, b) => {
+                    if (a.isGhost !== b.isGhost) return a.isGhost ? -1 : 1;
                     const weightA = a.role ? (ROLE_HIERARCHY[a.role] || 0) : 0;
                     const weightB = b.role ? (ROLE_HIERARCHY[b.role] || 0) : 0;
                     if (weightB !== weightA) return weightB - weightA;
                     return (a.name || '').localeCompare(b.name || '');
                   }).map((u) => {
-                    const isUserAdmin = isAdminUser(u.id);
-                    const canIManage = canManageUser(u.id, u.role || 'devotee');
+                    const isUserAdmin = u.isAdminRecord || isAdminUser(u.id);
+                    const canIManage = !u.isGhost && canManageUser(u.id, u.role || 'devotee');
                     const isTargetMe = u.id === user?.uid;
+                    const isGhost = u.isGhost;
                     
                     return (
-                      <Card key={u.id} className={cn("overflow-hidden border shadow-sm hover:shadow-md", !canIManage && !isTargetMe && "bg-muted/30")}>
+                      <Card key={u.id} className={cn("overflow-hidden border shadow-sm hover:shadow-md", !canIManage && !isTargetMe && !isGhost && "bg-muted/30", isGhost && "border-destructive/30 bg-destructive/5")}>
                         <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                           <div className="flex items-center gap-4 min-w-0 flex-1">
-                            <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-secondary flex items-center justify-center font-bold text-base sm:text-xl text-primary border shadow-inner shrink-0">
-                              {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
+                            <div className={cn("h-10 w-10 sm:h-14 sm:w-14 rounded-full flex items-center justify-center font-bold text-base sm:text-xl border shadow-inner shrink-0", isGhost ? "bg-destructive/10 text-destructive" : "bg-secondary text-primary")}>
+                              {isGhost ? <Ghost className="h-6 w-6" /> : (u.name?.charAt(0) || u.email?.charAt(0).toUpperCase())}
                             </div>
                             <div className="flex flex-col min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm sm:text-lg truncate">{u.name || 'User'}</span>
+                                <span className={cn("font-bold text-sm sm:text-lg truncate", isGhost && "text-destructive")}>{u.name || 'User'}</span>
                                 {isTargetMe && <Badge variant="outline" className="text-[9px] h-4 py-0 shrink-0">{language === 'hi' ? 'आप' : 'You'}</Badge>}
+                                {isGhost && <Badge variant="destructive" className="text-[8px] h-4 py-0 uppercase">{language === 'hi' ? 'भूत रिकॉर्ड' : 'Ghost'}</Badge>}
                               </div>
                               <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground truncate">
                                 <Mail className="h-3 w-3 shrink-0" /> {u.email}
                               </div>
                               <span className="text-[9px] sm:text-[10px] font-mono text-muted-foreground/60 mb-1 truncate">UID: {u.id}</span>
-                              <div className="flex flex-wrap gap-1 sm:gap-2 mt-1">
+                              <div className="flex wrap gap-1 sm:gap-2 mt-1">
                                 {isUserAdmin && <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] sm:text-[10px] h-5 py-0">{language === 'hi' ? 'व्यवस्थापक' : 'Admin'}</Badge>}
-                                <Badge variant="secondary" className="bg-secondary/50 font-medium text-[9px] sm:text-[10px] h-5 py-0">{u.role || (language === 'hi' ? 'भक्त' : 'Devotee')}</Badge>
+                                {!isGhost && <Badge variant="secondary" className="bg-secondary/50 font-medium text-[9px] sm:text-[10px] h-5 py-0">{u.role || (language === 'hi' ? 'भक्त' : 'Devotee')}</Badge>}
                               </div>
                             </div>
                           </div>
 
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                            <div className="flex flex-col gap-1.5 sm:w-48">
-                              <Label className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'पद / ग्रेड असाइन करें' : 'Assign Grade'}</Label>
-                              <select 
-                                disabled={!canIManage} 
-                                className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm"
-                                value={u.role || 'devotee'} 
-                                onChange={(e) => handleUpdateUserRole(u.id, u.role || 'devotee', e.target.value, u.name || 'User')}
-                              >
-                                <option value="devotee">{language === 'hi' ? 'भक्त' : 'Devotee'}</option>
-                                <option value="member">{language === 'hi' ? 'सदस्य' : 'Member'}</option>
-                                <option value="committee_member">{language === 'hi' ? 'समिति सदस्य' : 'Committee Member'}</option>
-                                <option value="official">{language === 'hi' ? 'अधिकारी' : 'Official'}</option>
-                                <option value="president">{language === 'hi' ? 'अध्यक्ष' : 'President'}</option>
-                                <option value="secretary">{language === 'hi' ? 'सचिव' : 'Secretary'}</option>
-                                <option value="treasurer">{language === 'hi' ? 'कोषाध्यक्ष' : 'Treasurer'}</option>
-                              </select>
-                            </div>
+                            {!isGhost && (
+                              <div className="flex flex-col gap-1.5 sm:w-48">
+                                <Label className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'पद / ग्रेड असाइन करें' : 'Assign Grade'}</Label>
+                                <select 
+                                  disabled={!canIManage} 
+                                  className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm"
+                                  value={u.role || 'devotee'} 
+                                  onChange={(e) => handleUpdateUserRole(u.id, u.role || 'devotee', e.target.value, u.name || 'User')}
+                                >
+                                  <option value="devotee">{language === 'hi' ? 'भक्त' : 'Devotee'}</option>
+                                  <option value="member">{language === 'hi' ? 'सदस्य' : 'Member'}</option>
+                                  <option value="committee_member">{language === 'hi' ? 'समिति सदस्य' : 'Committee Member'}</option>
+                                  <option value="official">{language === 'hi' ? 'अधिकारी' : 'Official'}</option>
+                                  <option value="president">{language === 'hi' ? 'अध्यक्ष' : 'President'}</option>
+                                  <option value="secretary">{language === 'hi' ? 'सचिव' : 'Secretary'}</option>
+                                  <option value="treasurer">{language === 'hi' ? 'कोषाध्यक्ष' : 'Treasurer'}</option>
+                                </select>
+                              </div>
+                            )}
 
                             <div className="flex flex-col gap-1.5">
-                               <Label className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">{language === 'hi' ? 'प्रबंधन पहुँच' : 'Management'}</Label>
+                               <Label className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">
+                                {isGhost ? (language === 'hi' ? 'सफ़ाई' : 'Cleanup') : (language === 'hi' ? 'प्रबंधन पहुँच' : 'Management')}
+                               </Label>
                                <div className="flex gap-2">
-                                  <Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role || 'devotee')} className={cn("flex-1 sm:flex-none gap-2 h-9 text-xs", isUserAdmin && "text-destructive border-destructive hover:bg-destructive/10")}>
-                                    {isUserAdmin ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                                    {isUserAdmin ? (language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin') : (language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin')}
-                                  </Button>
+                                  {!isGhost && (
+                                    <Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role || 'devotee')} className={cn("flex-1 sm:flex-none gap-2 h-9 text-xs", isUserAdmin && "text-destructive border-destructive hover:bg-destructive/10")}>
+                                      {isUserAdmin ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                                      {isUserAdmin ? (language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin') : (language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin')}
+                                    </Button>
+                                  )}
                                   
-                                  {isPresident && !isTargetMe && !isUserAdmin && (
+                                  {isPresident && !isTargetMe && isGhost && (
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10 shrink-0"><Trash2 className="h-4 w-4" /></Button>
@@ -583,25 +622,25 @@ export default function AdminPage(props: {
                                         <AlertDialogHeader>
                                           <AlertDialogTitle className="text-destructive flex items-center gap-2">
                                             <ShieldAlert className="h-5 w-5" />
-                                            {language === 'hi' ? 'स्थायी रूप से हटाएं?' : 'Permanently Delete?'}
+                                            {language === 'hi' ? 'रिकॉर्ड साफ़ करें?' : 'Purge Record?'}
                                           </AlertDialogTitle>
                                           <AlertDialogDescription className="space-y-3 pt-2 text-left">
                                             <p className="font-bold text-foreground">
                                               {language === 'hi' 
-                                                ? `क्या आप वाकई ${u.name || 'इस उपयोगकर्ता'} का सारा डेटा हटाना चाहते हैं?` 
-                                                : `Are you sure you want to delete all data for ${u.name || 'this user'}?`}
+                                                ? `यह एक 'भूत रिकॉर्ड' है जिसका मुख्य खाता हटाया जा चुका है। क्या आप इसे डेटाबेस से पूरी तरह हटाना चाहते हैं?` 
+                                                : `This is a 'Ghost Record' whose primary account has been deleted. Do you want to completely remove it from the database?`}
                                             </p>
                                             <p className="text-xs">
                                               {language === 'hi' 
-                                                ? "यह कार्रवाई अपरिवर्तनीय है। उपयोगकर्ता का प्रोफ़ाइल और प्रशासनिक रिकॉर्ड पूरी तरह से साफ़ कर दिया जाएगा।" 
-                                                : "This action is irreversible. The user's profile and administrative records will be completely purged."}
+                                                ? "यह कार्रवाई डेटाबेस में बचे हुए प्रशासनिक अवशेषों को साफ़ कर देगी।" 
+                                                : "This action will clean up the leftover administrative remains in the database."}
                                             </p>
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                                           <AlertDialogAction onClick={() => handleHardDeleteUser(u.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                            {language === 'hi' ? 'पूरी तरह से हटाएं' : 'Confirm Purge'}
+                                            {language === 'hi' ? 'साफ़ करें' : 'Confirm Purge'}
                                           </AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>
