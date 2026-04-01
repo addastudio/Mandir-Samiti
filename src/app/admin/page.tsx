@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -71,6 +71,10 @@ export default function AdminPage(props: {
     userName: string;
     role: string;
   } | null>(null);
+
+  const [adminConfirmPassword, setAdminConfirmPassword] = useState("");
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [isActionProcessing, setIsActionProcessing] = useState(false);
 
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
   const [resignPassword, setResignPassword] = useState("");
@@ -300,19 +304,36 @@ export default function AdminPage(props: {
     toast({ title: language === 'hi' ? "आइटम हटा दिया गया" : "Item deleted" });
   };
 
-  const confirmAdminToggle = () => {
-    if (!pendingAdminToggle || !firestore) return;
-    const { userId, isCurrentAdmin } = pendingAdminToggle;
-    const roleRef = doc(firestore, "roles_admin", userId);
+  const confirmAdminToggle = async () => {
+    if (!pendingAdminToggle || !firestore || !user) return;
+    setIsActionProcessing(true);
     
-    if (isCurrentAdmin) {
-      deleteDoc(roleRef);
-      toast({ title: language === 'hi' ? "व्यवस्थापक हटा दिया गया" : "Admin removed" });
-    } else {
-      setDocumentNonBlocking(roleRef, { assignedAt: new Date().toISOString() }, { merge: true });
-      toast({ title: language === 'hi' ? "व्यवस्थापक जोड़ा गया" : "Admin added" });
+    try {
+      // Re-authenticate admin for sensitive action
+      if (user.providerData.some(p => p.providerId === 'password')) {
+        const credential = EmailAuthProvider.credential(user.email!, adminConfirmPassword);
+        await reauthenticateWithCredential(user, credential);
+      }
+
+      const { userId, isCurrentAdmin } = pendingAdminToggle;
+      const roleRef = doc(firestore, "roles_admin", userId);
+      
+      if (isCurrentAdmin) {
+        await deleteDoc(roleRef);
+        toast({ title: language === 'hi' ? "व्यवस्थापक हटा दिया गया" : "Admin removed" });
+      } else {
+        await setDoc(roleRef, { assignedAt: new Date().toISOString() }, { merge: true });
+        toast({ title: language === 'hi' ? "व्यवस्थापक जोड़ा गया" : "Admin added" });
+      }
+      setPendingAdminToggle(null);
+      setAdminConfirmPassword("");
+    } catch (error: any) {
+      let msg = error.message;
+      if (error.code === 'auth/wrong-password') msg = language === 'hi' ? "गलत पासवर्ड" : "Incorrect password";
+      toast({ variant: "destructive", title: language === 'hi' ? "त्रुटि" : "Error", description: msg });
+    } finally {
+      setIsActionProcessing(false);
     }
-    setPendingAdminToggle(null);
   };
 
   const handleUpdateUserRole = (userId: string, targetCurrentRole: string, newRole: string, userName: string) => {
@@ -328,13 +349,29 @@ export default function AdminPage(props: {
     setPendingRoleUpdate({ userId, targetCurrentRole, newRole, userName });
   };
 
-  const confirmRoleUpdate = () => {
-    if (!pendingRoleUpdate || !firestore) return;
-    const { userId, newRole } = pendingRoleUpdate;
-    const userRef = doc(firestore, "users", userId);
-    updateDocumentNonBlocking(userRef, { role: newRole });
-    toast({ title: language === 'hi' ? "भूमिका अपडेट की गई" : "Role Updated" });
-    setPendingRoleUpdate(null);
+  const confirmRoleUpdate = async () => {
+    if (!pendingRoleUpdate || !firestore || !user) return;
+    setIsActionProcessing(true);
+    
+    try {
+      if (user.providerData.some(p => p.providerId === 'password')) {
+        const credential = EmailAuthProvider.credential(user.email!, adminConfirmPassword);
+        await reauthenticateWithCredential(user, credential);
+      }
+
+      const { userId, newRole } = pendingRoleUpdate;
+      const userRef = doc(firestore, "users", userId);
+      await updateDoc(userRef, { role: newRole });
+      toast({ title: language === 'hi' ? "भूमिका अपडेट की गई" : "Role Updated" });
+      setPendingRoleUpdate(null);
+      setAdminConfirmPassword("");
+    } catch (error: any) {
+      let msg = error.message;
+      if (error.code === 'auth/wrong-password') msg = language === 'hi' ? "गलत पासवर्ड" : "Incorrect password";
+      toast({ variant: "destructive", title: language === 'hi' ? "त्रुटि" : "Error", description: msg });
+    } finally {
+      setIsActionProcessing(false);
+    }
   };
 
   const handleResign = async () => {
@@ -954,7 +991,12 @@ export default function AdminPage(props: {
       </div>
 
       {/* Role Change Confirmation Dialog */}
-      <AlertDialog open={!!pendingRoleUpdate} onOpenChange={() => setPendingRoleUpdate(null)}>
+      <AlertDialog open={!!pendingRoleUpdate} onOpenChange={(open) => {
+        if (!open) {
+          setPendingRoleUpdate(null);
+          setAdminConfirmPassword("");
+        }
+      }}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'पद परिवर्तन की पुष्टि' : 'Confirm Grade Change'}</AlertDialogTitle>
@@ -965,18 +1007,42 @@ export default function AdminPage(props: {
                     ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?` 
                     : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position from '${pendingRoleUpdate?.targetCurrentRole}' to '${pendingRoleUpdate?.newRole}'?`}
                 </div>
+                <div className="space-y-2 py-2">
+                  <Label>{language === 'hi' ? 'पुष्टि के लिए अपना पासवर्ड दर्ज करें' : 'Enter your password to confirm'}</Label>
+                  <div className="relative">
+                    <Input 
+                      type={showAdminPassword ? "text" : "password"} 
+                      value={adminConfirmPassword} 
+                      onChange={(e) => setAdminConfirmPassword(e.target.value)} 
+                      placeholder="••••••••"
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setShowAdminPassword(!showAdminPassword)}>
+                      {showAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
-            <AlertDialogCancel onClick={() => setPendingRoleUpdate(null)} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRoleUpdate}>{language === 'hi' ? 'पुष्टि करें' : 'Confirm'}</AlertDialogAction>
+            <AlertDialogCancel onClick={() => {
+              setPendingRoleUpdate(null);
+              setAdminConfirmPassword("");
+            }} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRoleUpdate} disabled={isActionProcessing || !adminConfirmPassword}>
+              {isActionProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : (language === 'hi' ? 'पुष्टि करें' : 'Confirm')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Admin Toggle Confirmation Dialog */}
-      <AlertDialog open={!!pendingAdminToggle} onOpenChange={() => setPendingAdminToggle(null)}>
+      <AlertDialog open={!!pendingAdminToggle} onOpenChange={(open) => {
+        if (!open) {
+          setPendingAdminToggle(null);
+          setAdminConfirmPassword("");
+        }
+      }}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -997,16 +1063,34 @@ export default function AdminPage(props: {
                     ? 'यह कार्रवाई उपयोगकर्ता के प्रशासनिक अधिकार क्षेत्र को तुरंत बदल देगी।' 
                     : 'This action will immediately change the user\'s administrative authority.'}
                 </p>
+                <div className="space-y-2 py-2">
+                  <Label>{language === 'hi' ? 'पुष्टि के लिए अपना पासवर्ड दर्ज करें' : 'Enter your password to confirm'}</Label>
+                  <div className="relative">
+                    <Input 
+                      type={showAdminPassword ? "text" : "password"} 
+                      value={adminConfirmPassword} 
+                      onChange={(e) => setAdminConfirmPassword(e.target.value)} 
+                      placeholder="••••••••"
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setShowAdminPassword(!showAdminPassword)}>
+                      {showAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
-            <AlertDialogCancel onClick={() => setPendingAdminToggle(null)} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => {
+              setPendingAdminToggle(null);
+              setAdminConfirmPassword("");
+            }} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmAdminToggle}
+              disabled={isActionProcessing || !adminConfirmPassword}
               className={pendingAdminToggle?.isCurrentAdmin ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
             >
-              {language === 'hi' ? 'पुष्टि करें' : 'Confirm'}
+              {isActionProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : (language === 'hi' ? 'पुष्टि करें' : 'Confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
