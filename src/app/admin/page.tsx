@@ -355,9 +355,9 @@ export default function AdminPage(props: {
             variant="ghost" 
             size="sm" 
             onClick={() => router.push("/")}
-            className="gap-2 text-muted-foreground hover:text-primary transition-colors"
+            className="group gap-2 text-muted-foreground hover:text-primary transition-colors"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.backToHome}</span>
           </Button>
         </div>
@@ -718,7 +718,7 @@ export default function AdminPage(props: {
               {gallery?.map((item) => (
                 <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border shadow-sm bg-muted flex items-center justify-center">
                   {item.imageURL.startsWith('data:video') || item.imageURL.match(/\.(mp4|webm|ogg)$/i) || item.imageURL.includes('drive.google.com') ? (
-                    <div className="relative w-full h-full flex items-center justify-center">
+                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
                       <video src={item.imageURL} className="w-full h-full object-cover" muted />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <FileVideo className="h-8 w-8 text-white opacity-80" />
@@ -894,7 +894,7 @@ export default function AdminPage(props: {
                       <p>{language === 'hi' ? 'फायरबेस सुरक्षा नियम और पद-आधारित पहुँच नियंत्रण सक्रिय हैं।' : 'Firestore Security Rules and Role-Based Access Control are fully active.'}</p>
                       <ul className="list-disc pl-4 space-y-1">
                         <li>{language === 'hi' ? 'ग्रेड-आधारित पदानुक्रम' : 'Grade-based hierarchy enforcement'}</li>
-                        <li>{language === 'hi' ? 'सुरक्षित प्रमाणीकरण' : 'Secure OTP Authentication'}</li>
+                        <li>{language === 'hi' ? 'सुरक्षित OTP प्रमाणीकरण' : 'Secure OTP Authentication'}</li>
                       </ul>
                     </div>
                   </div>

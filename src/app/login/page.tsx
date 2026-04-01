@@ -252,8 +252,8 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-6 w-full max-w-md">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary">
-          <ArrowLeft className="h-4 w-4" />
+        <Link href="/" className="group inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary">
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           <span className={cn(language === "hi" ? "font-hindi" : "")}>{t.backToHome}</span>
         </Link>
       </div>

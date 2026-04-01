@@ -27,9 +27,9 @@ export default function PrayerRequestPage() {
             variant="ghost" 
             size="sm" 
             onClick={() => router.push("/")}
-            className="gap-2 text-muted-foreground hover:text-primary transition-colors"
+            className="group gap-2 text-muted-foreground hover:text-primary transition-colors"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             {t.backToHome}
           </Button>
         </div>

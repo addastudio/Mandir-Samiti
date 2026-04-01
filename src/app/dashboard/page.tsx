@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -11,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield, ArrowLeft, Plus, AlertCircle, Calendar, CreditCard, Banknote } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield, ArrowLeft, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -158,8 +157,13 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-secondary/30 pb-20 pt-24 sm:pt-28">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6">
         <div className="flex items-center">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/")} className="gap-2 text-muted-foreground hover:text-primary transition-colors">
-            <ArrowLeft className="h-4 w-4" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => router.push("/")} 
+            className="group gap-2 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.backToHome}</span>
           </Button>
         </div>
