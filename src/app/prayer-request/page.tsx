@@ -27,7 +27,7 @@ export default function PrayerRequestPage() {
             variant="ghost" 
             size="sm" 
             onClick={() => router.push("/")}
-            className="group gap-2 text-muted-foreground hover:text-primary transition-colors"
+            className="group flex items-center gap-2 px-4 py-2 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300 active:scale-95 font-medium"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             {t.backToHome}

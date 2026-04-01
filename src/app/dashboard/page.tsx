@@ -161,7 +161,7 @@ export default function DashboardPage() {
             variant="ghost" 
             size="sm" 
             onClick={() => router.push("/")} 
-            className="group gap-2 text-muted-foreground hover:text-primary transition-colors"
+            className="group flex items-center gap-2 px-4 py-2 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300 active:scale-95 font-medium"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.backToHome}</span>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                       </AlertDialogHeader>
                       {isPasswordUser && (
                         <div className="py-4 space-y-3">
-                          <Label htmlFor="delete-password">{t.dashboardDeletePasswordLabel}</Label>
+                          <Label htmlFor="delete-password">{t.dashboardDeletePasswordLabel}</Label Venue</Label>
                           <Input id="delete-password" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} />
                         </div>
                       )}
