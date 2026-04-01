@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -859,24 +859,47 @@ export default function AdminPage(props: {
                 </form>
               </CardContent>
             </Card>
-            <div className="space-y-4 mt-6">
-              {notices?.map((notice) => (
-                <Card key={notice.id} className={cn("border-l-4 rounded-xl", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
-                  <CardContent className="p-3 sm:p-4 flex justify-between items-start gap-3">
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-bold text-sm sm:text-base truncate">{notice.title}</h4>
-                        <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'} className="text-[9px] h-4 py-0 shrink-0">{notice.importance}</Badge>
+
+            <div className="pt-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className={cn("text-lg font-bold flex items-center gap-2", language === 'hi' ? 'font-hindi' : '')}>
+                  <History className="h-5 w-5 text-primary" />
+                  {language === 'hi' ? 'सूचना इतिहास' : 'Notice History'}
+                </h3>
+                <Badge variant="secondary" className="font-mono">{notices?.length || 0}</Badge>
+              </div>
+
+              <div className="space-y-4">
+                {notices?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((notice) => (
+                  <Card key={notice.id} className={cn("border-l-4 rounded-xl transition-all hover:shadow-md", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
+                    <CardContent className="p-3 sm:p-4 flex justify-between items-start gap-3">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-sm sm:text-base truncate">{notice.title}</h4>
+                          <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'} className="text-[9px] h-4 py-0 shrink-0 uppercase tracking-tighter">
+                            {notice.importance === 'urgent' ? t.noticesUrgent : t.noticesNormal}
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed">{notice.content}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Calendar className="h-3 w-3 text-muted-foreground/60" />
+                          <p className="text-[9px] text-muted-foreground/60">{new Date(notice.createdAt).toLocaleString()}</p>
+                        </div>
                       </div>
-                      <p className="text-[11px] sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed">{notice.content}</p>
-                      <p className="text-[9px] text-muted-foreground/60">{new Date(notice.createdAt).toLocaleString()}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete("notices", notice.id)} className="text-destructive shrink-0 h-8 w-8">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete("notices", notice.id)} className="text-destructive shrink-0 h-8 w-8 hover:bg-destructive/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {(!notices || notices.length === 0) && (
+                  <div className="py-12 text-center text-muted-foreground border-2 border-dashed rounded-xl">
+                    <Bell className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                    <p>{language === 'hi' ? 'कोई सूचना नहीं मिली।' : 'No notices found.'}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </TabsContent>
 
@@ -1022,9 +1045,9 @@ export default function AdminPage(props: {
             <AlertDialogDescription asChild>
               <div className="space-y-4 pt-2 text-left">
                 <div className="font-semibold text-foreground text-sm sm:text-base">
-                  {language === 'hi' 
-                    ? `क्या आप ${pendingRoleUpdate?.userName} के पद को '${pendingRoleUpdate?.targetCurrentRole}' से बदलकर '${pendingRoleUpdate?.newRole}' करना चाहते हैं?` 
-                    : `Are you sure you want to change ${pendingRoleUpdate?.userName}'s position from '${pendingRoleUpdate?.targetCurrentRole}' to '${pendingRoleUpdate?.newRole}'?`}
+                  {pendingRoleUpdate && (language === 'hi' 
+                    ? `क्या आप ${pendingRoleUpdate.userName} के पद को '${pendingRoleUpdate.targetCurrentRole}' से बदलकर '${pendingRoleUpdate.newRole}' करना चाहते हैं?` 
+                    : `Are you sure you want to change ${pendingRoleUpdate.userName}'s position from '${pendingRoleUpdate.targetCurrentRole}' to '${pendingRoleUpdate.newRole}'?`)}
                 </div>
                 <div className="space-y-2 py-2">
                   <Label>{language === 'hi' ? 'पुष्टि के लिए अपना पासवर्ड दर्ज करें' : 'Enter your password to confirm'}</Label>
