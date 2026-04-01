@@ -1,3 +1,4 @@
+
 export type TranslationKeys = {
   // Language Selector
   languagePopupTitle: string;
@@ -75,6 +76,10 @@ export type TranslationKeys = {
   donateUpiId: string;
   donateBtn: string;
   donateTransparency: string;
+  donateOnlineTitle: string;
+  donateOnlineDesc: string;
+  donateOnlineBtn: string;
+  donateAmountPlaceholder: string;
 
   // Gallery Section
   galleryTitle: string;
@@ -234,7 +239,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     testimonial3: 'यहाँ के त्यौहारों का उत्सव अद्भुत होता है। यह हम सभी को एक साथ लाता है।',
     testimonial3Name: 'अमित पटेल',
     donateTitle: 'हमारे मंदिर और समुदाय का समर्थन करें',
-    donateDescription: 'आपका योगदान हमारी समुदाय को मजबूत करता है।',
+    donateDescription: 'आपका योगदान हमारी समुदाय को मजबूत करता है। सुरक्षित ऑनलाइन भुगतान या पारंपरिक माध्यमों का उपयोग करें।',
     donateBankInfo: 'बैंक खाता विवरण',
     donateAccountName: 'खाता धारक का नाम: मंदिर समिति बहपुरा',
     donateAccountNumber: 'खाता संख्या: 1234567890',
@@ -244,6 +249,10 @@ export const translations: { [key: string]: TranslationKeys } = {
     donateUpiId: 'mandir.bahpura@upi',
     donateBtn: 'अभी दान करें',
     donateTransparency: 'आपका योगदान हमारे समुदाय को मजबूत करता है।',
+    donateOnlineTitle: 'सुरक्षित ऑनलाइन दान (Stripe)',
+    donateOnlineDesc: 'क्रेडिट कार्ड, डेबिट कार्ड या नेट बैंकिंग के माध्यम से सुरक्षित दान करें।',
+    donateOnlineBtn: 'ऑनलाइन दान प्रक्रिया शुरू करें',
+    donateAmountPlaceholder: 'राशि (₹)',
     galleryTitle: 'गैलरी',
     galleryLiveDarshan: 'लाइव दर्शन / आरती (वीडियो)',
     galleryLocalVideo: 'स्थानीय वीडियो',
@@ -383,7 +392,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     testimonial3: 'The festival celebrations here are amazing. It brings all of us together.',
     testimonial3Name: 'Amit Patel',
     donateTitle: 'Support Our Temple & Community',
-    donateDescription: 'Your contribution strengthens our community.',
+    donateDescription: 'Your contribution strengthens our community. Use secure online payments or traditional methods.',
     donateBankInfo: 'Bank Account Details',
     donateAccountName: 'Account Name: Mandir Samiti Bahpura',
     donateAccountNumber: 'Account Number: 1234567890',
@@ -393,6 +402,10 @@ export const translations: { [key: string]: TranslationKeys } = {
     donateUpiId: 'mandir.bahpura@upi',
     donateBtn: 'Donate Now',
     donateTransparency: 'Your contribution strengthens our community.',
+    donateOnlineTitle: 'Secure Online Donation (Stripe)',
+    donateOnlineDesc: 'Safe and fast contribution using Credit Card, Debit Card, or Net Banking.',
+    donateOnlineBtn: 'Proceed to Online Payment',
+    donateAmountPlaceholder: 'Amount (₹)',
     galleryTitle: 'Gallery',
     galleryLiveDarshan: 'Live Darshan / Aarti (Video)',
     galleryLocalVideo: 'Local Video',

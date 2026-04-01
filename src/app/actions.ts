@@ -1,3 +1,4 @@
+
 "use server";
 
 import { z } from "zod";
@@ -117,4 +118,34 @@ export async function sendVerificationOtp(email: string, otp: string) {
   console.log("");
   
   return { success: true };
+}
+
+/**
+ * STRIPE INTEGRATION PLACEHOLDER
+ * This action will create a Stripe Checkout session.
+ * Ensure STRIPE_SECRET_KEY is set in environment variables.
+ */
+export async function createStripeCheckoutSession(amount: number, userEmail?: string) {
+  // If STRIPE_SECRET_KEY is not set, we'll log a warning and return a failure
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.warn("STRIPE_SECRET_KEY is missing. Stripe integration is not yet active.");
+    return { success: false, message: "Payment service unavailable." };
+  }
+
+  try {
+    // Note: You would normally use the 'stripe' package here
+    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    // const session = await stripe.checkout.sessions.create({...});
+    
+    console.log(`[STRIPE PLACEHOLDER] Creating session for ₹${amount} for ${userEmail || 'anonymous'}`);
+    
+    return { 
+      success: true, 
+      url: "https://checkout.stripe.com/pay/placeholder", // Mock URL
+      sessionId: "cs_test_123" 
+    };
+  } catch (error) {
+    console.error("Stripe session creation failed:", error);
+    return { success: false, message: "Failed to initialize payment." };
+  }
 }

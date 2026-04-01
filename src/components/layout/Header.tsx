@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -44,6 +45,7 @@ export function Header() {
     { href: "/#events", label: t.navEvents, isAnchor: true },
     { href: "/#seva", label: t.navSeva, isAnchor: true },
     { href: "/prayer-request", label: t.navPrayer, isAnchor: false },
+    { href: "/donate", label: t.navDonate, isAnchor: false },
     { href: "/#gallery", label: t.navGallery, isAnchor: true },
     { href: "/#contact", label: t.navContact, isAnchor: true },
   ];
@@ -203,7 +205,7 @@ export function Header() {
               )}
               <AuthButton />
             </div>
-            <Link href="/#donate">
+            <Link href="/donate">
               <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
                 <Heart className="h-4 w-4 fill-current" />
                 <span className={cn(language === "hi" ? "font-hindi" : "")}>
@@ -294,7 +296,7 @@ export function Header() {
                   </span>
                   <LanguageSwitcher />
                 </div>
-                <Link href="/#donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
+                <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
                   <Button className="w-full gap-2 bg-accent text-accent-foreground">
                     <Heart className="h-4 w-4 fill-current" />
                     {t.navDonate}

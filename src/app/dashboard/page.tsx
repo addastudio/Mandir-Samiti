@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -10,14 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield, ArrowLeft, Plus, AlertCircle } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield, ArrowLeft, Plus, AlertCircle, Calendar, CreditCard, Banknote } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +27,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
@@ -87,7 +86,6 @@ export default function DashboardPage() {
     if (!user || !auth) return;
     setIsRefreshing(true);
     try {
-      // Force reload the user's token and properties from the server
       await auth.currentUser?.reload();
       router.refresh();
       toast({ title: "Updated", description: "Profile status refreshed successfully." });
@@ -101,8 +99,6 @@ export default function DashboardPage() {
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
 
-    // Standard 'devotee' or 'user' roles are allowed to delete directly.
-    // Higher committee roles must resign first to ensure records are handled properly.
     if (userProfile?.role && !['devotee', 'user'].includes(userProfile.role)) {
       toast({ variant: "destructive", title: "Resignation Required", description: t.dashboardDeleteResignFirst });
       return;
@@ -156,6 +152,8 @@ export default function DashboardPage() {
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
   const isVerified = userProfile?.isVerified ?? true;
 
+  const sortedDonations = donations ? [...donations].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
+
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-24 sm:pt-28">
       <div className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6">
@@ -173,7 +171,6 @@ export default function DashboardPage() {
             <AlertDescription className="flex items-center justify-between mt-2">
               <div className="space-y-1">
                 <p className="text-sm">{language === 'hi' ? 'कृपया अपनी लॉगिन स्क्रीन पर जाकर खाता सत्यापित करें।' : 'Please complete your account verification to access all features.'}</p>
-                <p className="text-[10px] opacity-80">{language === 'hi' ? 'सत्यापन कोड के लिए अपना ईमेल जांचें।' : 'Check your email for the verification code.'}</p>
               </div>
               <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => router.push('/login')}>
                 {language === 'hi' ? 'अभी सत्यापित करें' : 'Verify Now'}
@@ -184,8 +181,8 @@ export default function DashboardPage() {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-5 sm:p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="bg-primary/10 p-2 sm:p-3 rounded-full"><UserIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" /></div>
-            <div className="space-y-0.5">
+            <div className="bg-primary/10 p-2 sm:p-3 rounded-full shrink-0"><UserIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" /></div>
+            <div className="space-y-0.5 min-w-0">
               <h1 className={cn("text-xl sm:text-2xl font-bold flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                 {t.dashboardWelcome}, <span className="truncate max-w-[150px] sm:max-w-none">{user.displayName || user.email?.split('@')[0]}</span>
               </h1>
@@ -211,12 +208,12 @@ export default function DashboardPage() {
               <CardContent className="pt-6 px-5 space-y-5">
                 <div className="space-y-1">
                   <label className="text-[10px] font-semibold text-muted-foreground uppercase">{t.dashboardEmail}</label>
-                  <div className="font-medium text-sm flex items-center gap-2">
+                  <div className="font-medium text-sm flex items-center gap-2 min-w-0">
                     <span className="truncate">{user.email}</span>
                     {isVerified ? (
-                      <Badge className="bg-green-100 text-green-700 h-5 text-[9px]"><CheckCircle2 className="h-3 w-3 mr-1" /> Verified</Badge>
+                      <Badge className="bg-green-100 text-green-700 h-5 text-[9px] shrink-0"><CheckCircle2 className="h-3 w-3 mr-1" /> Verified</Badge>
                     ) : (
-                      <Badge variant="outline" className="text-destructive h-5 text-[9px]">Unverified</Badge>
+                      <Badge variant="outline" className="text-destructive h-5 text-[9px] shrink-0">Unverified</Badge>
                     )}
                   </div>
                 </div>
@@ -226,7 +223,11 @@ export default function DashboardPage() {
                 </div>
                 <div className="pt-4 border-t">
                   <AlertDialog>
-                    <AlertDialogTrigger asChild><Button variant="ghost" size="sm" className="text-destructive w-full justify-start gap-2 h-8 text-xs"><Trash2 className="h-4 w-4" />{t.dashboardDeleteAccount}</Button></AlertDialogTrigger>
+                    <Link href="#" className="w-full">
+                      <Button variant="ghost" size="sm" className="text-destructive w-full justify-start gap-2 h-8 text-xs" asChild>
+                        <span><Trash2 className="h-4 w-4" />{t.dashboardDeleteAccount}</span>
+                      </Button>
+                    </Link>
                     <AlertDialogContent className="w-[95%] max-w-md">
                       <AlertDialogHeader>
                         <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
@@ -248,40 +249,76 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-accent/20 bg-gradient-to-br from-white to-accent/5 p-5">
-              <CardDescription className="text-xs">{t.dashboardTotalContribution}</CardDescription>
+            <Card className="border-accent/20 bg-gradient-to-br from-white to-accent/5 p-5 shadow-sm">
+              <CardDescription className="text-xs font-bold uppercase tracking-widest">{t.dashboardTotalContribution}</CardDescription>
               <CardTitle className="text-3xl font-bold flex items-center gap-1 text-primary mt-1"><IndianRupee className="h-7 w-7" />{totalDonated}</CardTitle>
+              <div className="mt-4 pt-4 border-t border-accent/10">
+                <Link href="/donate">
+                  <Button variant="secondary" className="w-full h-10 text-xs font-bold uppercase tracking-wider" size="sm">
+                    {t.navDonate}
+                  </Button>
+                </Link>
+              </div>
             </Card>
           </div>
 
           <div className="lg:col-span-8">
-            <Card className="border-primary/20 shadow-md h-full overflow-hidden">
-              <Tabs defaultValue="donations" className="w-full">
+            <Card className="border-primary/20 shadow-md h-full overflow-hidden flex flex-col">
+              <Tabs defaultValue="donations" className="w-full flex-grow flex flex-col">
                 <CardHeader className="border-b bg-white p-0">
                   <TabsList className="w-full justify-start h-12 bg-transparent border-b-0 p-0 rounded-none">
                     <TabsTrigger value="donations" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger>
                     <TabsTrigger value="requests" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><MessageSquare className="h-4 w-4 mr-2" />{t.dashboardMyRequests}</TabsTrigger>
                   </TabsList>
                 </CardHeader>
-                <TabsContent value="donations" className="m-0">
+                <TabsContent value="donations" className="m-0 flex-grow">
                   <CardContent className="p-0">
                     {isDonationsLoading ? (
                       <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                    ) : donations && donations.length > 0 ? (
+                    ) : sortedDonations.length > 0 ? (
                       <div className="divide-y">
-                        {donations.map(d => (
-                          <div key={d.id} className="p-4 flex justify-between items-center hover:bg-muted/30">
-                            <div><p className="font-bold text-lg text-primary">₹{d.amount}</p><p className="text-[10px] text-muted-foreground">{new Date(d.date).toLocaleString()}</p></div>
-                            <Badge variant="outline" className="text-[10px]">{d.mode}</Badge>
+                        {sortedDonations.map(d => (
+                          <div key={d.id} className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:bg-muted/30 transition-colors">
+                            <div className="flex items-start gap-4">
+                              <div className={cn(
+                                "p-2 sm:p-3 rounded-full",
+                                d.mode?.includes('Stripe') ? "bg-blue-50 text-blue-600" : 
+                                d.mode?.includes('UPI') ? "bg-green-50 text-green-600" : "bg-primary/5 text-primary"
+                              )}>
+                                {d.mode?.includes('Stripe') ? <CreditCard className="h-5 w-5" /> : 
+                                 d.mode?.includes('UPI') ? <QrCode className="h-5 w-5" /> : <Banknote className="h-5 w-5" />}
+                              </div>
+                              <div className="space-y-1">
+                                <p className="font-bold text-lg text-primary flex items-center gap-1"><IndianRupee className="h-4 w-4" />{d.amount}</p>
+                                <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
+                                  <Calendar className="h-3 w-3" /> {new Date(d.date).toLocaleString()}
+                                </div>
+                                <div className="text-[9px] uppercase font-bold tracking-tighter text-muted-foreground/60">{d.mode || 'Direct'}</div>
+                              </div>
+                            </div>
+                            <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2">
+                              <Badge className={cn(
+                                "text-[9px] uppercase font-black",
+                                d.status === 'completed' ? "bg-green-100 text-green-700" :
+                                d.status === 'failed' ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                              )}>
+                                {d.status || 'completed'}
+                              </Badge>
+                              {d.id && <span className="text-[8px] font-mono text-muted-foreground opacity-40">Ref: {d.id.slice(0, 8)}</span>}
+                            </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="py-20 text-center text-muted-foreground px-4"><History className="h-10 w-10 mx-auto mb-3 opacity-20" /><p>{t.dashboardNoDonations}</p></div>
+                      <div className="py-20 text-center text-muted-foreground px-4 space-y-4">
+                        <History className="h-12 w-12 mx-auto opacity-20" />
+                        <p>{t.dashboardNoDonations}</p>
+                        <Link href="/donate"><Button variant="outline" size="sm" className="gap-2"><Plus className="h-4 w-4" /> {t.navDonate}</Button></Link>
+                      </div>
                     )}
                   </CardContent>
                 </TabsContent>
-                <TabsContent value="requests" className="m-0">
+                <TabsContent value="requests" className="m-0 flex-grow">
                   <CardContent className="p-0">
                     <div className="p-4 bg-muted/20 flex justify-end">
                       <Link href="/prayer-request"><Button size="sm" className="gap-2 h-8 text-xs"><Plus className="h-3 w-3" />{t.dashboardNewRequest}</Button></Link>
@@ -293,7 +330,7 @@ export default function DashboardPage() {
                         {userRequests.map(r => (
                           <div key={r.id} className="p-4 hover:bg-muted/30">
                             <div className="flex justify-between items-start gap-2 mb-2">
-                              <h4 className="font-bold text-sm">{r.requestType}</h4>
+                              <h4 className="font-bold text-sm uppercase tracking-wider">{r.requestType}</h4>
                               <Badge className={cn("text-[9px] h-5", r.status === 'completed' ? 'bg-green-100 text-green-700' : r.status === 'viewed' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700')}>{r.status}</Badge>
                             </div>
                             <p className="text-[11px] text-muted-foreground bg-muted/30 p-2 rounded-md italic">"{r.message}"</p>

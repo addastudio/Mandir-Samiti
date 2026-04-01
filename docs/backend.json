@@ -78,7 +78,12 @@
         },
         "mode": {
           "type": "string",
-          "description": "Method used for the donation (e.g., 'UPI', 'QR code', 'Bank Transfer')."
+          "description": "Method used for the donation (e.g., 'UPI', 'Stripe', 'Bank Transfer')."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "completed", "failed"],
+          "description": "Status of the donation transaction."
         }
       },
       "required": [
@@ -86,7 +91,8 @@
         "userId",
         "amount",
         "date",
-        "mode"
+        "mode",
+        "status"
       ]
     },
     "Event": {
