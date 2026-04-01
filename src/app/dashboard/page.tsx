@@ -26,6 +26,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
@@ -98,7 +99,8 @@ export default function DashboardPage() {
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
 
-    if (userProfile?.role && !['devotee', 'user'].includes(userProfile.role)) {
+    // Check if user is an admin/official. We only allow 'devotee' to delete directly.
+    if (userProfile?.role && !['devotee'].includes(userProfile.role)) {
       toast({ variant: "destructive", title: "Resignation Required", description: t.dashboardDeleteResignFirst });
       return;
     }
@@ -118,8 +120,11 @@ export default function DashboardPage() {
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
+      // Attempt to clean up Firestore records
       await deleteDoc(userRef).catch(() => {});
       await deleteDoc(adminRef).catch(() => {});
+      
+      // Delete the actual auth user
       await deleteUser(user);
       
       toast({ title: "Account Deleted", description: "Your account has been successfully removed." });
@@ -150,7 +155,6 @@ export default function DashboardPage() {
 
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
   const isVerified = userProfile?.isVerified ?? true;
-
   const sortedDonations = donations ? [...donations].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
 
   return (
@@ -227,11 +231,11 @@ export default function DashboardPage() {
                 </div>
                 <div className="pt-4 border-t">
                   <AlertDialog>
-                    <Link href="#" className="w-full">
-                      <Button variant="ghost" size="sm" className="text-destructive w-full justify-start gap-2 h-8 text-xs" asChild>
-                        <span><Trash2 className="h-4 w-4" />{t.dashboardDeleteAccount}</span>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive w-full justify-start gap-2 h-8 text-xs">
+                        <Trash2 className="h-4 w-4" />{t.dashboardDeleteAccount}
                       </Button>
-                    </Link>
+                    </AlertDialogTrigger>
                     <AlertDialogContent className="w-[95%] max-w-md">
                       <AlertDialogHeader>
                         <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
@@ -239,7 +243,7 @@ export default function DashboardPage() {
                       </AlertDialogHeader>
                       {isPasswordUser && (
                         <div className="py-4 space-y-3">
-                          <Label htmlFor="delete-password">{t.dashboardDeletePasswordLabel}</Label Venue</Label>
+                          <Label htmlFor="delete-password">{t.dashboardDeletePasswordLabel}</Label>
                           <Input id="delete-password" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} />
                         </div>
                       )}
