@@ -182,6 +182,9 @@ export type TranslationKeys = {
   signupVerifyBtn: string;
   signupOtpSent: string;
   signupOtpError: string;
+  signupGooglePasswordTitle: string;
+  signupGooglePasswordDesc: string;
+  signupGooglePasswordBtn: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -337,6 +340,9 @@ export const translations: { [key: string]: TranslationKeys } = {
     signupVerifyBtn: 'सत्यापित करें',
     signupOtpSent: 'सत्यापन कोड भेज दिया गया है!',
     signupOtpError: 'गलत सत्यापन कोड। कृपया पुनः प्रयास करें।',
+    signupGooglePasswordTitle: 'खाता सुरक्षित करें',
+    signupGooglePasswordDesc: 'भविष्य में खाता हटाने जैसी संवेदनशील कार्रवाइयों के लिए कृपया एक पासवर्ड सेट करें।',
+    signupGooglePasswordBtn: 'पासवर्ड सेट करें और आगे बढ़ें',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -491,5 +497,8 @@ export const translations: { [key: string]: TranslationKeys } = {
     signupVerifyBtn: 'Verify Account',
     signupOtpSent: 'Verification code sent successfully!',
     signupOtpError: 'Invalid verification code. Please try again.',
+    signupGooglePasswordTitle: 'Secure Your Account',
+    signupGooglePasswordDesc: 'Please set a password for sensitive actions like account deletion in the future.',
+    signupGooglePasswordBtn: 'Set Password & Continue',
   },
 };

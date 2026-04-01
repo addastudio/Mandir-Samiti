@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -22,10 +23,13 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  linkWithCredential,
+  EmailAuthProvider,
+  type User,
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -48,6 +52,11 @@ export default function SignupPage() {
   const [generatedOtp, setGeneratedOtp] = useState("");
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Google Password Step State
+  const [isSettingPasswordAfterGoogle, setIsSettingPasswordAfterGoogle] = useState(false);
+  const [passwordAfterGoogle, setPasswordAfterGoogle] = useState("");
+  const [tempUserForPassword, setTempUserForPassword] = useState<User | null>(null);
 
   const auth = useAuth();
   const firestore = useFirestore();
@@ -180,19 +189,15 @@ export default function SignupPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
+      const hasPassword = user.providerData.some(p => p.providerId === 'password');
       const userDocRef = doc(firestore, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      if (!userDoc.exists()) {
-        const userData = {
-          id: user.uid,
-          name: user.displayName || user.email?.split('@')[0] || 'User',
-          email: user.email,
-          role: "devotee",
-          language: language,
-          isVerified: true, 
-        };
-        await setDoc(userDocRef, userData, { merge: true });
+      if (!userDoc.exists() || !hasPassword) {
+        setTempUserForPassword(user);
+        setIsSettingPasswordAfterGoogle(true);
+        setIsLoading(false);
+        return;
       }
 
       toast({ title: "Success", description: "Signed up successfully with Google" });
@@ -209,7 +214,94 @@ export default function SignupPage() {
     }
   };
 
+  const handleFinishGoogleSignupWithPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tempUserForPassword || !auth || !firestore) return;
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const credential = EmailAuthProvider.credential(tempUserForPassword.email!, passwordAfterGoogle);
+      await linkWithCredential(tempUserForPassword, credential);
+      
+      const userDocRef = doc(firestore, "users", tempUserForPassword.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (!userDoc.exists()) {
+        const userData = {
+          id: tempUserForPassword.uid,
+          name: tempUserForPassword.displayName || tempUserForPassword.email?.split('@')[0] || 'User',
+          email: tempUserForPassword.email,
+          role: "devotee",
+          language: language,
+          isVerified: true, 
+        };
+        await setDoc(userDocRef, userData, { merge: true });
+      } else {
+        await updateDoc(userDocRef, { isVerified: true });
+      }
+
+      toast({ title: "Success", description: "Account secured and created successfully!" });
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message);
+      toast({ variant: "destructive", title: "Error", description: err.message });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!mounted) return null;
+
+  if (isSettingPasswordAfterGoogle) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md shadow-lg border-primary/20">
+          <CardHeader className="text-center">
+            <div className="mx-auto h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : '')}>
+              {t.signupGooglePasswordTitle}
+            </CardTitle>
+            <CardDescription className={cn(language === 'hi' ? 'font-hindi' : '')}>
+              {t.signupGooglePasswordDesc}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleFinishGoogleSignupWithPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="google-password">{language === 'hi' ? 'पासवर्ड' : 'New Password'}</Label>
+                <div className="relative">
+                  <Input 
+                    id="google-password" 
+                    type={showPassword ? "text" : "password"} 
+                    value={passwordAfterGoogle} 
+                    onChange={(e) => setPasswordAfterGoogle(e.target.value)} 
+                    required 
+                    minLength={6}
+                    className="border-primary/20 pr-10" 
+                  />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 text-muted-foreground" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+              {error && <p className="text-sm text-destructive font-medium p-2 rounded bg-destructive/5">{error}</p>}
+              <div className="flex flex-col gap-2">
+                <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : t.signupGooglePasswordBtn}
+                </Button>
+                <Button variant="ghost" onClick={() => setIsSettingPasswordAfterGoogle(false)} className="w-full h-12">
+                  {language === 'hi' ? 'पीछे जाएँ' : 'Go Back'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isOtpStep) {
     return (
