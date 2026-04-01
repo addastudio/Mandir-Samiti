@@ -17,7 +17,6 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocki
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -31,7 +30,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { getEmailServiceStatus } from "@/app/actions";
 
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -64,7 +62,6 @@ export default function AdminPage(props: {
     userName: string;
   } | null>(null);
 
-  const [resignPassword, setResignPassword] = useState("");
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
   const [galleryMediaPreview, setGalleryMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
@@ -72,7 +69,6 @@ export default function AdminPage(props: {
 
   useEffect(() => {
     setMounted(true);
-    // Check email service status on mount
     getEmailServiceStatus().then(setEmailStatus);
   }, []);
 
@@ -150,7 +146,6 @@ export default function AdminPage(props: {
 
   const currentRole = currentUserProfile?.role || 'devotee';
   const isPresident = currentRole === 'president';
-  const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
 
   const canManageUser = (targetUserId: string, targetRole: string) => {
     if (user?.uid === targetUserId) return false;
@@ -204,7 +199,6 @@ export default function AdminPage(props: {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 750KB limit to stay safe under 1MB Firestore limit after base64 conversion
       const MAX_FILE_SIZE = 750 * 1024;
       if (file.size > MAX_FILE_SIZE) {
         toast({ 
@@ -232,7 +226,6 @@ export default function AdminPage(props: {
     if (!galleryRef || !user) return;
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
-    
     const imageURL = galleryMediaPreview || (formData.get("imageURL") as string);
     
     if (!imageURL) {
@@ -312,10 +305,6 @@ export default function AdminPage(props: {
     if (!firestore || !user) return;
     setIsResigningInProgress(true);
     try {
-      if (isPasswordUser) {
-        const credential = EmailAuthProvider.credential(user.email!, resignPassword);
-        await reauthenticateWithCredential(user, credential);
-      }
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       await updateDoc(userRef, { role: "devotee" });
@@ -326,7 +315,6 @@ export default function AdminPage(props: {
       toast({ variant: "destructive", title: language === 'hi' ? "त्रुटि" : "Error", description: error.message });
     } finally {
       setIsResigningInProgress(false);
-      setResignPassword("");
     }
   };
 
@@ -404,21 +392,13 @@ export default function AdminPage(props: {
                 <AlertDialogContent className="w-[95%] max-w-md mx-auto">
                   <AlertDialogHeader>
                     <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
-                    <AlertDialogDescription asChild>
-                      <div className="space-y-4 pt-2">
-                        <p>{language === 'hi' ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप एक भक्त के रूप में लॉग इन रहेंगे।' : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}</p>
-                        {isPasswordUser && (
-                          <div className="space-y-2 pt-2 text-left">
-                            <Label htmlFor="resign-password">{language === 'hi' ? 'पुष्टि के लिए अपना पासवर्ड दर्ज करें' : 'Enter your password to confirm'}</Label>
-                            <Input id="resign-password" type="password" value={resignPassword} onChange={(e) => setResignPassword(e.target.value)} placeholder="Password" />
-                          </div>
-                        )}
-                      </div>
+                    <AlertDialogDescription>
+                      {language === 'hi' ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप एक भक्त के रूप में लॉग इन रहेंगे।' : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
-                    <AlertDialogCancel onClick={() => setResignPassword("")} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground" disabled={isResigningInProgress || (isPasswordUser && !resignPassword)}>
+                    <AlertDialogCancel className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground" disabled={isResigningInProgress}>
                       {isResigningInProgress ? '...' : (language === 'hi' ? 'पुष्टि करें' : 'Confirm')}
                     </AlertDialogAction>
                   </AlertDialogFooter>

@@ -6,11 +6,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { signOut, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, CheckCircle2, Trash2, RefreshCw, Shield, ArrowLeft, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode } from "lucide-react";
+import { signOut, deleteUser } from "firebase/auth";
+import { collection, doc, query, where, deleteDoc } from "firebase/firestore";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, ArrowLeft, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -40,7 +38,6 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -71,8 +68,6 @@ export default function DashboardPage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
   const { data: adminDoc } = useDoc(adminRoleRef);
 
-  const isPasswordUser = user?.providerData.some(p => p.providerId === 'password');
-
   useEffect(() => {
     if (mounted && !isUserLoading && !user) router.push("/login");
   }, [user, isUserLoading, router, mounted]);
@@ -99,7 +94,6 @@ export default function DashboardPage() {
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
 
-    // Check if user is an admin/official. We only allow 'devotee' to delete directly.
     if (userProfile?.role && !['devotee'].includes(userProfile.role)) {
       toast({ variant: "destructive", title: "Resignation Required", description: t.dashboardDeleteResignFirst });
       return;
@@ -107,31 +101,21 @@ export default function DashboardPage() {
 
     setIsDeleting(true);
     try {
-      if (isPasswordUser) {
-        if (!deletePassword) {
-          toast({ variant: "destructive", title: "Password Required" });
-          setIsDeleting(false);
-          return;
-        }
-        const credential = EmailAuthProvider.credential(user.email!, deletePassword);
-        await reauthenticateWithCredential(user, credential);
-      }
-
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
-      // Attempt to clean up Firestore records
       await deleteDoc(userRef).catch(() => {});
       await deleteDoc(adminRef).catch(() => {});
       
-      // Delete the actual auth user
       await deleteUser(user);
       
       toast({ title: "Account Deleted", description: "Your account has been successfully removed." });
       router.push("/");
     } catch (error: any) {
       let msg = error.message;
-      if (error.code === 'auth/network-request-failed') {
+      if (error.code === 'auth/requires-recent-login') {
+        msg = t.dashboardDeleteRecentLogin;
+      } else if (error.code === 'auth/network-request-failed') {
         msg = language === 'hi' 
           ? "नेटवर्क त्रुटि: कृपया अपना इंटरनेट कनेक्शन जांचें।" 
           : "Network error: Please check your internet connection.";
@@ -139,7 +123,6 @@ export default function DashboardPage() {
       toast({ variant: "destructive", title: "Error", description: msg });
     } finally {
       setIsDeleting(false);
-      setDeletePassword("");
     }
   };
 
@@ -219,7 +202,7 @@ export default function DashboardPage() {
                   <div className="font-medium text-sm flex items-center gap-2 min-w-0">
                     <span className="truncate">{user.email}</span>
                     {isVerified ? (
-                      <Badge className="bg-green-100 text-green-700 h-5 text-[9px] shrink-0"><CheckCircle2 className="h-3 w-3 mr-1" /> Verified</Badge>
+                      <Badge className="bg-green-100 text-green-700 h-5 text-[9px] shrink-0">Verified</Badge>
                     ) : (
                       <Badge variant="outline" className="text-destructive h-5 text-[9px] shrink-0">Unverified</Badge>
                     )}
@@ -241,15 +224,11 @@ export default function DashboardPage() {
                         <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
                         <AlertDialogDescription>{t.dashboardDeleteConfirmDesc}</AlertDialogDescription>
                       </AlertDialogHeader>
-                      {isPasswordUser && (
-                        <div className="py-4 space-y-3">
-                          <Label htmlFor="delete-password">{t.dashboardDeletePasswordLabel}</Label>
-                          <Input id="delete-password" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} />
-                        </div>
-                      )}
                       <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setDeletePassword("")}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive" disabled={isDeleting || (isPasswordUser && !deletePassword)}>{isDeleting ? '...' : 'Delete'}</AlertDialogAction>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={isDeleting}>
+                          {isDeleting ? '...' : 'Delete'}
+                        </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
