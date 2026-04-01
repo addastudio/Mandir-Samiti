@@ -986,9 +986,10 @@ export default function AdminPage(props: {
             <AlertDialogDescription asChild>
               <div className="space-y-4 pt-2 text-left">
                 <div className="font-semibold text-foreground text-sm sm:text-base">
-                  {pendingAdminToggle?.isCurrentAdmin 
+                  {pendingAdminToggle ? (pendingAdminToggle.isCurrentAdmin 
                     ? t.adminConfirmAdminRemoveDesc.replace('{{name}}', pendingAdminToggle.userName)
-                    : t.adminConfirmAdminAddDesc.replace('{{name}}', pendingAdminToggle.userName)
+                    : t.adminConfirmAdminAddDesc.replace('{{name}}', pendingAdminToggle.userName))
+                    : ''
                   }
                 </div>
                 <p className="text-xs text-muted-foreground">
