@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -56,11 +57,19 @@ export default function AdminPage(props: {
   const { toast } = useToast();
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  
   const [pendingRoleUpdate, setPendingRoleUpdate] = useState<{
     userId: string;
     targetCurrentRole: string;
     newRole: string;
     userName: string;
+  } | null>(null);
+
+  const [pendingAdminToggle, setPendingAdminToggle] = useState<{
+    userId: string;
+    isCurrentAdmin: boolean;
+    userName: string;
+    role: string;
   } | null>(null);
 
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
@@ -291,17 +300,11 @@ export default function AdminPage(props: {
     toast({ title: language === 'hi' ? "आइटम हटा दिया गया" : "Item deleted" });
   };
 
-  const toggleAdmin = (userId: string, isCurrentAdmin: boolean, targetRole: string) => {
-    if (!firestore) return;
-    if (!canManageUser(userId, targetRole)) {
-      toast({ 
-        variant: "destructive", 
-        title: language === 'hi' ? "अनुमति अस्वीकृत" : "Permission Denied", 
-        description: language === 'hi' ? "आपके पास इस उपयोगकर्ता को प्रबंधित करने के लिए पर्याप्त अधिकार नहीं हैं।" : "You do not have sufficient authority." 
-      });
-      return;
-    }
+  const confirmAdminToggle = () => {
+    if (!pendingAdminToggle || !firestore) return;
+    const { userId, isCurrentAdmin } = pendingAdminToggle;
     const roleRef = doc(firestore, "roles_admin", userId);
+    
     if (isCurrentAdmin) {
       deleteDoc(roleRef);
       toast({ title: language === 'hi' ? "व्यवस्थापक हटा दिया गया" : "Admin removed" });
@@ -309,6 +312,7 @@ export default function AdminPage(props: {
       setDocumentNonBlocking(roleRef, { assignedAt: new Date().toISOString() }, { merge: true });
       toast({ title: language === 'hi' ? "व्यवस्थापक जोड़ा गया" : "Admin added" });
     }
+    setPendingAdminToggle(null);
   };
 
   const handleUpdateUserRole = (userId: string, targetCurrentRole: string, newRole: string, userName: string) => {
@@ -607,7 +611,18 @@ export default function AdminPage(props: {
                                </Label>
                                <div className="flex gap-2">
                                   {!isGhost && (
-                                    <Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" onClick={() => toggleAdmin(u.id, !!isUserAdmin, u.role || 'devotee')} className={cn("flex-1 sm:flex-none gap-2 h-9 text-xs", isUserAdmin && "text-destructive border-destructive hover:bg-destructive/10")}>
+                                    <Button 
+                                      disabled={!canIManage} 
+                                      variant={isUserAdmin ? "outline" : "default"} 
+                                      size="sm" 
+                                      onClick={() => setPendingAdminToggle({ 
+                                        userId: u.id, 
+                                        isCurrentAdmin: !!isUserAdmin, 
+                                        userName: u.name || 'User', 
+                                        role: u.role || 'devotee' 
+                                      })} 
+                                      className={cn("flex-1 sm:flex-none gap-2 h-9 text-xs", isUserAdmin && "text-destructive border-destructive hover:bg-destructive/10")}
+                                    >
                                       {isUserAdmin ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
                                       {isUserAdmin ? (language === 'hi' ? 'एडमिन हटाएं' : 'Remove Admin') : (language === 'hi' ? 'एडमिन बनाएं' : 'Make Admin')}
                                     </Button>
@@ -938,10 +953,11 @@ export default function AdminPage(props: {
         </Tabs>
       </div>
 
+      {/* Role Change Confirmation Dialog */}
       <AlertDialog open={!!pendingRoleUpdate} onOpenChange={() => setPendingRoleUpdate(null)}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'GRADE CHANGE CONFIRMATION' : 'Confirm Grade Change'}</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> {language === 'hi' ? 'पद परिवर्तन की पुष्टि' : 'Confirm Grade Change'}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4 pt-2 text-left">
                 <div className="font-semibold text-foreground text-sm sm:text-base">
@@ -954,7 +970,43 @@ export default function AdminPage(props: {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
             <AlertDialogCancel onClick={() => setPendingRoleUpdate(null)} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRoleUpdate}>Confirm</AlertDialogAction>
+            <AlertDialogAction onClick={confirmRoleUpdate}>{language === 'hi' ? 'पुष्टि करें' : 'Confirm'}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Admin Toggle Confirmation Dialog */}
+      <AlertDialog open={!!pendingAdminToggle} onOpenChange={() => setPendingAdminToggle(null)}>
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-primary" /> 
+              {t.adminConfirmAdminToggleTitle}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 pt-2 text-left">
+                <div className="font-semibold text-foreground text-sm sm:text-base">
+                  {pendingAdminToggle?.isCurrentAdmin 
+                    ? t.adminConfirmAdminRemoveDesc.replace('{{name}}', pendingAdminToggle.userName)
+                    : t.adminConfirmAdminAddDesc.replace('{{name}}', pendingAdminToggle.userName)
+                  }
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {language === 'hi' 
+                    ? 'यह कार्रवाई उपयोगकर्ता के प्रशासनिक अधिकार क्षेत्र को तुरंत बदल देगी।' 
+                    : 'This action will immediately change the user\'s administrative authority.'}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <AlertDialogCancel onClick={() => setPendingAdminToggle(null)} className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmAdminToggle}
+              className={pendingAdminToggle?.isCurrentAdmin ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            >
+              {language === 'hi' ? 'पुष्टि करें' : 'Confirm'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

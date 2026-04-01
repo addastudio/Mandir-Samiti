@@ -185,6 +185,11 @@ export type TranslationKeys = {
   signupGooglePasswordTitle: string;
   signupGooglePasswordDesc: string;
   signupGooglePasswordBtn: string;
+
+  // Admin Confirmations
+  adminConfirmAdminToggleTitle: string;
+  adminConfirmAdminAddDesc: string;
+  adminConfirmAdminRemoveDesc: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -343,6 +348,9 @@ export const translations: { [key: string]: TranslationKeys } = {
     signupGooglePasswordTitle: 'खाता सुरक्षित करें',
     signupGooglePasswordDesc: 'भविष्य में खाता हटाने जैसी संवेदनशील कार्रवाइयों के लिए कृपया एक पासवर्ड सेट करें।',
     signupGooglePasswordBtn: 'पासवर्ड सेट करें और आगे बढ़ें',
+    adminConfirmAdminToggleTitle: 'व्यवस्थापक पहुँच की पुष्टि करें',
+    adminConfirmAdminAddDesc: 'क्या आप वाकई {{name}} को प्रशासनिक पहुँच देना चाहते हैं?',
+    adminConfirmAdminRemoveDesc: 'क्या आप वाकई {{name}} से प्रशासनिक पहुँच हटाना चाहते हैं?',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -470,7 +478,6 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboard2FAPinPlaceholder: '6-digit PIN',
     dashboard2FAUpdateSuccess: 'Security settings updated.',
     dashboardDeleteResignFirst: 'Please resign from your position before deleting your account.',
-
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
     prayerFormType: 'Request Type',
@@ -500,5 +507,8 @@ export const translations: { [key: string]: TranslationKeys } = {
     signupGooglePasswordTitle: 'Secure Your Account',
     signupGooglePasswordDesc: 'Please set a password for sensitive actions like account deletion in the future.',
     signupGooglePasswordBtn: 'Set Password & Continue',
+    adminConfirmAdminToggleTitle: 'Confirm Admin Access',
+    adminConfirmAdminAddDesc: 'Are you sure you want to grant administrative access to {{name}}?',
+    adminConfirmAdminRemoveDesc: 'Are you sure you want to remove administrative access from {{name}}?',
   },
 };
