@@ -9,15 +9,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CreditCard, Banknote, QrCode, Heart, Copy, ShieldCheck, CheckCircle2, IndianRupee, Loader2 } from "lucide-react";
+import { ArrowLeft, CreditCard, Banknote, Heart, ShieldCheck, CheckCircle2, IndianRupee, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { createStripeCheckoutSession } from "@/app/actions";
-import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function DonatePage() {
   const { language, t } = useLanguage();
@@ -27,7 +25,6 @@ export default function DonatePage() {
   const router = useRouter();
   const [amount, setAmount] = React.useState<string>("501");
   const [isProcessing, setIsProcessing] = React.useState(false);
-  const qrImage = PlaceHolderImages.find((img) => img.id === "donation-qr");
 
   const handleStripeDonate = async () => {
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -61,11 +58,6 @@ export default function DonatePage() {
       toast({ variant: "destructive", title: "Error", description: result.message });
     }
     setIsProcessing(false);
-  };
-
-  const copyUpi = () => {
-    navigator.clipboard.writeText(t.donateUpiId);
-    toast({ title: language === 'hi' ? "कॉपी किया गया" : "Copied", description: t.donateUpiId });
   };
 
   return (
@@ -173,33 +165,6 @@ export default function DonatePage() {
 
               {/* Offline Payment Column */}
               <div className="lg:col-span-5 space-y-6">
-                <Card className="shadow-lg border-primary/10">
-                  <CardHeader className="bg-secondary/30 p-5">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <QrCode className="h-5 w-5 text-primary" /> {t.donateUpi}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 flex flex-col items-center gap-6">
-                    {qrImage && (
-                      <div className="relative h-48 w-48 p-2 bg-white rounded-xl shadow-inner ring-1 ring-primary/10">
-                        <Image
-                          src={qrImage.imageUrl}
-                          alt="Donation QR"
-                          fill
-                          className="rounded-lg object-cover p-2"
-                        />
-                      </div>
-                    )}
-                    <div className="w-full space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-secondary rounded-lg border border-primary/10">
-                        <span className="font-bold text-primary">{t.donateUpiId}</span>
-                        <Button variant="ghost" size="icon" onClick={copyUpi} className="h-8 w-8 hover:bg-primary/20"><Copy className="h-4 w-4" /></Button>
-                      </div>
-                      <p className="text-[10px] text-center text-muted-foreground">{language === 'hi' ? 'किसी भी UPI ऐप से स्कैन करें' : 'Scan via any UPI App'}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
                 <Card className="shadow-lg border-primary/10">
                   <CardHeader className="bg-secondary/30 p-5">
                     <CardTitle className="text-lg flex items-center gap-2">
