@@ -913,9 +913,28 @@ export default function AdminPage(props: {
                        <Button size="sm" variant="outline" className="h-8 text-[10px] sm:text-xs" onClick={() => updateRequestStatus(req.id, 'completed')} disabled={req.status === 'completed'}>
                          <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Completed
                        </Button>
-                       <Button size="sm" variant="ghost" onClick={() => handleDelete("prayer_requests", req.id)} className="text-destructive ml-auto h-8 w-8 p-0 shrink-0">
-                         <Trash2 className="h-4 w-4" />
-                       </Button>
+                       
+                       <AlertDialog>
+                         <AlertDialogTrigger asChild>
+                           <Button size="sm" variant="ghost" className="text-destructive ml-auto h-8 w-8 p-0 shrink-0">
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                         </AlertDialogTrigger>
+                         <AlertDialogContent className="w-[95%] max-w-md mx-auto">
+                           <AlertDialogHeader>
+                             <AlertDialogTitle>{language === 'hi' ? 'निवेदन हटाएं?' : 'Delete Request?'}</AlertDialogTitle>
+                             <AlertDialogDescription>
+                               {language === 'hi' ? 'क्या आप वाकई इस निवेदन को हटाना चाहते हैं? यह कार्रवाई वापस नहीं ली जा सकती।' : 'Are you sure you want to delete this request? This action cannot be undone.'}
+                             </AlertDialogDescription>
+                           </AlertDialogHeader>
+                           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                             <AlertDialogCancel className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                             <AlertDialogAction onClick={() => handleDelete("prayer_requests", req.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                               {language === 'hi' ? 'हटाएं' : 'Delete'}
+                             </AlertDialogAction>
+                           </AlertDialogFooter>
+                         </AlertDialogContent>
+                       </AlertDialog>
                      </div>
                    </CardContent>
                  </Card>
