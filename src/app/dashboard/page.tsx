@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { signOut, deleteUser } from "firebase/auth";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, ArrowLeft, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, ArrowLeft, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -38,6 +40,8 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -101,6 +105,12 @@ export default function DashboardPage() {
 
     setIsDeleting(true);
     try {
+      // Re-authenticate if using password provider
+      if (user.providerData.some(p => p.providerId === 'password')) {
+        const credential = EmailAuthProvider.credential(user.email!, confirmPassword);
+        await reauthenticateWithCredential(user, credential);
+      }
+      
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       
@@ -113,16 +123,14 @@ export default function DashboardPage() {
       router.push("/");
     } catch (error: any) {
       let msg = error.message;
-      if (error.code === 'auth/requires-recent-login') {
+      if (error.code === 'auth/requires-recent-login' || error.code === 'auth/wrong-password') {
         msg = t.dashboardDeleteRecentLogin;
-      } else if (error.code === 'auth/network-request-failed') {
-        msg = language === 'hi' 
-          ? "नेटवर्क त्रुटि: कृपया अपना इंटरनेट कनेक्शन जांचें।" 
-          : "Network error: Please check your internet connection.";
       }
       toast({ variant: "destructive", title: "Error", description: msg });
     } finally {
       setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setConfirmPassword("");
     }
   };
 
@@ -213,7 +221,7 @@ export default function DashboardPage() {
                   <p className="font-medium text-sm">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
                 </div>
                 <div className="pt-4 border-t">
-                  <AlertDialog>
+                  <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="sm" className="text-destructive w-full justify-start gap-2 h-8 text-xs">
                         <Trash2 className="h-4 w-4" />{t.dashboardDeleteAccount}
@@ -224,9 +232,25 @@ export default function DashboardPage() {
                         <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
                         <AlertDialogDescription>{t.dashboardDeleteConfirmDesc}</AlertDialogDescription>
                       </AlertDialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="del-password">{t.dashboardDeletePasswordLabel}</Label>
+                          <Input 
+                            id="del-password" 
+                            type="password" 
+                            value={confirmPassword} 
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder={t.dashboardDeletePasswordPlaceholder}
+                          />
+                        </div>
+                      </div>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={isDeleting}>
+                        <AlertDialogCancel onClick={() => setConfirmPassword("")}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDeleteAccount} 
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+                          disabled={isDeleting || !confirmPassword}
+                        >
                           {isDeleting ? '...' : 'Delete'}
                         </AlertDialogAction>
                       </AlertDialogFooter>

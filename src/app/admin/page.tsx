@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -63,6 +64,7 @@ export default function AdminPage(props: {
   } | null>(null);
 
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
+  const [resignPassword, setResignPassword] = useState("");
   const [galleryMediaPreview, setGalleryMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
   const [emailStatus, setEmailStatus] = useState<{ isLive: boolean; provider: string } | null>(null);
@@ -305,6 +307,11 @@ export default function AdminPage(props: {
     if (!firestore || !user) return;
     setIsResigningInProgress(true);
     try {
+      if (user.providerData.some(p => p.providerId === 'password')) {
+        const credential = EmailAuthProvider.credential(user.email!, resignPassword);
+        await reauthenticateWithCredential(user, credential);
+      }
+      
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
       await updateDoc(userRef, { role: "devotee" });
@@ -312,9 +319,12 @@ export default function AdminPage(props: {
       toast({ title: language === 'hi' ? "इस्तीफा स्वीकार किया गया" : "Resignation Accepted" });
       router.push("/");
     } catch (error: any) {
-      toast({ variant: "destructive", title: language === 'hi' ? "त्रुटि" : "Error", description: error.message });
+      let msg = error.message;
+      if (error.code === 'auth/wrong-password') msg = language === 'hi' ? "गलत पासवर्ड" : "Incorrect password";
+      toast({ variant: "destructive", title: language === 'hi' ? "त्रुटि" : "Error", description: msg });
     } finally {
       setIsResigningInProgress(false);
+      setResignPassword("");
     }
   };
 
@@ -393,12 +403,16 @@ export default function AdminPage(props: {
                   <AlertDialogHeader>
                     <AlertDialogTitle>{language === 'hi' ? 'क्या आप पद छोड़ना चाहते हैं?' : 'Are you sure you want to resign?'}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      {language === 'hi' ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। आप एक भक्त के रूप में लॉग इन रहेंगे।' : 'This will remove your current role and administrative access. You will remain logged in as a devotee.'}
+                      {language === 'hi' ? 'यह आपके वर्तमान पद और प्रशासनिक पहुँच को हटा देगा। पुष्टि के लिए अपना पासवर्ड दर्ज करें।' : 'This will remove your current role and administrative access. Enter password to confirm.'}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
+                  <div className="py-4 space-y-2">
+                    <Label>{language === 'hi' ? 'पासवर्ड दर्ज करें' : 'Enter Password'}</Label>
+                    <Input type="password" value={resignPassword} onChange={(e) => setResignPassword(e.target.value)} />
+                  </div>
                   <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
-                    <AlertDialogCancel className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground" disabled={isResigningInProgress}>
+                    <AlertDialogCancel className="mt-0" onClick={() => setResignPassword("")}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResign} className="bg-destructive text-destructive-foreground" disabled={isResigningInProgress || !resignPassword}>
                       {isResigningInProgress ? '...' : (language === 'hi' ? 'पुष्टि करें' : 'Confirm')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
