@@ -454,10 +454,15 @@ export default function AdminPage(props: {
                       </AlertDialog>
                     </div>
                   </div>
-                  <CardHeader className="p-4">
+                  <CardHeader className="p-4 pb-2">
                     <CardTitle className="text-lg truncate">{event.title}</CardTitle>
                     <CardDescription>{new Date(event.date).toLocaleString()}</CardDescription>
                   </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed border-t pt-2 mt-2">
+                      {event.description}
+                    </p>
+                  </CardContent>
                 </Card>
               ))}
             </div>
@@ -676,7 +681,7 @@ export default function AdminPage(props: {
                         <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center font-bold text-primary">
                           {u.isGhost ? <Ghost className="h-5 w-5 text-destructive" /> : (u.name?.charAt(0) || "?")}
                         </div>
-                        <div>
+                        <div className="flex flex-col">
                           <div className="font-bold flex items-center gap-2">
                             <span>{u.name}</span>
                             {u.id === user?.uid && <Badge variant="outline" className="text-[8px]">YOU</Badge>}

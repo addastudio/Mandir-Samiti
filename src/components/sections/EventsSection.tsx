@@ -101,6 +101,11 @@ export function EventsSection() {
                           day: 'numeric'
                         })}
                       </span>
+                      {event.description && (
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-2 line-clamp-2 italic">
+                          {event.description}
+                        </p>
+                      )}
                     </li>
                   ))}
                 </ul>
