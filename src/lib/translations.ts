@@ -86,6 +86,11 @@ export type TranslationKeys = {
   galleryLiveDarshan: string;
   galleryLocalVideo: string;
   galleryYoutubeVideo: string;
+  galleryViewAll: string;
+  galleryFilterAll: string;
+  galleryFilterPhotos: string;
+  galleryFilterVideos: string;
+  galleryAddMedia: string;
 
   // Contact Section
   contactTitle: string;
@@ -265,6 +270,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     galleryLiveDarshan: 'लाइव दर्शन / आरती (वीडियो)',
     galleryLocalVideo: 'स्थानीय वीडियो',
     galleryYoutubeVideo: 'यूट्यूब वीडियो',
+    galleryViewAll: 'सभी मीडिया देखें',
+    galleryFilterAll: 'सभी',
+    galleryFilterPhotos: 'फोटो',
+    galleryFilterVideos: 'वीडियो',
+    galleryAddMedia: 'मीडिया जोड़ें',
     contactTitle: 'हमसे संपर्क करें',
     contactAddress: 'पता: मंदिर समिति, बहपुरा, जिला-आगरा, उत्तर प्रदेश, भारत',
     contactPhone: 'फ़ोन: +91 98765 43210',
@@ -424,6 +434,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     galleryLiveDarshan: 'Live Darshan / Aarti (Video)',
     galleryLocalVideo: 'Local Video',
     galleryYoutubeVideo: 'YouTube Video',
+    galleryViewAll: 'View All Media',
+    galleryFilterAll: 'All',
+    galleryFilterPhotos: 'Photos',
+    galleryFilterVideos: 'Videos',
+    galleryAddMedia: 'Add Media',
     contactTitle: 'Contact Us',
     contactAddress: 'Address: Mandir Samiti, Bahpura, Dist-Agra, Uttar Pradesh, India',
     contactPhone: 'Phone: +91 98765 43210',

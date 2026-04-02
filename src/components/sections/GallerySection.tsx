@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Youtube, Play, Loader2, PlayCircle, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Camera, Youtube, Play, Loader2, PlayCircle, ChevronLeft, ChevronRight, X, ArrowRight } from "lucide-react";
 import React, { useEffect, useCallback, useMemo } from "react";
 import {
   Dialog,
@@ -22,6 +22,7 @@ import {
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function GallerySection() {
   const { t, language } = useLanguage();
@@ -132,25 +133,33 @@ export function GallerySection() {
   return (
     <section id="gallery" className="bg-secondary/30 py-16 sm:py-20 md:py-28">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2
-            className={cn(
-              "text-3xl xs:text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center gap-2 sm:gap-3",
-              language === "hi" ? "font-hindi" : "font-headline"
-            )}
-          >
-            <Camera className="h-7 w-7 sm:h-8 sm:w-8" />
-            {t.galleryTitle}
-          </h2>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
+          <div className="mx-auto md:mx-0 text-center md:text-left">
+            <h2
+              className={cn(
+                "text-3xl xs:text-4xl font-bold tracking-tight sm:text-5xl text-text-accent flex items-center justify-center md:justify-start gap-2 sm:gap-3",
+                language === "hi" ? "font-hindi" : "font-headline"
+              )}
+            >
+              <Camera className="h-7 w-7 sm:h-8 sm:w-8" />
+              {t.galleryTitle}
+            </h2>
+          </div>
+          <Link href="/gallery" className="mx-auto md:mx-0">
+            <Button variant="outline" className="gap-2 group">
+              {t.galleryViewAll}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </Link>
         </div>
 
-        <div className="mt-12 sm:mt-16 grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 sm:grid-cols-3 lg:grid-cols-4">
           {isLoading ? (
             <div className="col-span-full flex justify-center py-20">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
           ) : (
-            allMedia.map((item, index) => (
+            allMedia.slice(0, 8).map((item, index) => (
               <div 
                 key={item.id} 
                 className="group overflow-hidden rounded-xl shadow-md border border-primary/5 cursor-pointer aspect-[3/2] relative transition-transform hover:scale-[1.02] active:scale-[0.98] bg-muted flex items-center justify-center" 
@@ -250,7 +259,7 @@ export function GallerySection() {
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setLightboxOpen(false)}
-                className="text-white hover:bg-white/20 rounded-full"
+                className="text-white hover:bg-white/20 rounded-full opacity-100 backdrop-blur-md bg-black/20"
               >
                 <X className="h-6 w-6" />
               </Button>

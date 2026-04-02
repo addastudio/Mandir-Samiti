@@ -46,7 +46,7 @@ export function Header() {
     { href: "/#seva", label: t.navSeva, isAnchor: true },
     { href: "/prayer-request", label: t.navPrayer, isAnchor: false },
     { href: "/donate", label: t.navDonate, isAnchor: false },
-    { href: "/#gallery", label: t.navGallery, isAnchor: true },
+    { href: "/gallery", label: t.navGallery, isAnchor: false },
     { href: "/#contact", label: t.navContact, isAnchor: true },
   ];
 
@@ -119,7 +119,7 @@ export function Header() {
       {navItems.map((item) => {
         const isActive = pathname === '/' 
           ? (item.isAnchor && activeSection === item.href.replace('/#', ''))
-          : (pathname === item.href);
+          : (pathname === item.href || (pathname.startsWith('/gallery') && item.href === '/gallery'));
 
         return (
           <Link
