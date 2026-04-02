@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -77,10 +77,21 @@ export default function AdminPage(props: {
   const [galleryMediaPreview, setGalleryMediaPreview] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<{ isLive: boolean; provider: string } | null>(null);
 
+  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
+  const [expandedNotices, setExpandedNotices] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     setMounted(true);
     getEmailServiceStatus().then(setEmailStatus);
   }, []);
+
+  const toggleEvent = (id: string) => {
+    setExpandedEvents((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const toggleNotice = (id: string) => {
+    setExpandedNotices((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const currentUserRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -434,39 +445,61 @@ export default function AdminPage(props: {
               </CardContent>
             </Card>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events?.map((event) => (
-                <Card key={event.id} className="group overflow-hidden border-primary/5 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="relative h-40 bg-muted">
-                    <img src={event.image} alt={event.title} className="object-cover w-full h-full" />
-                    <div className="absolute top-2 right-2">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon" className="h-8 w-8 shadow-lg"><Trash2 className="h-4 w-4" /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="w-[95%] max-w-md">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{language === 'hi' ? 'ईवेंट हटाएं?' : 'Delete Event?'}</AlertDialogTitle>
-                            <AlertDialogDescription>{language === 'hi' ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure you want to delete this event?'}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
-                            <AlertDialogCancel>{language === 'hi' ? 'रद्द' : 'Cancel'}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete("events", event.id, event.title)} className="bg-destructive text-destructive-foreground">{language === 'hi' ? 'हटाएं' : 'Delete'}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+              {events?.map((event) => {
+                const isExpanded = !!expandedEvents[event.id];
+                return (
+                  <Card key={event.id} className="group overflow-hidden border-primary/5 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="relative h-40 bg-muted">
+                      <img src={event.image} alt={event.title} className="object-cover w-full h-full" />
+                      <div className="absolute top-2 right-2">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon" className="h-8 w-8 shadow-lg"><Trash2 className="h-4 w-4" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="w-[95%] max-w-md">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{language === 'hi' ? 'ईवेंट हटाएं?' : 'Delete Event?'}</AlertDialogTitle>
+                              <AlertDialogDescription>{language === 'hi' ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure you want to delete this event?'}</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                              <AlertDialogCancel>{language === 'hi' ? 'रद्द' : 'Cancel'}</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete("events", event.id, event.title)} className="bg-destructive text-destructive-foreground">{language === 'hi' ? 'हटाएं' : 'Delete'}</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
-                  </div>
-                  <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-lg truncate">{event.title}</CardTitle>
-                    <CardDescription className="text-xs">{new Date(event.date).toLocaleString()}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed border-t pt-2 mt-2 italic">
-                      {event.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+                    <CardHeader className="p-4 pb-2">
+                      <CardTitle className="text-lg truncate">{event.title}</CardTitle>
+                      <CardDescription className="text-xs">{new Date(event.date).toLocaleString()}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <div className="border-t pt-2 mt-2">
+                        <p className={cn(
+                          "text-sm text-muted-foreground leading-relaxed italic",
+                          !isExpanded && "line-clamp-3"
+                        )}>
+                          {event.description}
+                        </p>
+                        {event.description && event.description.length > 80 && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => toggleEvent(event.id)}
+                            className="p-0 h-auto mt-1 text-primary font-bold hover:no-underline flex items-center gap-1 text-[10px] sm:text-xs"
+                          >
+                            {isExpanded ? (
+                              <> {language === 'hi' ? 'कम दिखाएं' : 'Show Less'} <ChevronUp className="h-3 w-3" /> </>
+                            ) : (
+                              <> {language === 'hi' ? 'और पढ़ें' : 'Read More'} <ChevronDown className="h-3 w-3" /> </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
 
@@ -501,35 +534,57 @@ export default function AdminPage(props: {
             <div className="space-y-4">
               <h3 className="text-lg font-bold flex items-center gap-2"><History className="h-5 w-5" /> {language === 'hi' ? 'सूचना इतिहास' : 'Notice History'}</h3>
               <div className="grid grid-cols-1 gap-4">
-                {notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((notice) => (
-                  <Card key={notice.id} className={cn("border-l-4 shadow-sm", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
-                    <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h4 className="font-bold truncate">{notice.title}</h4>
-                          <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'} className="text-[10px] uppercase">{notice.importance}</Badge>
+                {notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((notice) => {
+                  const isExpanded = !!expandedNotices[notice.id];
+                  return (
+                    <Card key={notice.id} className={cn("border-l-4 shadow-sm", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
+                      <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h4 className="font-bold truncate">{notice.title}</h4>
+                            <Badge variant={notice.importance === 'urgent' ? 'destructive' : 'outline'} className="text-[10px] uppercase">{notice.importance}</Badge>
+                          </div>
+                          <p className={cn(
+                            "text-sm text-muted-foreground leading-relaxed",
+                            !isExpanded && "line-clamp-3"
+                          )}>{notice.content}</p>
+                          {notice.content && notice.content.length > 120 && (
+                            <Button
+                              variant="link"
+                              size="sm"
+                              onClick={() => toggleNotice(notice.id)}
+                              className="p-0 h-auto mt-2 text-primary font-bold hover:no-underline flex items-center gap-1"
+                            >
+                              {isExpanded ? (
+                                <> {language === 'hi' ? 'कम दिखाएं' : 'Show Less'} <ChevronUp className="h-3 w-3" /> </>
+                              ) : (
+                                <> {language === 'hi' ? 'और पढ़ें' : 'Read More'} <ChevronDown className="h-3 w-3" /> </>
+                              )}
+                            </Button>
+                          )}
+                          <p className="text-[10px] text-muted-foreground mt-3 flex items-center gap-1 font-medium"><Calendar className="h-3 w-3" /> {new Date(notice.createdAt).toLocaleString()}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">{notice.content}</p>
-                        <p className="text-[10px] text-muted-foreground mt-3 flex items-center gap-1 font-medium"><Calendar className="h-3 w-3" /> {new Date(notice.createdAt).toLocaleString()}</p>
-                      </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive h-9 w-9 shrink-0 hover:bg-destructive/5"><Trash2 className="h-4 w-4" /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="w-[95%] max-w-md">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{language === 'hi' ? 'हटाएं?' : 'Delete?'}</AlertDialogTitle>
-                            <AlertDialogDescription>{language === 'hi' ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure?'}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
-                            <AlertDialogCancel>{language === 'hi' ? 'रद्द' : 'Cancel'}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete("notices", notice.id, notice.title)} className="bg-destructive text-destructive-foreground">{language === 'hi' ? 'हटाएं' : 'Delete'}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="flex flex-col gap-2">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive h-9 w-9 shrink-0 hover:bg-destructive/5"><Trash2 className="h-4 w-4" /></Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="w-[95%] max-w-md">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{language === 'hi' ? 'हटाएं?' : 'Delete?'}</AlertDialogTitle>
+                                <AlertDialogDescription>{language === 'hi' ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure?'}</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                                <AlertDialogCancel>{language === 'hi' ? 'रद्द' : 'Cancel'}</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete("notices", notice.id, notice.title)} className="bg-destructive text-destructive-foreground">{language === 'hi' ? 'हटाएं' : 'Delete'}</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           </TabsContent>

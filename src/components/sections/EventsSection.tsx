@@ -121,7 +121,7 @@ export function EventsSection() {
                             )}>
                               {event.description}
                             </p>
-                            {event.description.length > 80 && (
+                            {event.description.length > 50 && (
                               <Button
                                 variant="link"
                                 size="sm"
