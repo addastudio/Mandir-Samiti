@@ -12,12 +12,22 @@ import { collection, doc, deleteDoc } from "firebase/firestore";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Camera, PlayCircle, Loader2, ChevronLeft, ChevronRight, X, Image as ImageIcon, Video, Trash2, ShieldCheck } from "lucide-react";
+import { Camera, PlayCircle, Loader2, ChevronLeft, ChevronRight, X, Image as ImageIcon, Video, Trash2, ShieldCheck, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +38,7 @@ export default function GalleryPage() {
   const { user } = useUser();
   const { toast } = useToast();
   const [filter, setFilter] = React.useState<'all' | 'image' | 'video'>('all');
+  const [itemToDelete, setItemToDelete] = React.useState<string | null>(null);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -131,16 +142,15 @@ export default function GalleryPage() {
     );
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
+  const handleDelete = async (id: string) => {
     if (!firestore || !adminDoc) return;
-    if (confirm(language === 'hi' ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure you want to delete this?')) {
-      try {
-        await deleteDoc(doc(firestore, "gallery", id));
-        toast({ title: language === 'hi' ? 'हटा दिया गया' : 'Deleted successfully' });
-      } catch (err: any) {
-        toast({ variant: 'destructive', title: 'Error', description: err.message });
-      }
+    try {
+      await deleteDoc(doc(firestore, "gallery", id));
+      toast({ title: language === 'hi' ? 'हटा दिया गया' : 'Deleted successfully' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    } finally {
+      setItemToDelete(null);
     }
   };
 
@@ -247,7 +257,10 @@ export default function GalleryPage() {
                         variant="destructive" 
                         size="icon" 
                         className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                        onClick={(e) => handleDelete(e, item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setItemToDelete(item.id);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -325,6 +338,31 @@ export default function GalleryPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {language === 'hi' ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure you want to delete this?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'hi' 
+                ? 'यह कार्रवाई स्थायी है और इसे वापस नहीं लिया जा सकता। यह इमेज/वीडियो गैलरी से स्थायी रूप से हटा दिया जाएगा।' 
+                : 'This action is permanent and cannot be undone. This image/video will be permanently removed from the temple gallery.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
+            <AlertDialogCancel className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => itemToDelete && handleDelete(itemToDelete)} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {language === 'hi' ? 'पुष्टि करें और हटाएं' : 'Confirm Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>
