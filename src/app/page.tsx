@@ -38,7 +38,7 @@ export default function Home(props: {
     <div className={cn("bg-background", language === "hi" && "font-hindi")}>
       <LanguageSelectorModal />
       <Header />
-      <main className="animate-in fade-in duration-500">
+      <main id="main-content" className="animate-in fade-in duration-500">
         <HeroSection />
         <NoticeSection />
         <AboutSection />

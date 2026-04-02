@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Poppins, Mukta } from 'next/font/google';
 import { FirebaseClientProvider } from '@/firebase';
 import * as React from 'react';
+import { BackToTop } from '@/components/layout/BackToTop';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -35,7 +36,6 @@ export default function RootLayout(props: {
   params: Promise<any>;
 }) {
   const children = props.children;
-  // Unwrap params if needed, though not used here directly, it's good practice for Next.js 15
   const params = React.use(props.params);
 
   return (
@@ -50,7 +50,15 @@ export default function RootLayout(props: {
       >
         <FirebaseClientProvider>
           <LanguageProvider>
+            {/* Accessibility: Skip to Content link for keyboard users */}
+            <a 
+              href="#main-content" 
+              className="skip-link"
+            >
+              Skip to main content
+            </a>
             {children}
+            <BackToTop />
             <Toaster />
           </LanguageProvider>
         </FirebaseClientProvider>

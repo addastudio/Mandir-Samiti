@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -150,28 +150,16 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-24 sm:pt-28">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6">
-        <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => router.push("/")} 
-            className="group flex items-center gap-2 px-4 py-2 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300 active:scale-95 font-medium"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            <span className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.backToHome}</span>
-          </Button>
-        </div>
+      <main id="main-content" className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6">
+        <Breadcrumbs items={[{ label: language === 'hi' ? 'डैशबोर्ड' : 'Dashboard' }]} />
 
         {!isVerified && (
           <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>{language === 'hi' ? 'खाता सत्यापित नहीं है' : 'Account Not Verified'}</AlertTitle>
-            <AlertDescription className="flex items-center justify-between mt-2">
-              <div className="space-y-1">
-                <p className="text-sm">{language === 'hi' ? 'कृपया अपनी लॉगिन स्क्रीन पर जाकर खाता सत्यापित करें।' : 'Please complete your account verification to access all features.'}</p>
-              </div>
-              <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => router.push('/login')}>
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 gap-4">
+              <p className="text-sm">{language === 'hi' ? 'कृपया अपनी लॉगिन स्क्रीन पर जाकर खाता सत्यापित करें।' : 'Please complete your account verification to access all features.'}</p>
+              <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 w-fit" onClick={() => router.push('/login')}>
                 {language === 'hi' ? 'अभी सत्यापित करें' : 'Verify Now'}
               </Button>
             </AlertDescription>
@@ -367,7 +355,7 @@ export default function DashboardPage() {
             </Card>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

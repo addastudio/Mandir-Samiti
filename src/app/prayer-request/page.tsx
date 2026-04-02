@@ -6,9 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PrayerRequestSection } from "@/components/sections/PrayerRequestSection";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 /**
  * Dedicated page for devotees to submit prayer and ritual requests.
@@ -16,22 +14,13 @@ import { useRouter } from "next/navigation";
  */
 export default function PrayerRequestPage() {
   const { language, t } = useLanguage();
-  const router = useRouter();
 
   return (
     <div className={cn("bg-background min-h-screen flex flex-col", language === "hi" && "font-hindi")}>
       <Header />
-      <main className="flex-grow pt-24 pb-12 sm:pt-32">
+      <main id="main-content" className="flex-grow pt-24 pb-12 sm:pt-32">
         <div className="container mx-auto px-4 mb-8">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => router.push("/")}
-            className="group flex items-center gap-2 px-4 py-2 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300 active:scale-95 font-medium"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            {t.backToHome}
-          </Button>
+          <Breadcrumbs items={[{ label: t.navPrayer }]} />
         </div>
         
         {/* Reuse the specialized section component */}
