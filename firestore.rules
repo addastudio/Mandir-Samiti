@@ -1,92 +1,158 @@
-/**
- * @file Firestore Security Rules for Mandir Samiti Bahpura Web Application
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the request is from a designated administrator
+    /**
+     * FIRESTORE SECURITY RULES DOCUMENTATION
+     *
+     * Core Philosophy:
+     * This ruleset implements a Role-Based Access Control (RBAC) model specifically designed for a Temple Management System.
+     * It prioritizes public visibility for community-facing content while strictly restricting management capabilities 
+     * to verified administrative users.
+     *
+     * Data Structure:
+     * Data is organized into flat, top-level collections for events, gallery items, committee members, 
+     * and service programs. Administrative roles are managed via a dedicated /roles_admin collection.
+     *
+     * Key Security Decisions:
+     * 1. DBAC (Database Access Control): Admin status is determined by the existence of a document 
+     *    in /roles_admin/{userId}, avoiding reliance on custom claims for rapid prototyping.
+     * 2. Auditability: An AdminActivityLog collection is implemented to track all management actions, 
+     *    fulfilling the requirement for a history of upload and delete events.
+     * 3. Public Accessibility: Temple-related information (events, programs, testimonials) is 
+     *    publicly readable by any user, including unauthenticated visitors.
+     * 4. Secure Submissions: Contact form submissions are "write-only" for the public; only 
+     *    administrators can view or manage them.
+     *
+     * Denormalization for Authorization:
+     * Administrative logs include the `adminId` directly on the document to ensure the creator 
+     * of the log entry matches the authenticated user performing the action.
+     */
+
+    // --- HELPER FUNCTIONS ---
+
+    /** Checks if the user is authenticated with Firebase Auth. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** 
+     * Checks if the authenticated user has an entry in the roles_admin collection.
+     * This is the primary check for all management/write operations.
+     */
     function isAdmin() {
-      return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    // User Profile Rules
-    match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      
-      // Allow reading profile if it's yours or if you are an admin
-      allow get: if isOwner(userId) || isAdmin();
-      
-      // Listing all users is restricted to admins for management purposes
-      allow list: if isAdmin();
-      
-      // Users can create their own profile upon signup
-      allow create: if isOwner(userId);
-      
-      // Users can update their own info (language, phone, etc). Admins can update roles.
-      allow update: if isOwner(userId) || isAdmin();
-      
-      // Critical: Allow users to delete their own record (e.g., account deletion)
-      // and allow admins to purge records.
-      allow delete: if isOwner(userId) || isAdmin();
+    /** Verifies that a document exists and the user is an admin. Used for updates and deletes. */
+    function isExistingAdmin() {
+      return resource != null && isAdmin();
     }
 
-    // Donation Records
-    match /users/{userId}/donations/{donationId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      allow get, list: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      // Donations are permanent records, usually only deletable by high-level admins if at all
-      allow update, delete: if isAdmin();
-    }
+    // --- COLLECTION RULES ---
 
-    // Events (Publicly Readable, Admin Managed)
+    /**
+     * @description Publicly readable temple events and festivals. Managed by administrators.
+     * @path /events/{eventId}
+     * @allow (get, list) if true; (create, update, delete) if user is an admin.
+     * @deny (write) if user is not in the roles_admin collection.
+     * @principle Public Read / Admin Write.
+     */
     match /events/{eventId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // Gallery (Publicly Readable, Admin Managed)
-    match /gallery/{galleryId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // Notices (Publicly Readable, Admin Managed)
-    match /notices/{noticeId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // Prayer Requests
-    match /prayer_requests/{requestId} {
-      // Anyone can submit a request (devotees might not be logged in)
-      allow create: if true;
-      // Users read their own. Admins read all.
-      allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
-      allow update, delete: if isAdmin();
-    }
-
-    // Admin Roles Management
-    match /roles_admin/{userId} {
-      // Allow any logged-in user to check if they are an admin for UI routing
-      allow get: if request.auth != null;
-      
-      // Only existing admins can see the full list of other admins
-      allow list: if isAdmin();
-      
-      // Only existing admins can grant new admin privileges
       allow create: if isAdmin();
-      
-      // Users can resign (delete their own role) or admins can remove others
-      allow delete: if isAdmin() || (request.auth != null && request.auth.uid == userId);
-      
-      // Role metadata shouldn't be updated directly, only added/removed
-      allow update: if false;
+      allow update, delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Photo and video gallery items.
+     * @path /gallery_items/{galleryItemId}
+     * @allow (get, list) if true; (create, update, delete) if user is an admin.
+     * @deny (write) if user is not an admin.
+     * @principle Public Read / Admin Write.
+     */
+    match /gallery_items/{galleryItemId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update, delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Information about Temple Committee (Mandir Samiti) members.
+     * @path /mandir_samiti_members/{memberId}
+     * @allow (get, list) if true; (create, update, delete) if user is an admin.
+     * @deny (write) if user is not an admin.
+     * @principle Public Read / Admin Write.
+     */
+    match /mandir_samiti_members/{memberId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update, delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Community service (Seva) programs offered by the temple.
+     * @path /seva_programs/{programId}
+     * @allow (get, list) if true; (create, update, delete) if user is an admin.
+     * @deny (write) if user is not an admin.
+     * @principle Public Read / Admin Write.
+     */
+    match /seva_programs/{programId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update, delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Testimonials from devotees and beneficiaries.
+     * @path /testimonials/{testimonialId}
+     * @allow (get, list) if true; (create, update, delete) if user is an admin.
+     * @deny (write) if user is not an admin.
+     * @principle Public Read / Admin Write.
+     */
+    match /testimonials/{testimonialId} {
+      allow get, list: if true;
+      allow create: if isAdmin();
+      allow update, delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Contact form submissions. Public users can submit; only admins can view.
+     * @path /contact_form_submissions/{submissionId}
+     * @allow (create) if true; (get, list, update, delete) if user is an admin.
+     * @deny (read) if user is not an admin.
+     * @principle Write-Only for Public / Admin Managed.
+     */
+    match /contact_form_submissions/{submissionId} {
+      allow create: if true;
+      allow get, list: if isAdmin();
+      allow update, delete: if isExistingAdmin();
+    }
+
+    /**
+     * @description Audit trail of administrative actions (uploads, deletes).
+     * @path /admin_activity_logs/{logId}
+     * @allow (get, list) if user is an admin; (create) if adminId in data matches auth UID.
+     * @deny (update, delete) if false (immutable logs).
+     * @principle Immutable Audit Log / Identity Enforcement.
+     */
+    match /admin_activity_logs/{logId} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.adminId == request.auth.uid;
+      allow update, delete: if false; 
+    }
+
+    /**
+     * @description Role registry for administrative users.
+     * @path /roles_admin/{adminId}
+     * @allow (get) if authenticated; (list, write) if false.
+     * @deny (write) to prevent self-elevation of privileges.
+     * @principle Secure Identity Registry.
+     */
+    match /roles_admin/{adminId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create, update, delete: if false; // Roles must be managed by system administrators or via console/functions.
     }
   }
 }

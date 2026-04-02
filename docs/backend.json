@@ -1,257 +1,421 @@
-
 {
   "entities": {
-    "User": {
+    "Event": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
+      "title": "Event",
       "type": "object",
-      "description": "Represents a user of the Mandir Samiti Bahpura web application.",
+      "description": "Represents a temple event or festival, including daily puja timings and annual celebrations.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user entity."
+          "description": "Unique identifier for the Event entity."
+        },
+        "titleEn": {
+          "type": "string",
+          "description": "The title of the event in English."
+        },
+        "titleHi": {
+          "type": "string",
+          "description": "The title of the event in Hindi (Devanagari script)."
+        },
+        "descriptionEn": {
+          "type": "string",
+          "description": "A detailed description of the event in English."
+        },
+        "descriptionHi": {
+          "type": "string",
+          "description": "A detailed description of the event in Hindi (Devanagari script)."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date when the event is scheduled to occur.",
+          "format": "date"
+        },
+        "time": {
+          "type": "string",
+          "description": "The specific time of the event, if applicable (e.g., puja timings)."
+        },
+        "locationEn": {
+          "type": "string",
+          "description": "The location where the event will be held in English, if different from the temple."
+        },
+        "locationHi": {
+          "type": "string",
+          "description": "The location where the event will be held in Hindi, if different from the temple."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the main image representing the event."
+        },
+        "isFestival": {
+          "type": "boolean",
+          "description": "Indicates if the event is a major annual festival."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the event record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the event record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "titleEn",
+        "titleHi",
+        "descriptionEn",
+        "descriptionHi",
+        "date",
+        "imageUrl",
+        "isFestival",
+        "createdAt"
+      ]
+    },
+    "GalleryItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GalleryItem",
+      "type": "object",
+      "description": "Represents an item in the temple's photo and video gallery.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GalleryItem entity."
+        },
+        "titleEn": {
+          "type": "string",
+          "description": "The title or caption of the gallery item in English."
+        },
+        "titleHi": {
+          "type": "string",
+          "description": "The title or caption of the gallery item in Hindi (Devanagari script)."
+        },
+        "descriptionEn": {
+          "type": "string",
+          "description": "A brief description of the gallery item in English."
+        },
+        "descriptionHi": {
+          "type": "string",
+          "description": "A brief description of the gallery item in Hindi (Devanagari script)."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of media (e.g., 'image', 'video')."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to the image file or video embed link.",
+          "format": "uri"
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "description": "URL to a thumbnail image, especially for videos.",
+          "format": "uri"
+        },
+        "eventId": {
+          "type": "string",
+          "description": "Reference to an Event, if this gallery item is associated with a specific event. (Relationship: Event 1:N GalleryItem)"
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "The date when the gallery item was uploaded.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the gallery item record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the gallery item record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "titleEn",
+        "titleHi",
+        "type",
+        "url",
+        "uploadDate",
+        "createdAt"
+      ]
+    },
+    "MandirSamitiMember": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MandirSamitiMember",
+      "type": "object",
+      "description": "Represents a member of the Mandir Samiti (Temple Committee).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MandirSamitiMember entity."
+        },
+        "nameEn": {
+          "type": "string",
+          "description": "The name of the committee member in English."
+        },
+        "nameHi": {
+          "type": "string",
+          "description": "The name of the committee member in Hindi (Devanagari script)."
+        },
+        "roleEn": {
+          "type": "string",
+          "description": "The role or position of the member in English (e.g., 'President', 'Secretary')."
+        },
+        "roleHi": {
+          "type": "string",
+          "description": "The role or position of the member in Hindi (Devanagari script)."
+        },
+        "descriptionEn": {
+          "type": "string",
+          "description": "A brief introductory description of the member in English."
+        },
+        "descriptionHi": {
+          "type": "string",
+          "description": "A brief introductory description of the member in Hindi (Devanagari script)."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the photo of the committee member."
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order for committee members."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the member record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the member record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "nameEn",
+        "nameHi",
+        "roleEn",
+        "roleHi",
+        "imageUrl",
+        "order",
+        "createdAt"
+      ]
+    },
+    "SevaProgram": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SevaProgram",
+      "type": "object",
+      "description": "Represents a community service (Seva) program offered by the temple.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SevaProgram entity."
+        },
+        "titleEn": {
+          "type": "string",
+          "description": "The title of the Seva program in English."
+        },
+        "titleHi": {
+          "type": "string",
+          "description": "The title of the Seva program in Hindi (Devanagari script)."
+        },
+        "descriptionEn": {
+          "type": "string",
+          "description": "A detailed description of the Seva program in English."
+        },
+        "descriptionHi": {
+          "type": "string",
+          "description": "A detailed description of the Seva program in Hindi (Devanagari script)."
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "URL to a small icon representing the Seva program."
+        },
+        "displayOrder": {
+          "type": "number",
+          "description": "The display order for Seva programs."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the program record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the program record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "titleEn",
+        "titleHi",
+        "descriptionEn",
+        "descriptionHi",
+        "iconUrl",
+        "displayOrder",
+        "createdAt"
+      ]
+    },
+    "Testimonial": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Testimonial",
+      "type": "object",
+      "description": "Represents a testimonial or feedback related to a Seva program or the temple.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Testimonial entity."
+        },
+        "textEn": {
+          "type": "string",
+          "description": "The testimonial text in English."
+        },
+        "textHi": {
+          "type": "string",
+          "description": "The testimonial text in Hindi (Devanagari script)."
+        },
+        "authorNameEn": {
+          "type": "string",
+          "description": "The name of the testimonial author in English."
+        },
+        "authorNameHi": {
+          "type": "string",
+          "description": "The name of the testimonial author in Hindi (Devanagari script)."
+        },
+        "authorRoleEn": {
+          "type": "string",
+          "description": "The role or context of the author in English (e.g., 'Beneficiary', 'Volunteer')."
+        },
+        "authorRoleHi": {
+          "type": "string",
+          "description": "The role or context of the author in Hindi (Devanagari script)."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the photo of the testimonial author, if available."
+        },
+        "sevaProgramId": {
+          "type": "string",
+          "description": "Reference to a SevaProgram, if the testimonial is related to a specific program. (Relationship: SevaProgram 1:N Testimonial)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the testimonial record was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "textEn",
+        "textHi",
+        "authorNameEn",
+        "authorNameHi",
+        "createdAt"
+      ]
+    },
+    "ContactFormSubmission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContactFormSubmission",
+      "type": "object",
+      "description": "Stores messages submitted through the website's contact form.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ContactFormSubmission entity."
         },
         "name": {
           "type": "string",
-          "description": "User's full name."
+          "description": "The name provided by the user in the contact form."
         },
         "email": {
           "type": "string",
-          "description": "User's email address.",
+          "description": "The email address provided by the user.",
           "format": "email"
         },
-        "phone": {
+        "message": {
           "type": "string",
-          "description": "User's phone number."
+          "description": "The message content submitted by the user."
         },
-        "address": {
+        "submittedAt": {
           "type": "string",
-          "description": "User's physical address."
+          "description": "Timestamp when the contact form was submitted.",
+          "format": "date-time"
         },
-        "role": {
-          "type": "string",
-          "description": "User's role within the application (e.g., 'user', 'admin')."
-        },
-        "language": {
-          "type": "string",
-          "description": "User's preferred language (e.g., 'hi-IN', 'en-US')."
-        },
-        "twoFactorEnabled": {
+        "isRead": {
           "type": "boolean",
-          "description": "Whether 2-step verification is enabled."
-        },
-        "twoFactorPin": {
-          "type": "string",
-          "description": "6-digit PIN for 2-step verification."
+          "description": "Flag indicating if the message has been read by an administrator."
         }
       },
       "required": [
         "id",
         "name",
         "email",
-        "role",
-        "language"
+        "message",
+        "submittedAt"
       ]
     },
-    "Donation": {
+    "AdminActivityLog": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Donation",
+      "title": "AdminActivityLog",
       "type": "object",
-      "description": "Represents a donation made to the Mandir Samiti Bahpura.",
+      "description": "Records administrative actions performed by users, such as uploading or deleting events, to maintain an audit trail.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the donation entity."
+          "description": "Unique identifier for the AdminActivityLog entry."
         },
-        "userId": {
+        "adminId": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Donation)"
+          "description": "Reference to the unique identifier of the administrative user who performed the action (from an external authentication system)."
         },
-        "amount": {
-          "type": "number",
-          "description": "Amount of the donation."
-        },
-        "date": {
+        "actionType": {
           "type": "string",
-          "description": "Date and time when the donation was made.",
+          "description": "Describes the type of action performed (e.g., 'EVENT_UPLOADED', 'EVENT_DELETED', 'GALLERY_ITEM_UPDATED')."
+        },
+        "entityType": {
+          "type": "string",
+          "description": "The type of the entity that was affected by the action (e.g., 'Event', 'GalleryItem', 'SevaProgram')."
+        },
+        "entityId": {
+          "type": "string",
+          "description": "The unique identifier of the specific entity instance that was affected (e.g., an Event's ID)."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time when the administrative action occurred.",
           "format": "date-time"
         },
-        "mode": {
+        "details": {
           "type": "string",
-          "description": "Method used for the donation (e.g., 'UPI', 'Stripe', 'Bank Transfer')."
-        },
-        "status": {
-          "type": "string",
-          "enum": ["pending", "completed", "failed"],
-          "description": "Status of the donation transaction."
+          "description": "Optional JSON string for additional details about the action, such as old and new values for updates, or an IP address."
         }
       },
       "required": [
         "id",
-        "userId",
-        "amount",
-        "date",
-        "mode",
-        "status"
+        "adminId",
+        "actionType",
+        "entityType",
+        "entityId",
+        "timestamp"
       ]
-    },
-    "Event": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Event",
-      "type": "object",
-      "description": "Represents an event organized by the Mandir Samiti Bahpura.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the event entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "Title of the event."
-        },
-        "date": {
-          "type": "string",
-          "description": "Date and time of the event.",
-          "format": "date-time"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the event."
-        },
-        "image": {
-          "type": "string",
-          "description": "URL or path to the event's image."
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "date",
-        "description"
-      ]
-    },
-    "Gallery": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Gallery",
-      "type": "object",
-      "description": "Represents an image in the temple gallery.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the gallery item."
-        },
-        "imageURL": {
-          "type": "string",
-          "description": "URL of the image."
-        },
-        "caption": {
-          "type": "string",
-          "description": "Caption or description of the image."
-        },
-        "uploadedBy": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Gallery)"
-        }
-      },
-      "required": [
-        "id",
-        "imageURL"
-      ]
-    },
-    "Notice": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Notice",
-      "type": "object",
-      "description": "Represents a public notice or announcement from the temple committee.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the notice."
-        },
-        "title": {
-          "type": "string",
-          "description": "The headline of the notice."
-        },
-        "content": {
-          "type": "string",
-          "description": "The detailed message."
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp of creation.",
-          "format": "date-time"
-        },
-        "importance": {
-          "type": "string",
-          "enum": ["normal", "urgent"],
-          "description": "Priority level of the notice."
-        }
-      },
-      "required": ["id", "title", "content", "createdAt"]
-    },
-    "PrayerRequest": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PrayerRequest",
-      "type": "object",
-      "description": "Represents a prayer or ritual request submitted by a devotee.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "phone": { "type": "string" },
-        "requestType": { "type": "string", "enum": ["prayer", "puja", "other"] },
-        "message": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "viewed", "completed"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "userId": { "type": "string", "description": "Optional reference to a registered User." }
-      },
-      "required": ["id", "name", "requestType", "message", "createdAt"]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "google.com"
+      "anonymous"
     ]
   },
   "firestore": {
     "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile information.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/donations/{donationId}",
-        "definition": {
-          "entityName": "Donation",
-          "schema": {
-            "$ref": "#/backend/entities/Donation"
-          },
-          "description": "Stores donation records for each user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "donationId",
-              "description": "The unique identifier for the donation."
-            }
-          ]
-        }
-      },
       {
         "path": "/events/{eventId}",
         "definition": {
@@ -259,83 +423,128 @@
           "schema": {
             "$ref": "#/backend/entities/Event"
           },
-          "description": "Stores event information.",
+          "description": "Collection for temple events and festivals. These documents are publicly readable by everyone, and writable/updatable/deletable only by administrators.",
           "params": [
             {
               "name": "eventId",
-              "description": "The unique identifier for the event."
+              "description": "The unique identifier for an Event document."
             }
           ]
         }
       },
       {
-        "path": "/gallery/{galleryId}",
+        "path": "/gallery_items/{galleryItemId}",
         "definition": {
-          "entityName": "Gallery",
+          "entityName": "GalleryItem",
           "schema": {
-            "$ref": "#/backend/entities/Gallery"
+            "$ref": "#/backend/entities/GalleryItem"
           },
-          "description": "Stores gallery images.",
+          "description": "Collection for temple photo and video gallery items. These documents are publicly readable by everyone, and writable/updatable/deletable only by administrators.",
           "params": [
             {
-              "name": "galleryId",
-              "description": "The unique identifier for the gallery item."
+              "name": "galleryItemId",
+              "description": "The unique identifier for a GalleryItem document."
             }
           ]
         }
       },
       {
-        "path": "/notices/{noticeId}",
+        "path": "/mandir_samiti_members/{memberId}",
         "definition": {
-          "entityName": "Notice",
+          "entityName": "MandirSamitiMember",
           "schema": {
-            "$ref": "#/backend/entities/Notice"
+            "$ref": "#/backend/entities/MandirSamitiMember"
           },
-          "description": "Stores temple announcements and notices.",
+          "description": "Collection for Mandir Samiti (Temple Committee) members. These documents are publicly readable by everyone, and writable/updatable/deletable only by administrators.",
           "params": [
             {
-              "name": "noticeId",
-              "description": "The unique identifier for the notice."
+              "name": "memberId",
+              "description": "The unique identifier for a MandirSamitiMember document."
             }
           ]
         }
       },
       {
-        "path": "/prayer_requests/{requestId}",
+        "path": "/seva_programs/{programId}",
         "definition": {
-          "entityName": "PrayerRequest",
+          "entityName": "SevaProgram",
           "schema": {
-            "$ref": "#/backend/entities/PrayerRequest"
+            "$ref": "#/backend/entities/SevaProgram"
           },
-          "description": "Stores prayer and ritual requests from devotees.",
+          "description": "Collection for community service (Seva) programs. These documents are publicly readable by everyone, and writable/updatable/deletable only by administrators.",
           "params": [
             {
-              "name": "requestId",
-              "description": "Unique identifier for the request."
+              "name": "programId",
+              "description": "The unique identifier for a SevaProgram document."
             }
           ]
         }
       },
       {
-        "path": "/roles_admin/{userId}",
+        "path": "/testimonials/{testimonialId}",
         "definition": {
-          "entityName": "User",
+          "entityName": "Testimonial",
           "schema": {
-            "type": "object",
-            "properties": {
-              "assignedAt": { "type": "string" }
-            }
+            "$ref": "#/backend/entities/Testimonial"
           },
-          "description": "Collection used to grant admin privileges. A document here with a user's UID as the ID grants admin rights.",
+          "description": "Collection for testimonials or feedback related to Seva programs or the temple. These documents are publicly readable by everyone, and writable/updatable/deletable only by administrators.",
           "params": [
             {
-              "name": "userId",
-              "description": "The UID of the user."
+              "name": "testimonialId",
+              "description": "The unique identifier for a Testimonial document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/contact_form_submissions/{submissionId}",
+        "definition": {
+          "entityName": "ContactFormSubmission",
+          "schema": {
+            "$ref": "#/backend/entities/ContactFormSubmission"
+          },
+          "description": "Collection to store messages submitted through the website's contact form. These documents are writable by any user (authenticated or unauthenticated) but readable only by administrators.",
+          "params": [
+            {
+              "name": "submissionId",
+              "description": "The unique identifier for a ContactFormSubmission document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/admin_activity_logs/{logId}",
+        "definition": {
+          "entityName": "AdminActivityLog",
+          "schema": {
+            "$ref": "#/backend/entities/AdminActivityLog"
+          },
+          "description": "Collection to record administrative actions (e.g., uploads, deletions) performed by users. These documents are readable only by administrators and are designed to be written by trusted server-side functions/Cloud Functions.",
+          "params": [
+            {
+              "name": "logId",
+              "description": "The unique identifier for an AdminActivityLog entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{adminId}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/AdminRole"
+          },
+          "description": "Dedicated collection for Database Access Control (DBAC). The existence of a document at this path signifies that the user identified by {adminId} (their Firebase Auth UID) has administrative privileges. This collection is crucial for securing admin-only operations.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier (Firebase Auth UID) of the administrative user."
             }
           ]
         }
       }
     ],
-    "reasoning": "Standard structure with admin roles and public content managed by admins."
+    "reasoning": "The Firestore structure is designed with a strong emphasis on authorization independence, structural segregation, and debuggability, adhering to all core design principles and strategy mandates. Each entity type is mapped to a dedicated top-level collection, ensuring a homogeneous security posture for all documents within that collection.\n\n**Authorization Independence (CRITICAL):**\n\n1.  **Public Data Collections:** Collections like `/events`, `/gallery_items`, `/mandir_samiti_members`, `/seva_programs`, and `/testimonials` are designed for public read access. Each document in these collections is self-contained, meaning its access permissions do not depend on data from a parent document or any external lookup (e.g., no `get()` calls in security rules to check parent ownership or status). This enables atomic read operations and simplifies rule logic considerably.\n2.  **Admin-Specific Data:** The `/contact_form_submissions` and `/admin_activity_logs` collections are designed for admin-only read access. The documents themselves contain all necessary data (e.g., `adminId` in `admin_activity_logs` for audit, `isRead` in `contact_form_submissions`). Their access is determined by whether the requesting user holds the `admin` role, not by any hierarchical dependency within the data itself. This again removes the need for `get()` operations for authorization.\n3.  **No Denormalization for Parent-Child Authorization:** Since most data is either public or globally admin-controlled, there is no scenario where a subcollection's access would depend on a parent's specific attributes (like a 'members' map for a subcollection). This simplifies the data model and security rules by avoiding complex denormalization for authorization purposes, as per Strategy A. The `eventId` and `sevaProgramId` fields in `GalleryItem` and `Testimonial` respectively are purely for referential integrity, not for authorization.\n\n**QAPs (Rules are not Filters):**\n\n1.  **Public Collections:** For collections like `/events`, `/gallery_items`, etc., all documents are intended for public display. Therefore, `list` operations on these collections are inherently secure, as every document retrieved is meant to be visible to all users. Security rules will simply allow all read operations for unauthenticated and authenticated users, without needing to filter results based on user permissions.\n2.  **Admin-Only Collections:** For `/contact_form_submissions` and `/admin_activity_logs`, `list` operations are secure because access to these collections is restricted entirely to authenticated administrators. The security rules will only grant read access if `request.auth.uid` corresponds to an administrator, ensuring that no non-admin user can list or access any documents from these collections. This design completely eliminates the need for query-based filtering within security rules for unauthorized users.\n\n**DBAC and Structural Segregation:**\n\n*   **Global Admin Role:** A dedicated top-level collection, `/roles_admin/{adminId}`, is introduced. The *existence* of a document in this collection, where `{adminId}` is a user's Firebase Authentication UID, grants that user administrative privileges. This fulfills the DBAC mandate by storing roles in the database and relying solely on `request.auth.uid` for authorization checks, avoiding custom claims.\n*   **Homogeneous Security:** Every collection (`/events`, `/gallery_items`, `/contact_form_submissions`, `/admin_activity_logs`, etc.) is designed with a single, clear security posture. This structural segregation simplifies security rules immensely, as the rules only need to determine *who* can access *this specific collection*, rather than having complex logic to differentiate document types or states within a single collection.\n\n**Addressing User Request:**\n\nThe user's request for an admin panel section showing the history of upload and delete events by users is directly addressed by the `/admin_activity_logs/{logId}` collection. This collection provides a dedicated, immutable audit trail of administrative actions, allowing administrators to easily view and debug changes made to the application's data. Access to this collection is strictly limited to users defined in `/roles_admin`, ensuring a secure and transparent audit trail."
   }
 }
