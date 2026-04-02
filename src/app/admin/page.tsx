@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -408,7 +409,7 @@ export default function AdminPage(props: {
       await deleteDoc(adminRef);
       toast({ title: language === 'hi' ? "रिकॉर्ड हटाया गया" : "Record Purged" });
     } catch (error: any) {
-      toast({ variant: "destructive", title: language === 'hi' ? "त्रुटि" : "Error", description: error.message });
+      toast({ variant: "destructive", title: "Error", description: error.message });
     }
   };
 
@@ -543,9 +544,27 @@ export default function AdminPage(props: {
                   <div className="relative h-40 sm:h-48 bg-muted">
                     <img src={event.image} alt={event.title} className="object-cover w-full h-full" />
                     <div className="absolute top-3 right-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                      <Button variant="destructive" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 shadow-lg" onClick={() => handleDelete("events", event.id)}>
-                        <Trash2 className="h-4 w-4 sm:h-5 w-5" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="icon" className="h-8 w-8 sm:h-10 sm:w-10 shadow-lg">
+                            <Trash2 className="h-4 w-4 sm:h-5 w-5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{language === 'hi' ? 'कार्यक्रम हटाएं?' : 'Delete Event?'}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {language === 'hi' ? 'क्या आप वाकई इस कार्यक्रम को हटाना चाहते हैं?' : 'Are you sure you want to delete this event?'}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                            <AlertDialogCancel className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete("events", event.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              {language === 'hi' ? 'हटाएं' : 'Delete'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                   <CardHeader className="p-4 sm:p-5">
@@ -805,9 +824,27 @@ export default function AdminPage(props: {
                   <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center p-3 sm:p-4">
                     <div className="text-center">
                       <p className="text-white text-[10px] sm:text-xs mb-2 line-clamp-2">{item.caption}</p>
-                      <Button variant="destructive" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => handleDelete("gallery", item.id)}>
-                        <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
+                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{language === 'hi' ? 'मीडिया हटाएं?' : 'Delete Media?'}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {language === 'hi' ? 'क्या आप वाकई इस मीडिया को गैलरी से हटाना चाहते हैं?' : 'Are you sure you want to delete this media from the gallery?'}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                            <AlertDialogCancel className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete("gallery", item.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              {language === 'hi' ? 'हटाएं' : 'Delete'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>
@@ -876,9 +913,27 @@ export default function AdminPage(props: {
                           <p className="text-[9px] text-muted-foreground/60">{new Date(notice.createdAt).toLocaleString()}</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete("notices", notice.id)} className="text-destructive shrink-0 h-8 w-8 hover:bg-destructive/10">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive shrink-0 h-8 w-8 hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{language === 'hi' ? 'सूचना हटाएं?' : 'Delete Notice?'}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {language === 'hi' ? 'क्या आप वाकई इस सूचना को हटाना चाहते हैं?' : 'Are you sure you want to delete this notice?'}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                            <AlertDialogCancel className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete("notices", notice.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              {language === 'hi' ? 'हटाएं' : 'Delete'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </CardContent>
                   </Card>
                 ))}
