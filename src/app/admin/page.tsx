@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -292,10 +292,10 @@ export default function AdminPage(props: {
       const roleRef = doc(firestore, "roles_admin", userId);
       if (isCurrentAdmin) {
         deleteDocumentNonBlocking(roleRef);
-        logAction("REMOVE_ADMIN", "User", userName);
+        logAction("REMOVE_ADMIN", "Admin Rights", userName);
       } else {
         setDocumentNonBlocking(roleRef, { assignedAt: new Date().toISOString() }, { merge: true });
-        logAction("GRANT_ADMIN", "User", userName);
+        logAction("GRANT_ADMIN", "Admin Rights", userName);
       }
       setPendingAdminToggle(null);
       setAdminConfirmPassword("");
@@ -314,9 +314,9 @@ export default function AdminPage(props: {
         const credential = EmailAuthProvider.credential(user.email!, adminConfirmPassword);
         await reauthenticateWithCredential(user, credential);
       }
-      const { userId, newRole, userName } = pendingRoleUpdate;
+      const { userId, targetCurrentRole, newRole, userName } = pendingRoleUpdate;
       updateDocumentNonBlocking(doc(firestore, "users", userId), { role: newRole });
-      logAction("UPDATE_ROLE", "User", `${userName} to ${newRole}`);
+      logAction("UPDATE_ROLE", "User Role", `${userName}: ${targetCurrentRole} to ${newRole}`);
       setPendingRoleUpdate(null);
       setAdminConfirmPassword("");
     } catch (error: any) {
@@ -579,22 +579,45 @@ export default function AdminPage(props: {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  {activityLogs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map((log) => (
-                    <div key={log.id} className="flex items-start gap-4 p-3 rounded-lg border bg-muted/10">
-                      <div className={cn("p-2 rounded-full", log.actionType === 'DELETE' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600')}>
-                        {log.actionType === 'DELETE' ? <Trash2 className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-bold">
-                            <span className="text-primary">{log.adminName}</span> {log.actionType === 'DELETE' ? (language === 'hi' ? 'ने हटाया' : 'deleted') : (language === 'hi' ? 'ने जोड़ा' : 'added')} <span className="text-foreground">{log.entityType}</span>
-                          </p>
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</span>
+                  {activityLogs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map((log) => {
+                    const getActionIcon = (type: string) => {
+                      if (type === 'DELETE' || type === 'REMOVE_ADMIN') return <Trash2 className="h-4 w-4" />;
+                      if (type === 'GRANT_ADMIN' || type === 'UPDATE_ROLE') return <UserCog className="h-4 w-4" />;
+                      return <Upload className="h-4 w-4" />;
+                    };
+
+                    const getActionVerb = (type: string) => {
+                      switch(type) {
+                        case 'DELETE': return language === 'hi' ? 'ने हटाया' : 'deleted';
+                        case 'CREATE': return language === 'hi' ? 'ने जोड़ा' : 'added';
+                        case 'GRANT_ADMIN': return language === 'hi' ? 'ने व्यवस्थापक बनाया' : 'granted admin rights to';
+                        case 'REMOVE_ADMIN': return language === 'hi' ? 'से व्यवस्थापक अधिकार हटाए' : 'removed admin rights from';
+                        case 'UPDATE_ROLE': return language === 'hi' ? 'की भूमिका बदली' : 'updated role for';
+                        case 'RESIGN': return language === 'hi' ? 'ने इस्तीफा दिया' : 'resigned as';
+                        default: return language === 'hi' ? 'ने कार्य किया' : 'performed action on';
+                      }
+                    };
+
+                    return (
+                      <div key={log.id} className="flex items-start gap-4 p-3 rounded-lg border bg-muted/10">
+                        <div className={cn(
+                          "p-2 rounded-full", 
+                          (log.actionType === 'DELETE' || log.actionType === 'REMOVE_ADMIN') ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                        )}>
+                          {getActionIcon(log.actionType)}
                         </div>
-                        <p className="text-xs italic text-muted-foreground mt-1">"{log.entityTitle}"</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-bold">
+                              <span className="text-primary">{log.adminName}</span> {getActionVerb(log.actionType)} <span className="text-foreground">{log.entityType}</span>
+                            </p>
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</span>
+                          </div>
+                          <p className="text-xs italic text-muted-foreground mt-1">"{log.entityTitle}"</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {(!activityLogs || activityLogs.length === 0) && (
                     <div className="text-center py-12 text-muted-foreground italic">No activity logs found.</div>
                   )}
@@ -748,7 +771,7 @@ export default function AdminPage(props: {
             <Input type="password" value={adminConfirmPassword} onChange={(e) => setAdminConfirmPassword(e.target.value)} />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setAdminConfirmPassword("")}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRoleUpdate} disabled={isActionProcessing || !adminConfirmPassword}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -767,7 +790,7 @@ export default function AdminPage(props: {
             <Input type="password" value={adminConfirmPassword} onChange={(e) => setAdminConfirmPassword(e.target.value)} />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setAdminConfirmPassword("")}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmAdminToggle} disabled={isActionProcessing || !adminConfirmPassword}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
