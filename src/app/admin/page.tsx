@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -660,17 +660,97 @@ export default function AdminPage(props: {
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddGallery} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="imageURL">{language === 'hi' ? 'URL' : 'Media URL'}</Label>
-                      <Input id="imageURL" name="imageURL" required className="bg-secondary/10" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>{language === 'hi' ? 'मीडिया अपलोड' : 'Upload Media'}</Label>
+                        <div 
+                          className={cn(
+                            "border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-primary/5",
+                            galleryMediaPreview ? "border-primary bg-primary/5" : "border-muted-foreground/20"
+                          )}
+                          onClick={() => document.getElementById('gallery-file-input')?.click()}
+                        >
+                          <input 
+                            id="gallery-file-input" 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*,video/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  setGalleryMediaPreview(reader.result as string);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                          {galleryMediaPreview ? (
+                            <div className="relative w-full aspect-video rounded-lg overflow-hidden border shadow-sm">
+                              {galleryMediaPreview.startsWith('data:video') ? (
+                                <video src={galleryMediaPreview} className="w-full h-full object-cover" />
+                              ) : (
+                                <img src={galleryMediaPreview} className="w-full h-full object-cover" />
+                              )}
+                              <Button 
+                                type="button" 
+                                variant="destructive" 
+                                size="icon" 
+                                className="absolute top-1 right-1 h-6 w-6"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setGalleryMediaPreview(null);
+                                  const input = document.getElementById('gallery-file-input') as HTMLInputElement;
+                                  if (input) input.value = '';
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="p-3 bg-primary/10 rounded-full text-primary">
+                                <Upload className="h-6 w-6" />
+                              </div>
+                              <p className="text-xs font-medium text-muted-foreground">{language === 'hi' ? 'फ़ाइल चुनें या यहाँ खींचें' : 'Choose file or drag here'}</p>
+                              <p className="text-[10px] text-muted-foreground opacity-60">PNG, JPG, MP4 (Max 5MB recommended)</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                        <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-background px-2 text-muted-foreground">{language === 'hi' ? 'या' : 'OR'}</span></div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="imageURL">{language === 'hi' ? 'मीडिया URL' : 'Media URL'}</Label>
+                        <Input 
+                          id="imageURL" 
+                          name="imageURL" 
+                          placeholder="https://..." 
+                          className="bg-secondary/10" 
+                          disabled={!!galleryMediaPreview}
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="caption">{language === 'hi' ? 'कैप्शन' : 'Caption'}</Label>
-                      <Input id="caption" name="caption" required className="bg-secondary/10" />
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="caption">{language === 'hi' ? 'कैप्शन' : 'Caption'}</Label>
+                        <Input id="caption" name="caption" required className="bg-secondary/10" placeholder={language === 'hi' ? 'विवरण लिखें...' : 'Enter caption...'} />
+                      </div>
+                      <div className="pt-2">
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                          {language === 'hi' ? 'गैलरी में जोड़ें' : 'Add to Gallery'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>{isSubmitting ? '...' : (language === 'hi' ? 'जोड़ें' : 'Add')}</Button>
                 </form>
               </CardContent>
             </Card>
