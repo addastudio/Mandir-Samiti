@@ -656,11 +656,11 @@ export default function AdminPage(props: {
                           {u.isGhost ? <Ghost className="h-5 w-5 text-destructive" /> : (u.name?.charAt(0) || "?")}
                         </div>
                         <div>
-                          <p className="font-bold flex items-center gap-2">
+                          <div className="font-bold flex items-center gap-2">
                             {u.name} 
                             {u.id === user?.uid && <Badge variant="outline" className="text-[8px]">YOU</Badge>}
                             {isUserAdmin && <Badge className="text-[8px] bg-primary/10 text-primary border-primary/20">ADMIN</Badge>}
-                          </p>
+                          </div>
                           <p className="text-xs text-muted-foreground">{u.email}</p>
                           <p className="text-[10px] font-mono opacity-50 uppercase mt-1">{u.role || 'devotee'}</p>
                         </div>
