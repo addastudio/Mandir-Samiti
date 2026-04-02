@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -31,6 +32,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { getEmailServiceStatus } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
@@ -79,6 +87,9 @@ export default function AdminPage(props: {
 
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
   const [expandedNotices, setExpandedNotices] = useState<Record<string, boolean>>({});
+
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [editingNotice, setEditingNotice] = useState<any | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -237,6 +248,25 @@ export default function AdminPage(props: {
     setIsSubmitting(false);
   };
 
+  const handleEditEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firestore || !editingEvent) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get("title") as string;
+    const eventData = {
+      title,
+      date: formData.get("date") as string,
+      description: formData.get("description") as string,
+      image: formData.get("image") as string || editingEvent.image,
+    };
+    updateDocumentNonBlocking(doc(firestore, "events", editingEvent.id), eventData);
+    logAction("UPDATE", "Event", title);
+    toast({ title: language === 'hi' ? "ईवेंट सफलतापूर्वक अपडेट किया गया" : "Event Updated Successfully" });
+    setEditingEvent(null);
+    setIsSubmitting(false);
+  };
+
   const handleAddNotice = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!noticesRef) return;
@@ -253,6 +283,24 @@ export default function AdminPage(props: {
     logAction("CREATE", "Notice", title);
     toast({ title: language === 'hi' ? "सूचना सफलतापूर्वक जोड़ी गई" : "Notice Added Successfully" });
     (e.target as HTMLFormElement).reset();
+    setIsSubmitting(false);
+  };
+
+  const handleEditNotice = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firestore || !editingNotice) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get("title") as string;
+    const noticeData = {
+      title,
+      content: formData.get("content") as string,
+      importance: formData.get("importance") as string || "normal",
+    };
+    updateDocumentNonBlocking(doc(firestore, "notices", editingNotice.id), noticeData);
+    logAction("UPDATE", "Notice", title);
+    toast({ title: language === 'hi' ? "सूचना सफलतापूर्वक अपडेट की गई" : "Notice Updated Successfully" });
+    setEditingNotice(null);
     setIsSubmitting(false);
   };
 
@@ -451,7 +499,15 @@ export default function AdminPage(props: {
                   <Card key={event.id} className="group overflow-hidden border-primary/5 shadow-sm hover:shadow-md transition-shadow">
                     <div className="relative h-40 bg-muted">
                       <img src={event.image} alt={event.title} className="object-cover w-full h-full" />
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <Button 
+                          variant="secondary" 
+                          size="icon" 
+                          className="h-8 w-8 shadow-lg"
+                          onClick={() => setEditingEvent(event)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="icon" className="h-8 w-8 shadow-lg"><Trash2 className="h-4 w-4" /></Button>
@@ -564,7 +620,15 @@ export default function AdminPage(props: {
                           )}
                           <p className="text-[10px] text-muted-foreground mt-3 flex items-center gap-1 font-medium"><Calendar className="h-3 w-3" /> {new Date(notice.createdAt).toLocaleString()}</p>
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-primary h-9 w-9 shrink-0 hover:bg-primary/5"
+                            onClick={() => setEditingNotice(notice)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="icon" className="text-destructive h-9 w-9 shrink-0 hover:bg-destructive/5"><Trash2 className="h-4 w-4" /></Button>
@@ -650,7 +714,7 @@ export default function AdminPage(props: {
                   {activityLogs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map((log) => {
                     const getActionIcon = (type: string) => {
                       if (type === 'DELETE' || type === 'REMOVE_ADMIN') return <Trash2 className="h-4 w-4" />;
-                      if (type === 'GRANT_ADMIN' || type === 'UPDATE_ROLE') return <UserCog className="h-4 w-4" />;
+                      if (type === 'GRANT_ADMIN' || type === 'UPDATE_ROLE' || type === 'UPDATE') return <UserCog className="h-4 w-4" />;
                       return <Upload className="h-4 w-4" />;
                     };
 
@@ -658,6 +722,7 @@ export default function AdminPage(props: {
                       switch(type) {
                         case 'DELETE': return language === 'hi' ? 'ने हटाया' : 'deleted';
                         case 'CREATE': return language === 'hi' ? 'ने जोड़ा' : 'added';
+                        case 'UPDATE': return language === 'hi' ? 'ने अपडेट किया' : 'updated';
                         case 'GRANT_ADMIN': return language === 'hi' ? 'ने व्यवस्थापक बनाया' : 'granted admin rights to';
                         case 'REMOVE_ADMIN': return language === 'hi' ? 'से व्यवस्थापक अधिकार हटाए' : 'removed admin rights from';
                         case 'UPDATE_ROLE': return language === 'hi' ? 'की भूमिका बदली' : 'updated role for';
@@ -822,6 +887,71 @@ export default function AdminPage(props: {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={!!editingEvent} onOpenChange={(o) => !o && setEditingEvent(null)}>
+        <DialogContent className="sm:max-w-[600px] w-[95%]">
+          <DialogHeader>
+            <DialogTitle>{language === 'hi' ? 'ईवेंट संपादित करें' : 'Edit Event'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditEvent} className="space-y-4 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-event-title">{language === 'hi' ? 'ईवेंट का नाम' : 'Event Title'}</Label>
+                <Input id="edit-event-title" name="title" defaultValue={editingEvent?.title} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-event-date">{language === 'hi' ? 'तारीख और समय' : 'Date & Time'}</Label>
+                <Input id="edit-event-date" name="date" type="datetime-local" defaultValue={editingEvent?.date} required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-event-image">{language === 'hi' ? 'इमेज URL' : 'Image URL'}</Label>
+              <Input id="edit-event-image" name="image" defaultValue={editingEvent?.image} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-event-description">{language === 'hi' ? 'विवरण' : 'Description'}</Label>
+              <Textarea id="edit-event-description" name="description" defaultValue={editingEvent?.description} required className="min-h-[120px]" />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="ghost" onClick={() => setEditingEvent(null)}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</Button>
+              <Button type="submit" disabled={isSubmitting}>{isSubmitting ? '...' : (language === 'hi' ? 'सहेजें' : 'Save Changes')}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Notice Dialog */}
+      <Dialog open={!!editingNotice} onOpenChange={(o) => !o && setEditingNotice(null)}>
+        <DialogContent className="sm:max-w-[600px] w-[95%]">
+          <DialogHeader>
+            <DialogTitle>{language === 'hi' ? 'सूचना संपादित करें' : 'Edit Notice'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditNotice} className="space-y-4 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-notice-title">{language === 'hi' ? 'शीर्षक' : 'Title'}</Label>
+                <Input id="edit-notice-title" name="title" defaultValue={editingNotice?.title} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-notice-importance">{language === 'hi' ? 'महत्व' : 'Importance'}</Label>
+                <select name="importance" defaultValue={editingNotice?.importance} className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background">
+                  <option value="normal">{language === 'hi' ? 'सामान्य' : 'Normal'}</option>
+                  <option value="urgent">{language === 'hi' ? 'महत्वपूर्ण' : 'Urgent'}</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notice-content">{language === 'hi' ? 'संदेश' : 'Message'}</Label>
+              <Textarea id="edit-notice-content" name="content" defaultValue={editingNotice?.content} required className="min-h-[120px]" />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="ghost" onClick={() => setEditingNotice(null)}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</Button>
+              <Button type="submit" disabled={isSubmitting}>{isSubmitting ? '...' : (language === 'hi' ? 'सहेजें' : 'Save Changes')}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmation Dialogs */}
       <AlertDialog open={!!pendingRoleUpdate} onOpenChange={(o) => !o && setPendingRoleUpdate(null)}>
