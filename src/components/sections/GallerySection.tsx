@@ -196,7 +196,7 @@ export function GallerySection() {
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         allowFullScreen
-                        className="border-0"
+                        className="border-0 w-full h-full"
                       ></iframe>
                     </div>
                   </TabsContent>
@@ -217,7 +217,7 @@ export function GallerySection() {
       </div>
       
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-4xl p-1 bg-black/90 border-0 shadow-none ring-0">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl p-1 bg-black/95 border-0 shadow-none ring-0 [&>button]:bg-white/20 [&>button]:text-white [&>button]:hover:bg-white/40 [&>button]:rounded-full [&>button]:p-2 [&>button]:opacity-100 [&>button]:backdrop-blur-md [&>button]:transition-all [&>button]:right-4 [&>button]:top-4">
           <DialogTitle className="sr-only">Gallery Media View</DialogTitle>
           {selectedMedia && (
             <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center min-h-[300px]">
