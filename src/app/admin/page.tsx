@@ -586,12 +586,12 @@ export default function AdminPage(props: {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-bold truncate">
+                          <p className="text-sm font-bold">
                             <span className="text-primary">{log.adminName}</span> {log.actionType === 'DELETE' ? (language === 'hi' ? 'ने हटाया' : 'deleted') : (language === 'hi' ? 'ने जोड़ा' : 'added')} <span className="text-foreground">{log.entityType}</span>
                           </p>
                           <span className="text-[10px] text-muted-foreground whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</span>
                         </div>
-                        <p className="text-xs italic text-muted-foreground mt-1 truncate">"{log.entityTitle}"</p>
+                        <p className="text-xs italic text-muted-foreground mt-1">"{log.entityTitle}"</p>
                       </div>
                     </div>
                   ))}
