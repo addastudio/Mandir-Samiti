@@ -392,15 +392,17 @@ export default function AdminPage(props: {
         </div>
 
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="flex w-full overflow-x-auto no-scrollbar justify-start h-auto gap-2 bg-transparent p-0 mb-8 touch-scroll">
-            <TabsTrigger value="events" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
-            <TabsTrigger value="gallery" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
-            <TabsTrigger value="notices" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}</TabsTrigger>
-            <TabsTrigger value="requests" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}</TabsTrigger>
-            <TabsTrigger value="users" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}</TabsTrigger>
-            <TabsTrigger value="activity" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Activity className="h-4 w-4" /> {language === 'hi' ? 'गतिविधि' : 'Activity'}</TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2 bg-white border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Settings className="h-4 w-4" /> {language === 'hi' ? 'सेटिंग्स' : 'Settings'}</TabsTrigger>
-          </TabsList>
+          <div className="sticky top-16 sm:top-20 z-30 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="flex w-full items-center justify-start gap-2 overflow-x-auto bg-muted/40 p-1.5 rounded-xl border border-primary/10 shadow-sm touch-scroll no-scrollbar">
+              <TabsTrigger value="events" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
+              <TabsTrigger value="gallery" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
+              <TabsTrigger value="notices" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}</TabsTrigger>
+              <TabsTrigger value="requests" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}</TabsTrigger>
+              <TabsTrigger value="users" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}</TabsTrigger>
+              <TabsTrigger value="activity" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Activity className="h-4 w-4" /> {language === 'hi' ? 'गतिविधि' : 'Activity'}</TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Settings className="h-4 w-4" /> {language === 'hi' ? 'सेटिंग्स' : 'Settings'}</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="events" className="space-y-6 outline-none">
             <Card className="border-primary/20 shadow-md">
@@ -619,9 +621,9 @@ export default function AdminPage(props: {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                            <p className="text-sm font-bold">
+                            <div className="text-sm font-bold">
                               <span className="text-primary">{log.adminName}</span> {getActionVerb(log.actionType)} <span className="text-foreground">{log.entityType}</span>
-                            </p>
+                            </div>
                             <span className="text-[10px] text-muted-foreground whitespace-nowrap bg-muted px-2 py-0.5 rounded-full w-fit">{new Date(log.timestamp).toLocaleString()}</span>
                           </div>
                           <p className="text-xs italic text-muted-foreground mt-1.5 p-2 bg-secondary/20 rounded border border-primary/5 break-words">"{log.entityTitle}"</p>
