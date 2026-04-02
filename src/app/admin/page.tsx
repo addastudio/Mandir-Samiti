@@ -393,7 +393,7 @@ export default function AdminPage(props: {
 
         <Tabs defaultValue="events" className="w-full">
           <div className="sticky top-16 sm:top-20 z-30 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="flex w-full items-center justify-start gap-2 overflow-x-auto bg-muted/40 p-1.5 rounded-xl border border-primary/10 shadow-sm touch-scroll no-scrollbar">
+            <TabsList className="flex w-full items-center justify-start gap-2 overflow-x-auto bg-muted/40 p-1.5 rounded-xl border border-primary/10 shadow-sm touch-scroll">
               <TabsTrigger value="events" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
               <TabsTrigger value="gallery" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
               <TabsTrigger value="notices" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}</TabsTrigger>
@@ -404,7 +404,7 @@ export default function AdminPage(props: {
             </TabsList>
           </div>
 
-          <TabsContent value="events" className="space-y-6 outline-none">
+          <TabsContent value="events" className="space-y-6 outline-none mt-4">
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5">
                 <CardTitle className="text-lg">{language === 'hi' ? 'नया कार्यक्रम जोड़ें' : 'Add New Event'}</CardTitle>
@@ -470,7 +470,7 @@ export default function AdminPage(props: {
             </div>
           </TabsContent>
 
-          <TabsContent value="notices" className="space-y-6 outline-none">
+          <TabsContent value="notices" className="space-y-6 outline-none mt-4">
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5">
                 <CardTitle className="text-lg">{language === 'hi' ? 'नई सूचना जोड़ें' : 'Add Notice'}</CardTitle>
@@ -534,7 +534,7 @@ export default function AdminPage(props: {
             </div>
           </TabsContent>
 
-          <TabsContent value="gallery" className="space-y-6 outline-none">
+          <TabsContent value="gallery" className="space-y-6 outline-none mt-4">
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5">
                 <CardTitle className="text-lg">{language === 'hi' ? 'गैलरी आइटम' : 'Add Gallery'}</CardTitle>
@@ -584,7 +584,7 @@ export default function AdminPage(props: {
             </div>
           </TabsContent>
 
-          <TabsContent value="activity" className="space-y-6 outline-none">
+          <TabsContent value="activity" className="space-y-6 outline-none mt-4">
             <Card className="border-primary/20 shadow-md overflow-hidden">
               <CardHeader className="bg-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5 text-primary" /> {language === 'hi' ? 'प्रशासनिक गतिविधि' : 'Admin Activity Log'}</CardTitle>
@@ -639,7 +639,7 @@ export default function AdminPage(props: {
             </Card>
           </TabsContent>
 
-          <TabsContent value="requests" className="space-y-6 outline-none">
+          <TabsContent value="requests" className="space-y-6 outline-none mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {requests?.map((req) => (
                 <Card key={req.id} className="shadow-sm border-primary/5 flex flex-col h-full overflow-hidden">
@@ -675,7 +675,7 @@ export default function AdminPage(props: {
             </div>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6 outline-none">
+          <TabsContent value="users" className="space-y-6 outline-none mt-4">
             <div className="space-y-4">
               {combinedUserList?.sort((a, b) => (ROLE_HIERARCHY[b.role] || 0) - (ROLE_HIERARCHY[a.role] || 0)).map((u) => {
                 const isUserAdmin = allAdmins?.some(admin => admin.id === u.id);
@@ -736,7 +736,7 @@ export default function AdminPage(props: {
             </div>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6 outline-none">
+          <TabsContent value="settings" className="space-y-6 outline-none mt-4">
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5">
                 <CardTitle className="text-lg flex items-center gap-2"><Zap className="h-5 w-5 text-primary" /> {language === 'hi' ? 'सिस्टम स्थिति' : 'System Status'}</CardTitle>
