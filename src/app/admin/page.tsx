@@ -10,11 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, deleteDoc, updateDoc, setDoc, addDoc } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -70,13 +70,11 @@ export default function AdminPage(props: {
   } | null>(null);
 
   const [adminConfirmPassword, setAdminConfirmPassword] = useState("");
-  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isActionProcessing, setIsActionProcessing] = useState(false);
 
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
   const [resignPassword, setResignPassword] = useState("");
   const [galleryMediaPreview, setGalleryMediaPreview] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
   const [emailStatus, setEmailStatus] = useState<{ isLive: boolean; provider: string } | null>(null);
 
   useEffect(() => {
@@ -199,7 +197,7 @@ export default function AdminPage(props: {
 
   const logAction = (action: string, entityType: string, entityTitle: string) => {
     if (!firestore || !user) return;
-    addDoc(collection(firestore, "admin_activity_logs"), {
+    addDocumentNonBlocking(collection(firestore, "admin_activity_logs"), {
       adminId: user.uid,
       adminName: user.displayName || user.email,
       actionType: action,
@@ -277,7 +275,7 @@ export default function AdminPage(props: {
 
   const handleDelete = (col: string, id: string, title: string = "Item") => {
     if (!firestore) return;
-    deleteDoc(doc(firestore, col, id));
+    deleteDocumentNonBlocking(doc(firestore, col, id));
     logAction("DELETE", col.charAt(0).toUpperCase() + col.slice(1), title);
     toast({ title: language === 'hi' ? "हटा दिया गया" : "Deleted" });
   };
@@ -293,10 +291,10 @@ export default function AdminPage(props: {
       const { userId, isCurrentAdmin, userName } = pendingAdminToggle;
       const roleRef = doc(firestore, "roles_admin", userId);
       if (isCurrentAdmin) {
-        await deleteDoc(roleRef);
+        deleteDocumentNonBlocking(roleRef);
         logAction("REMOVE_ADMIN", "User", userName);
       } else {
-        await setDoc(roleRef, { assignedAt: new Date().toISOString() }, { merge: true });
+        setDocumentNonBlocking(roleRef, { assignedAt: new Date().toISOString() }, { merge: true });
         logAction("GRANT_ADMIN", "User", userName);
       }
       setPendingAdminToggle(null);
@@ -317,7 +315,7 @@ export default function AdminPage(props: {
         await reauthenticateWithCredential(user, credential);
       }
       const { userId, newRole, userName } = pendingRoleUpdate;
-      await updateDoc(doc(firestore, "users", userId), { role: newRole });
+      updateDocumentNonBlocking(doc(firestore, "users", userId), { role: newRole });
       logAction("UPDATE_ROLE", "User", `${userName} to ${newRole}`);
       setPendingRoleUpdate(null);
       setAdminConfirmPassword("");
@@ -336,8 +334,8 @@ export default function AdminPage(props: {
         const credential = EmailAuthProvider.credential(user.email!, resignPassword);
         await reauthenticateWithCredential(user, credential);
       }
-      await updateDoc(doc(firestore, "users", user.uid), { role: "devotee" });
-      await deleteDoc(doc(firestore, "roles_admin", user.uid));
+      updateDocumentNonBlocking(doc(firestore, "users", user.uid), { role: "devotee" });
+      deleteDocumentNonBlocking(doc(firestore, "roles_admin", user.uid));
       logAction("RESIGN", "Self", user.displayName || user.email || "Admin");
       router.push("/");
     } catch (error: any) {
@@ -657,7 +655,7 @@ export default function AdminPage(props: {
                         </div>
                         <div>
                           <div className="font-bold flex items-center gap-2">
-                            {u.name} 
+                            <span>{u.name}</span>
                             {u.id === user?.uid && <Badge variant="outline" className="text-[8px]">YOU</Badge>}
                             {isUserAdmin && <Badge className="text-[8px] bg-primary/10 text-primary border-primary/20">ADMIN</Badge>}
                           </div>
