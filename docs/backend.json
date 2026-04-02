@@ -14,6 +14,29 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["adminId", "actionType", "entityType", "timestamp"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile data.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "isVerified": { "type": "boolean" }
+      }
+    },
+    "Donation": {
+      "title": "Donation",
+      "description": "Donation record.",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "mode": { "type": "string" },
+        "status": { "type": "string" }
+      }
     }
   },
   "auth": {
@@ -28,6 +51,14 @@
     "/gallery/{galleryId}": { "description": "Temple media gallery." },
     "/notices/{noticeId}": { "description": "Temple announcements." },
     "/prayer_requests/{requestId}": { "description": "Devotee prayer and ritual requests." },
-    "/roles_admin/{adminId}": { "description": "Registry of administrative UIDs." }
+    "/roles_admin/{adminId}": { "description": "Registry of administrative UIDs." },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles."
+    },
+    "/users/{userId}/donations/{donationId}": {
+      "schema": { "$ref": "#/entities/Donation" },
+      "description": "User donation history."
+    }
   }
 }

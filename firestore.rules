@@ -86,6 +86,10 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create, update: if isSignedIn() && request.auth.uid == userId;
       allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+
+      match /donations/{donationId} {
+        allow read, write: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      }
     }
   }
 }
