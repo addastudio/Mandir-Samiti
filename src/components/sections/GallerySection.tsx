@@ -11,6 +11,7 @@ import React from "react";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Tabs,
@@ -217,6 +218,7 @@ export function GallerySection() {
       
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-4xl p-1 bg-black/90 border-0 shadow-none ring-0">
+          <DialogTitle className="sr-only">Gallery Media View</DialogTitle>
           {selectedMedia && (
             <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center min-h-[300px]">
               {renderMedia(selectedMedia)}
