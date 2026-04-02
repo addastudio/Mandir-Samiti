@@ -5,13 +5,16 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, AlertCircle } from "lucide-react";
+import { Calendar, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export function EventsSection() {
   const { t, language } = useLanguage();
   const firestore = useFirestore();
+  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
 
   const eventsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -19,6 +22,13 @@ export function EventsSection() {
   }, [firestore]);
 
   const { data: firebaseEvents, isLoading } = useCollection(eventsQuery);
+
+  const toggleEvent = (id: string) => {
+    setExpandedEvents((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const festivals = [
     { name: t.festivalNavratri, imageId: "event-navratri" },
@@ -90,24 +100,46 @@ export function EventsSection() {
                 </div>
               ) : firebaseEvents && firebaseEvents.length > 0 ? (
                 <ul className="space-y-4">
-                  {firebaseEvents.slice(0, 3).map((event) => (
-                    <li key={event.id} className="flex flex-col border-b border-border/50 pb-3 last:border-0 last:pb-0">
-                      <span className="font-bold text-foreground text-sm sm:text-base">{event.title}</span>
-                      <span className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        {new Date(event.date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </span>
-                      {event.description && (
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-2 line-clamp-2 italic">
-                          {event.description}
-                        </p>
-                      )}
-                    </li>
-                  ))}
+                  {firebaseEvents.slice(0, 3).map((event) => {
+                    const isExpanded = !!expandedEvents[event.id];
+                    return (
+                      <li key={event.id} className="flex flex-col border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                        <span className="font-bold text-foreground text-sm sm:text-base">{event.title}</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground mt-1">
+                          {new Date(event.date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', {
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
+                        {event.description && (
+                          <div className="mt-2">
+                            <p className={cn(
+                              "text-xs sm:text-sm text-muted-foreground italic leading-relaxed",
+                              !isExpanded && "line-clamp-2"
+                            )}>
+                              {event.description}
+                            </p>
+                            {event.description.length > 80 && (
+                              <Button
+                                variant="link"
+                                size="sm"
+                                onClick={() => toggleEvent(event.id)}
+                                className="p-0 h-auto mt-1 text-primary font-bold hover:no-underline flex items-center gap-1 text-[10px] sm:text-xs"
+                              >
+                                {isExpanded ? (
+                                  <> {language === 'hi' ? 'कम दिखाएं' : 'Show Less'} <ChevronUp className="h-3 w-3" /> </>
+                                ) : (
+                                  <> {language === 'hi' ? 'और पढ़ें' : 'Read More'} <ChevronDown className="h-3 w-3" /> </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <div className="flex items-center gap-2 text-muted-foreground italic py-4 text-sm">
