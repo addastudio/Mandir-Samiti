@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -99,44 +100,51 @@ export function EventsSection() {
                   <Clock className="h-4 w-4 animate-spin" /> {language === 'hi' ? 'कार्यक्रम लोड हो रहे हैं...' : 'Loading live events...'}
                 </div>
               ) : firebaseEvents && firebaseEvents.length > 0 ? (
-                <ul className="space-y-4">
+                <ul className="space-y-6">
                   {firebaseEvents.slice(0, 3).map((event) => {
                     const isExpanded = !!expandedEvents[event.id];
                     return (
-                      <li key={event.id} className="flex flex-col border-b border-border/50 pb-3 last:border-0 last:pb-0">
-                        <span className="font-bold text-foreground text-sm sm:text-base">{event.title}</span>
-                        <span className="text-xs sm:text-sm text-muted-foreground mt-1">
-                          {new Date(event.date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', {
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </span>
-                        {event.description && (
-                          <div className="mt-2">
-                            <p className={cn(
-                              "text-xs sm:text-sm text-muted-foreground italic leading-relaxed",
-                              !isExpanded && "line-clamp-2"
-                            )}>
-                              {event.description}
-                            </p>
-                            {event.description.length > 50 && (
-                              <Button
-                                variant="link"
-                                size="sm"
-                                onClick={() => toggleEvent(event.id)}
-                                className="p-0 h-auto mt-1 text-primary font-bold hover:no-underline flex items-center gap-1 text-[10px] sm:text-xs"
-                              >
-                                {isExpanded ? (
-                                  <> {language === 'hi' ? 'कम दिखाएं' : 'Show Less'} <ChevronUp className="h-3 w-3" /> </>
-                                ) : (
-                                  <> {language === 'hi' ? 'और पढ़ें' : 'Read More'} <ChevronDown className="h-3 w-3" /> </>
-                                )}
-                              </Button>
-                            )}
+                      <li key={event.id} className="flex gap-4 border-b border-border/50 pb-4 last:border-0 last:pb-0">
+                        {event.image && (
+                          <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-lg overflow-hidden shrink-0 border border-primary/10 shadow-sm">
+                            <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
                           </div>
                         )}
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-bold text-foreground text-sm sm:text-base truncate">{event.title}</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">
+                            {new Date(event.date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', {
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </span>
+                          {event.description && (
+                            <div className="mt-1">
+                              <p className={cn(
+                                "text-[11px] sm:text-xs text-muted-foreground italic leading-relaxed",
+                                !isExpanded && "line-clamp-2"
+                              )}>
+                                {event.description}
+                              </p>
+                              {event.description.length > 50 && (
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  onClick={() => toggleEvent(event.id)}
+                                  className="p-0 h-auto mt-1 text-primary font-bold hover:no-underline flex items-center gap-1 text-[10px]"
+                                >
+                                  {isExpanded ? (
+                                    <> {language === 'hi' ? 'कम दिखाएं' : 'Show Less'} <ChevronUp className="h-2 w-2" /> </>
+                                  ) : (
+                                    <> {language === 'hi' ? 'और पढ़ें' : 'Read More'} <ChevronDown className="h-2 w-2" /> </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </li>
                     );
                   })}

@@ -83,6 +83,8 @@ export default function AdminPage(props: {
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
   const [resignPassword, setResignPassword] = useState("");
   const [galleryMediaPreview, setGalleryMediaPreview] = useState<string | null>(null);
+  const [eventMediaPreview, setEventMediaPreview] = useState<string | null>(null);
+  const [editEventMediaPreview, setEditEventMediaPreview] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<{ isLive: boolean; provider: string } | null>(null);
 
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
@@ -235,16 +237,29 @@ export default function AdminPage(props: {
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     const title = formData.get("title") as string;
+    const imageURL = eventMediaPreview || (formData.get("image") as string);
+
+    if (imageURL && imageURL.length > 1000000) {
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "फ़ाइल बहुत बड़ी है" : "File Too Large", 
+        description: "Max 1MB" 
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const eventData = {
       title,
       date: formData.get("date") as string,
       description: formData.get("description") as string,
-      image: formData.get("image") as string || "https://picsum.photos/seed/event/600/400",
+      image: imageURL || "https://picsum.photos/seed/event/600/400",
     };
     addDocumentNonBlocking(eventsRef, eventData);
     logAction("CREATE", "Event", title);
     toast({ title: language === 'hi' ? "ईवेंट सफलतापूर्वक जोड़ा गया" : "Event Added Successfully" });
     (e.target as HTMLFormElement).reset();
+    setEventMediaPreview(null);
     setIsSubmitting(false);
   };
 
@@ -254,16 +269,29 @@ export default function AdminPage(props: {
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     const title = formData.get("title") as string;
+    const imageURL = editEventMediaPreview || (formData.get("image") as string);
+
+    if (imageURL && imageURL.length > 1000000) {
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "फ़ाइल बहुत बड़ी है" : "File Too Large", 
+        description: "Max 1MB" 
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const eventData = {
       title,
       date: formData.get("date") as string,
       description: formData.get("description") as string,
-      image: formData.get("image") as string || editingEvent.image,
+      image: imageURL || editingEvent.image,
     };
     updateDocumentNonBlocking(doc(firestore, "events", editingEvent.id), eventData);
     logAction("UPDATE", "Event", title);
     toast({ title: language === 'hi' ? "ईवेंट सफलतापूर्वक अपडेट किया गया" : "Event Updated Successfully" });
     setEditingEvent(null);
+    setEditEventMediaPreview(null);
     setIsSubmitting(false);
   };
 
@@ -417,7 +445,7 @@ export default function AdminPage(props: {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-16 sm:pt-20 scroll-smooth">
+    <div className="min-h-screen bg-background pb-20 pt-16 sm:pt-20">
       <main id="main-content" className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6 pt-4">
         <Breadcrumbs items={[{ label: language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel' }]} />
 
@@ -482,23 +510,87 @@ export default function AdminPage(props: {
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddEvent} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">{language === 'hi' ? 'ईवेंट का नाम' : 'Event Title'}</Label>
-                      <Input id="title" name="title" required className="bg-secondary/10" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="title">{language === 'hi' ? 'ईवेंट का नाम' : 'Event Title'}</Label>
+                        <Input id="title" name="title" required className="bg-secondary/10" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="date">{language === 'hi' ? 'तारीख और समय' : 'Date & Time'}</Label>
+                        <Input id="date" name="date" type="datetime-local" required className="bg-secondary/10" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description">{language === 'hi' ? 'विवरण' : 'Description'}</Label>
+                        <Textarea id="description" name="description" required className="bg-secondary/10 min-h-[100px]" />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="date">{language === 'hi' ? 'तारीख और समय' : 'Date & Time'}</Label>
-                      <Input id="date" name="date" type="datetime-local" required className="bg-secondary/10" />
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>{language === 'hi' ? 'ईवेंट इमेज' : 'Event Image'}</Label>
+                        <div 
+                          className={cn(
+                            "border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-primary/5",
+                            eventMediaPreview ? "border-primary bg-primary/5" : "border-muted-foreground/20"
+                          )}
+                          onClick={() => document.getElementById('event-file-input')?.click()}
+                        >
+                          <input 
+                            id="event-file-input" 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  setEventMediaPreview(reader.result as string);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                          {eventMediaPreview ? (
+                            <div className="relative w-full aspect-video rounded-lg overflow-hidden border shadow-sm">
+                              <img src={eventMediaPreview} className="w-full h-full object-cover" />
+                              <Button 
+                                type="button" 
+                                variant="destructive" 
+                                size="icon" 
+                                className="absolute top-1 right-1 h-6 w-6"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEventMediaPreview(null);
+                                  const input = document.getElementById('event-file-input') as HTMLInputElement;
+                                  if (input) input.value = '';
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="p-3 bg-primary/10 rounded-full text-primary">
+                                <Upload className="h-6 w-6" />
+                              </div>
+                              <p className="text-xs font-medium text-muted-foreground">{language === 'hi' ? 'इमेज चुनें' : 'Choose Image'}</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                        <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-background px-2 text-muted-foreground">{language === 'hi' ? 'या' : 'OR'}</span></div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="image">{language === 'hi' ? 'इमेज URL (वैकल्पिक)' : 'Image URL (Optional)'}</Label>
+                        <Input id="image" name="image" placeholder="https://..." className="bg-secondary/10" disabled={!!eventMediaPreview} />
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="image">{language === 'hi' ? 'इमेज URL (वैकल्पिक)' : 'Image URL'}</Label>
-                    <Input id="image" name="image" placeholder="https://..." className="bg-secondary/10" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">{language === 'hi' ? 'विवरण' : 'Description'}</Label>
-                    <Textarea id="description" name="description" required className="bg-secondary/10 min-h-[100px]" />
                   </div>
                   <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>{isSubmitting ? '...' : (language === 'hi' ? 'कार्यक्रम जोड़ें' : 'Add Event')}</Button>
                 </form>
@@ -981,32 +1073,104 @@ export default function AdminPage(props: {
       </main>
 
       {/* Edit Event Dialog */}
-      <Dialog open={!!editingEvent} onOpenChange={(o) => !o && setEditingEvent(null)}>
+      <Dialog open={!!editingEvent} onOpenChange={(o) => {
+        if (!o) {
+          setEditingEvent(null);
+          setEditEventMediaPreview(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-[600px] w-[95%]">
           <DialogHeader>
             <DialogTitle>{language === 'hi' ? 'ईवेंट संपादित करें' : 'Edit Event'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditEvent} className="space-y-4 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-event-title">{language === 'hi' ? 'ईवेंट का नाम' : 'Event Title'}</Label>
-                <Input id="edit-event-title" name="title" defaultValue={editingEvent?.title} required />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-event-title">{language === 'hi' ? 'ईवेंट का नाम' : 'Event Title'}</Label>
+                  <Input id="edit-event-title" name="title" defaultValue={editingEvent?.title} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-event-date">{language === 'hi' ? 'तारीख और समय' : 'Date & Time'}</Label>
+                  <Input id="edit-event-date" name="date" type="datetime-local" defaultValue={editingEvent?.date} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-event-description">{language === 'hi' ? 'विवरण' : 'Description'}</Label>
+                  <Textarea id="edit-event-description" name="description" defaultValue={editingEvent?.description} required className="min-h-[120px]" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-event-date">{language === 'hi' ? 'तारीख और समय' : 'Date & Time'}</Label>
-                <Input id="edit-event-date" name="date" type="datetime-local" defaultValue={editingEvent?.date} required />
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>{language === 'hi' ? 'ईवेंट इमेज' : 'Event Image'}</Label>
+                  <div 
+                    className={cn(
+                      "border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-primary/5",
+                      (editEventMediaPreview || editingEvent?.image) ? "border-primary bg-primary/5" : "border-muted-foreground/20"
+                    )}
+                    onClick={() => document.getElementById('edit-event-file-input')?.click()}
+                  >
+                    <input 
+                      id="edit-event-file-input" 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setEditEventMediaPreview(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    {(editEventMediaPreview || editingEvent?.image) ? (
+                      <div className="relative w-full aspect-video rounded-lg overflow-hidden border shadow-sm">
+                        <img src={editEventMediaPreview || editingEvent?.image} className="w-full h-full object-cover" />
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute top-1 right-1 h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditEventMediaPreview(null);
+                            const input = document.getElementById('edit-event-file-input') as HTMLInputElement;
+                            if (input) input.value = '';
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="p-3 bg-primary/10 rounded-full text-primary">
+                          <Upload className="h-6 w-6" />
+                        </div>
+                        <p className="text-xs font-medium text-muted-foreground">{language === 'hi' ? 'इमेज बदलें' : 'Change Image'}</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                  <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-background px-2 text-muted-foreground">{language === 'hi' ? 'या' : 'OR'}</span></div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-event-image">{language === 'hi' ? 'इमेज URL' : 'Image URL'}</Label>
+                  <Input id="edit-event-image" name="image" defaultValue={editingEvent?.image} disabled={!!editEventMediaPreview} />
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-event-image">{language === 'hi' ? 'इमेज URL' : 'Image URL'}</Label>
-              <Input id="edit-event-image" name="image" defaultValue={editingEvent?.image} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-event-description">{language === 'hi' ? 'विवरण' : 'Description'}</Label>
-              <Textarea id="edit-event-description" name="description" defaultValue={editingEvent?.description} required className="min-h-[120px]" />
             </div>
             <DialogFooter className="gap-2">
-              <Button type="button" variant="ghost" onClick={() => setEditingEvent(null)}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</Button>
+              <Button type="button" variant="ghost" onClick={() => {
+                setEditingEvent(null);
+                setEditEventMediaPreview(null);
+              }}>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</Button>
               <Button type="submit" disabled={isSubmitting}>{isSubmitting ? '...' : (language === 'hi' ? 'सहेजें' : 'Save Changes')}</Button>
             </DialogFooter>
           </form>
