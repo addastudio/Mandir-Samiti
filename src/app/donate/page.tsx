@@ -14,8 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
 import { createStripeCheckoutSession } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { Suspense } from "react";
 
-export default function DonatePage() {
+function DonateContent() {
   const { language, t } = useLanguage();
   const { user } = useUser();
   const { toast } = useToast();
@@ -192,5 +193,17 @@ export default function DonatePage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function DonatePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <DonateContent />
+    </Suspense>
   );
 }
