@@ -11,6 +11,7 @@ This is a professional, bilingual (Hindi/English) website for the Mandir Samiti 
 
 ## Documentation
 - [Website Details](./docs/WEBSITE_DETAILS.md): Architecture and Design overview.
+- [Zero-Cost Plan](./docs/ZERO_COST_PLAN.md): **Recommended** plan for non-profits to host for free.
 - [Migration Guide](./docs/MIGRATION_GUIDE.md): Full instructions for GitHub and Production deployment.
 
 ## Tech Stack
