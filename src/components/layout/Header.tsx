@@ -155,8 +155,8 @@ export function Header() {
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group">
-          <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-2 py-1.5 sm:px-3 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
-            <div className="relative h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner">
               <Image 
                 src="/logo.png" 
                 alt="Logo" 
@@ -166,18 +166,18 @@ export function Header() {
                   (e.target as any).style.opacity = '0';
                 }}
               />
-              <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary absolute" />
+              <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-primary absolute" />
             </div>
-            <div className="flex flex-col items-start leading-none">
+            <div className="flex flex-col items-start leading-tight">
               <span
                 className={cn(
-                  "text-base sm:text-lg font-bold text-foreground",
+                  "text-base sm:text-lg lg:text-xl font-bold text-foreground",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
                 {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
               </span>
-              <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground">
+              <span className="text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-bold opacity-80">
                 {language === "hi" ? "बहपुरा" : "Bahpura"}
               </span>
             </div>
