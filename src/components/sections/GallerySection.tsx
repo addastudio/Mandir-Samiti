@@ -1,7 +1,6 @@
 
 "use client";
 
-import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -83,6 +82,7 @@ export function GallerySection() {
   }, [lightboxOpen, handleNext, handlePrev]);
 
   const isVideo = (url: string) => {
+    if (!url) return false;
     return (
       url.startsWith('data:video') || 
       url.match(/\.(mp4|webm|ogg)$/i) || 
@@ -111,18 +111,16 @@ export function GallerySection() {
 
     if (isVideo(url)) {
       return (
-        <video src={url} controls autoPlay className="max-w-full max-h-full" />
+        <video src={url} controls autoPlay className="max-w-full max-h-full mx-auto" />
       );
     }
 
     return (
-      <div className="relative w-full h-full">
-        <Image 
+      <div className="relative w-full h-full flex items-center justify-center">
+        <img 
           src={url} 
           alt={title || "Gallery view"}
-          fill
-          className="object-contain"
-          priority
+          className="max-w-full max-h-full object-contain"
         />
       </div>
     );
@@ -166,19 +164,18 @@ export function GallerySection() {
                 onClick={() => openLightbox(index)}
               >
                 {isVideo(item.imageURL) ? (
-                  <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                  <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-black">
                     <video src={item.imageURL} className="w-full h-full object-cover" muted />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-colors">
                       <PlayCircle className="h-10 w-10 text-white opacity-80" />
                     </div>
                   </div>
                 ) : (
-                  <Image
+                  <img
                     src={item.imageURL}
                     alt={item.caption || "Gallery item"}
-                    fill
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    loading="lazy"
                   />
                 )}
                 <div className="absolute inset-0 bg-black/5 group-hover:bg-black/30 transition-colors" />

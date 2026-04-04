@@ -10,7 +10,6 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import { collection, doc, deleteDoc } from "firebase/firestore";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Camera, PlayCircle, Loader2, ChevronLeft, ChevronRight, X, Image as ImageIcon, Video, Trash2, ShieldCheck, AlertTriangle } from "lucide-react";
 import {
@@ -69,6 +68,7 @@ export default function GalleryPage() {
   }, [firebaseGallery, placeholderGallery]);
 
   const isVideo = (url: string) => {
+    if (!url) return false;
     return (
       url.startsWith('data:video') || 
       url.match(/\.(mp4|webm|ogg)$/i) || 
@@ -133,11 +133,11 @@ export default function GalleryPage() {
       );
     }
     if (isVideo(url)) {
-      return <video src={url} controls autoPlay className="max-w-full max-h-full" />;
+      return <video src={url} controls autoPlay className="max-w-full max-h-full mx-auto" />;
     }
     return (
-      <div className="relative w-full h-full">
-        <Image src={url} alt={title || "Gallery view"} fill className="object-contain" priority />
+      <div className="relative w-full h-full flex items-center justify-center">
+        <img src={url} alt={title || "Gallery view"} className="max-w-full max-h-full object-contain shadow-2xl" />
       </div>
     );
   };
@@ -231,7 +231,7 @@ export default function GalleryPage() {
                     onClick={() => openLightbox(index)}
                   >
                     {isVid ? (
-                      <div className="w-full h-full relative">
+                      <div className="w-full h-full relative bg-black">
                         <video src={url} className="w-full h-full object-cover" muted />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
                           <PlayCircle className="h-12 w-12 text-white/90 drop-shadow-lg" />
@@ -239,12 +239,11 @@ export default function GalleryPage() {
                         <Badge className="absolute top-3 left-3 bg-primary/90 text-white border-0 shadow-lg">Video</Badge>
                       </div>
                     ) : (
-                      <Image
+                      <img
                         src={url}
                         alt={item.caption || "Gallery"}
-                        fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
                       />
                     )}
                     
