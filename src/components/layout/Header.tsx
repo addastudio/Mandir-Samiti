@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -41,6 +40,7 @@ export function Header() {
 
   const navItems = [
     { href: "/#home", label: t.navHome, isAnchor: true },
+    { href: "/#notices", label: t.noticesTitle, isAnchor: true },
     { href: "/#about", label: t.navAbout, isAnchor: true },
     { href: "/#events", label: t.navEvents, isAnchor: true },
     { href: "/#seva", label: t.navSeva, isAnchor: true },

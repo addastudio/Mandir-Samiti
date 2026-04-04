@@ -10,10 +10,11 @@ export function Footer() {
   const { t, language } = useLanguage();
 
   const navItems = [
-    { href: "#home", label: t.navHome },
-    { href: "#about", label: t.navAbout },
-    { href: "#donate", label: t.navDonate },
-    { href: "#contact", label: t.navContact },
+    { href: "/#home", label: t.navHome },
+    { href: "/#notices", label: t.noticesTitle },
+    { href: "/#about", label: t.navAbout },
+    { href: "/donate", label: t.navDonate },
+    { href: "/#contact", label: t.navContact },
   ];
 
   const socialIcons = [
@@ -70,7 +71,7 @@ export function Footer() {
             </h3>
             <ul className="mt-4 space-y-2">
               {navItems.map((item) => (
-                <li key={item.href}>
+                <li key={item.label}>
                   <a
                     href={item.href}
                     className={cn(
