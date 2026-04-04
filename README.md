@@ -1,5 +1,22 @@
-# Firebase Studio
+# Mandir Samiti Bahpura
 
-This is a NextJS starter in Firebase Studio.
+This is a professional, bilingual (Hindi/English) website for the Mandir Samiti Bahpura, built with Next.js 15, Firebase, and Tailwind CSS.
 
-To get started, take a look at src/app/page.tsx.
+## Key Features
+- **Bilingual Support:** Full Hindi and English translation system.
+- **Management Panel:** Admin interface for events, notices, and gallery.
+- **Donation Gateway:** Integrated with Stripe for secure contributions.
+- **Prayer Requests:** Secure portal for devotees to submit ritual requests.
+- **Real-time Updates:** Powered by Firestore for instant notices and events.
+
+## Documentation
+- [Website Details](./docs/WEBSITE_DETAILS.md): Architecture and Design overview.
+- [Migration Guide](./docs/MIGRATION_GUIDE.md): Full instructions for GitHub and Production deployment.
+
+## Tech Stack
+- **Framework:** Next.js 15 (App Router)
+- **Database:** Firebase Firestore
+- **Auth:** Firebase Authentication
+- **Styling:** Tailwind CSS + ShadCN UI
+- **Payments:** Stripe
+- **Email:** Resend
