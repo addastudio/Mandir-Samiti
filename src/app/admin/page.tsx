@@ -318,6 +318,20 @@ export default function AdminPage(props: {
       return;
     }
 
+    // Firestore document size limit is 1MB. Base64 is larger than binary.
+    // We check length directly to prevent "Document too large" or "Missing permissions" (if masked) errors.
+    if (imageURL.length > 1000000) {
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "फ़ाइल बहुत बड़ी है" : "File Too Large", 
+        description: language === 'hi' 
+          ? "कृपया 1MB से छोटी फ़ाइल चुनें या किसी बाहरी लिंक (URL) का उपयोग करें।" 
+          : "Please choose a file smaller than 1MB or use an external URL." 
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const galleryData = {
       imageURL,
       caption,
@@ -715,7 +729,7 @@ export default function AdminPage(props: {
                                 <Upload className="h-6 w-6" />
                               </div>
                               <p className="text-xs font-medium text-muted-foreground">{language === 'hi' ? 'फ़ाइल चुनें या यहाँ खींचें' : 'Choose file or drag here'}</p>
-                              <p className="text-[10px] text-muted-foreground opacity-60">PNG, JPG, MP4 (Max 5MB recommended)</p>
+                              <p className="text-[10px] text-muted-foreground opacity-60">PNG, JPG, MP4 (Max 1MB recommended)</p>
                             </>
                           )}
                         </div>
