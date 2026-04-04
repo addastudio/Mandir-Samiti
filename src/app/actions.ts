@@ -1,8 +1,9 @@
-
 "use server";
 
 import { z } from "zod";
 import { Resend } from 'resend';
+import Stripe from 'stripe';
+import { headers } from 'next/headers';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -121,31 +122,52 @@ export async function sendVerificationOtp(email: string, otp: string) {
 }
 
 /**
- * STRIPE INTEGRATION PLACEHOLDER
- * This action will create a Stripe Checkout session.
+ * STRIPE INTEGRATION
+ * Creates a Stripe Checkout session for donations.
  * Ensure STRIPE_SECRET_KEY is set in environment variables.
  */
 export async function createStripeCheckoutSession(amount: number, userEmail?: string) {
-  // If STRIPE_SECRET_KEY is not set, we'll log a warning and return a failure
   if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn("STRIPE_SECRET_KEY is missing. Stripe integration is not yet active.");
-    return { success: false, message: "Payment service unavailable." };
+    console.warn("STRIPE_SECRET_KEY is missing. Payment service unavailable.");
+    return { success: false, message: "Payment service is currently unavailable. Please contact the administrator." };
   }
 
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const headersList = await headers();
+  const host = headersList.get("host");
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const origin = `${protocol}://${host}`;
+
   try {
-    // Note: You would normally use the 'stripe' package here
-    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    // const session = await stripe.checkout.sessions.create({...});
-    
-    console.log(`[STRIPE PLACEHOLDER] Creating session for ₹${amount} for ${userEmail || 'anonymous'}`);
-    
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "inr",
+            product_data: {
+              name: "Mandir Samiti Bahpura - Donation",
+              description: "Thank you for supporting our temple and community services.",
+              images: ["https://picsum.photos/seed/donate/400/400"],
+            },
+            unit_amount: amount * 100, // Stripe expects amount in smallest currency unit (Paisa for INR)
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      customer_email: userEmail,
+      success_url: `${origin}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/donate?canceled=true`,
+    });
+
     return { 
       success: true, 
-      url: "https://checkout.stripe.com/pay/placeholder", // Mock URL
-      sessionId: "cs_test_123" 
+      url: session.url,
+      sessionId: session.id 
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Stripe session creation failed:", error);
-    return { success: false, message: "Failed to initialize payment." };
+    return { success: false, message: error.message || "Failed to initialize payment." };
   }
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, useAuth } from "@/firebase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, ArrowLeft, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, ShieldAlert } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const auth = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -46,6 +47,20 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle successful donation redirection toast
+  useEffect(() => {
+    if (mounted && searchParams.get('success') === 'true') {
+      toast({
+        title: language === 'hi' ? "दान सफल!" : "Donation Successful!",
+        description: language === 'hi' 
+          ? "आपके उदार योगदान के लिए धन्यवाद। हम आपकी सहायता की सराहना करते हैं।" 
+          : "Thank you for your generous contribution. We appreciate your support!",
+      });
+      // Clear the query params to avoid showing the toast multiple times
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [mounted, searchParams, toast, language]);
 
   const donationsRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;

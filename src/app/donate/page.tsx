@@ -8,12 +8,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, CreditCard, Banknote, Heart, ShieldCheck, CheckCircle2, IndianRupee, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { CreditCard, Banknote, Heart, ShieldCheck, CheckCircle2, IndianRupee, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useUser, useFirestore } from "@/firebase";
-import { collection } from "firebase/firestore";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useUser } from "@/firebase";
 import { createStripeCheckoutSession } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
@@ -21,43 +19,54 @@ export default function DonatePage() {
   const { language, t } = useLanguage();
   const { user } = useUser();
   const { toast } = useToast();
-  const firestore = useFirestore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [amount, setAmount] = React.useState<string>("501");
   const [isProcessing, setIsProcessing] = React.useState(false);
 
+  React.useEffect(() => {
+    if (searchParams.get('canceled') === 'true') {
+      toast({
+        variant: "destructive",
+        title: language === 'hi' ? "भुगतान रद्द" : "Payment Canceled",
+        description: language === 'hi' ? "दान प्रक्रिया रद्द कर दी गई थी।" : "The donation process was canceled.",
+      });
+    }
+  }, [searchParams, toast, language]);
+
   const handleStripeDonate = async () => {
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      toast({ variant: "destructive", title: "Invalid Amount", description: "Please enter a valid donation amount." });
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "अमान्य राशि" : "Invalid Amount", 
+        description: language === 'hi' ? "कृपया दान के लिए एक वैध राशि दर्ज करें।" : "Please enter a valid donation amount." 
+      });
       return;
     }
 
     setIsProcessing(true);
-    const result = await createStripeCheckoutSession(Number(amount), user?.email || undefined);
-    
-    if (result.success && result.url) {
-      // In a real integration, you would redirect to result.url
-      // window.location.href = result.url;
-      toast({ 
-        title: "Stripe Redirect", 
-        description: "In production, you would now be redirected to Stripe Checkout. [Sandbox Simulation]" 
-      });
+    try {
+      const result = await createStripeCheckoutSession(Number(amount), user?.email || undefined);
       
-      // Simulate success for the dashboard record
-      if (user && firestore) {
-        const donationsRef = collection(firestore, "users", user.uid, "donations");
-        addDocumentNonBlocking(donationsRef, {
-          userId: user.uid,
-          amount: Number(amount),
-          date: new Date().toISOString(),
-          mode: "Stripe Online",
-          status: "completed"
+      if (result.success && result.url) {
+        // Redirect the user to Stripe Checkout
+        window.location.href = result.url;
+      } else {
+        toast({ 
+          variant: "destructive", 
+          title: language === 'hi' ? "त्रुटि" : "Error", 
+          description: result.message 
         });
+        setIsProcessing(false);
       }
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.message });
+    } catch (err: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "Unexpected Error", 
+        description: "Could not connect to payment gateway. Please try again later." 
+      });
+      setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   return (
