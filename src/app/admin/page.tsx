@@ -318,8 +318,6 @@ export default function AdminPage(props: {
       return;
     }
 
-    // Firestore document size limit is 1MB. Base64 is larger than binary.
-    // We check length directly to prevent "Document too large" or "Missing permissions" (if masked) errors.
     if (imageURL.length > 1000000) {
       toast({ 
         variant: "destructive", 
@@ -465,7 +463,7 @@ export default function AdminPage(props: {
         </div>
 
         <Tabs defaultValue="events" className="w-full">
-          <div className="sticky top-16 sm:top-20 z-30 bg-background pb-4 pt-2">
+          <div className="pb-6 pt-2">
             <TabsList className="flex w-full items-center justify-start gap-2 overflow-x-auto bg-muted/40 p-1.5 rounded-xl border border-primary/10 shadow-sm touch-pan-x scroll-smooth overscroll-x-contain select-none">
               <TabsTrigger value="events" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
               <TabsTrigger value="gallery" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2.5 px-4 text-xs sm:text-sm shrink-0 shadow-sm rounded-lg transition-all"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
