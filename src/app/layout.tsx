@@ -7,6 +7,7 @@ import { Poppins, Mukta } from 'next/font/google';
 import { FirebaseClientProvider } from '@/firebase';
 import * as React from 'react';
 import { BackToTop } from '@/components/layout/BackToTop';
+import Script from 'next/script';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -36,7 +37,6 @@ export default function RootLayout(props: {
   params: Promise<any>;
 }) {
   const children = props.children;
-  const params = React.use(props.params);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -50,7 +50,12 @@ export default function RootLayout(props: {
       >
         <FirebaseClientProvider>
           <LanguageProvider>
-            {/* Accessibility: Skip to Content link for keyboard users */}
+            {/* Cashfree SDK */}
+            <Script 
+              src="https://sdk.cashfree.com/js/v3/cashfree.js" 
+              strategy="afterInteractive" 
+            />
+            
             <a 
               href="#main-content" 
               className="skip-link"

@@ -8,13 +8,19 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CreditCard, Banknote, Heart, ShieldCheck, CheckCircle2, IndianRupee, Loader2 } from "lucide-react";
+import { CreditCard, Banknote, Heart, ShieldCheck, CheckCircle2, IndianRupee, Loader2, QrCode, Globe } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/firebase";
-import { createStripeCheckoutSession } from "@/app/actions";
+import { createStripeCheckoutSession, createCashfreeOrder, getPaymentGatewayStatus } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Suspense } from "react";
+
+declare global {
+  interface Window {
+    Cashfree: any;
+  }
+}
 
 function DonateContent() {
   const { language, t } = useLanguage();
@@ -24,6 +30,11 @@ function DonateContent() {
   const searchParams = useSearchParams();
   const [amount, setAmount] = React.useState<string>("501");
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [gateways, setGateways] = React.useState<{ stripe: boolean; cashfree: boolean } | null>(null);
+
+  React.useEffect(() => {
+    getPaymentGatewayStatus().then(setGateways);
+  }, []);
 
   React.useEffect(() => {
     if (searchParams.get('canceled') === 'true') {
@@ -48,24 +59,41 @@ function DonateContent() {
     setIsProcessing(true);
     try {
       const result = await createStripeCheckoutSession(Number(amount), user?.email || undefined);
-      
       if (result.success && result.url) {
-        // Redirect the user to Stripe Checkout
         window.location.href = result.url;
       } else {
-        toast({ 
-          variant: "destructive", 
-          title: language === 'hi' ? "त्रुटि" : "Error", 
-          description: result.message 
-        });
+        toast({ variant: "destructive", title: "Error", description: result.message });
         setIsProcessing(false);
       }
     } catch (err: any) {
-      toast({ 
-        variant: "destructive", 
-        title: "Unexpected Error", 
-        description: "Could not connect to payment gateway. Please try again later." 
-      });
+      toast({ variant: "destructive", title: "Error", description: "Payment gateway error." });
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCashfreeDonate = async () => {
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      toast({ variant: "destructive", title: "Invalid Amount" });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const result = await createCashfreeOrder(Number(amount), user?.email || undefined, user?.uid || undefined);
+      if (result.success && result.paymentSessionId) {
+        const cashfree = new window.Cashfree({
+          mode: process.env.NEXT_PUBLIC_CASHFREE_MODE || "sandbox",
+        });
+        cashfree.checkout({
+          paymentSessionId: result.paymentSessionId,
+        });
+      } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast({ variant: "destructive", title: "Error", description: "Cashfree initialization failed." });
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -91,7 +119,6 @@ function DonateContent() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Online Payment Column */}
               <div className="lg:col-span-7 space-y-6">
                 <Card className="shadow-xl border-primary/10 overflow-hidden">
                   <CardHeader className="bg-primary/5 p-6 border-b border-primary/5">
@@ -133,18 +160,42 @@ function DonateContent() {
                     </div>
 
                     <div className="space-y-4 pt-4 border-t">
-                      <Button 
-                        size="lg" 
-                        className="w-full h-14 text-lg font-bold shadow-xl gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                        onClick={handleStripeDonate}
-                        disabled={isProcessing}
-                      >
-                        {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
-                        {t.donateOnlineBtn}
-                      </Button>
+                      {!gateways ? (
+                        <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                      ) : (
+                        <div className="flex flex-col gap-3">
+                          {gateways.cashfree && (
+                            <Button 
+                              size="lg" 
+                              className="w-full h-14 text-lg font-bold shadow-md bg-green-600 hover:bg-green-700 text-white gap-2 transition-all"
+                              onClick={handleCashfreeDonate}
+                              disabled={isProcessing}
+                            >
+                              {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <QrCode className="h-5 w-5" />}
+                              {language === 'hi' ? 'UPI / QR / नेटबैंकिंग' : 'UPI / QR / Netbanking'}
+                            </Button>
+                          )}
+                          {gateways.stripe && (
+                            <Button 
+                              variant="outline"
+                              size="lg" 
+                              className="w-full h-14 text-lg font-bold shadow-sm gap-2 border-primary/20 hover:bg-primary/5"
+                              onClick={handleStripeDonate}
+                              disabled={isProcessing}
+                            >
+                              {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Globe className="h-5 w-5" />}
+                              {language === 'hi' ? 'ऑनलाइन कार्ड (Stripe)' : 'Online Card (Stripe)'}
+                            </Button>
+                          )}
+                          {!gateways.stripe && !gateways.cashfree && (
+                            <p className="text-center text-destructive text-sm italic py-2">{language === 'hi' ? 'ऑनलाइन भुगतान वर्तमान में अक्षम है।' : 'Online payments are currently disabled.'}</p>
+                          )}
+                        </div>
+                      )}
+                      
                       <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
                         <CheckCircle2 className="h-3 w-3 text-green-500" />
-                        {language === 'hi' ? 'Stripe द्वारा सुरक्षित और एन्क्रिप्टेड' : 'Secured and Encrypted by Stripe'}
+                        {language === 'hi' ? 'सुरक्षित भुगतान गेटवे' : 'Secured and Encrypted Payment Gateway'}
                       </p>
                     </div>
                   </CardContent>
@@ -163,7 +214,6 @@ function DonateContent() {
                 </div>
               </div>
 
-              {/* Offline Payment Column */}
               <div className="lg:col-span-5 space-y-6">
                 <Card className="shadow-lg border-primary/10">
                   <CardHeader className="bg-secondary/30 p-5">

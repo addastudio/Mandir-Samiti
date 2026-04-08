@@ -14,8 +14,17 @@ const contactSchema = z.object({
 });
 
 /**
+ * Checks which payment gateways are active based on available API keys.
+ */
+export async function getPaymentGatewayStatus() {
+  return {
+    stripe: !!process.env.STRIPE_SECRET_KEY,
+    cashfree: !!process.env.CASHFREE_APP_ID && !!process.env.CASHFREE_SECRET_KEY,
+  };
+}
+
+/**
  * Checks if the live email service is configured.
- * This is used by the admin panel to show the system status.
  */
 export async function getEmailServiceStatus() {
   return {
@@ -40,7 +49,6 @@ export async function submitContactForm(prevState: any, formData: FormData) {
   }
 
   try {
-    // If live email is connected, send contact form details to admin
     if (resend) {
       await resend.emails.send({
         from: 'Mandir Samiti Website <onboarding@resend.dev>',
@@ -73,11 +81,8 @@ export async function submitContactForm(prevState: any, formData: FormData) {
 
 /**
  * Sends a verification OTP to the user's email.
- * If RESEND_API_KEY is present in environment variables, it sends a real email.
- * Otherwise, it logs the OTP to the console for development/prototype testing.
  */
 export async function sendVerificationOtp(email: string, otp: string) {
-  // Try sending real email if API key is configured
   if (resend) {
     try {
       await resend.emails.send({
@@ -97,15 +102,12 @@ export async function sendVerificationOtp(email: string, otp: string) {
           </div>
         `,
       });
-      console.log(`[LIVE EMAIL SENT] OTP sent to ${email}`);
       return { success: true };
     } catch (error) {
       console.error("Failed to send real email via Resend:", error);
-      // Fallback to console simulation below
     }
   }
 
-  // DEVELOPMENT SIMULATION LOG
   console.log("");
   console.log("==========================================");
   console.log("      [SIMULATED EMAIL SERVICE LOG]      ");
@@ -123,13 +125,10 @@ export async function sendVerificationOtp(email: string, otp: string) {
 
 /**
  * STRIPE INTEGRATION
- * Creates a Stripe Checkout session for donations.
- * Ensure STRIPE_SECRET_KEY is set in environment variables.
  */
 export async function createStripeCheckoutSession(amount: number, userEmail?: string) {
   if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn("STRIPE_SECRET_KEY is missing. Payment service unavailable.");
-    return { success: false, message: "Payment service is currently unavailable. Please contact the administrator." };
+    return { success: false, message: "Stripe service unavailable." };
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -147,10 +146,10 @@ export async function createStripeCheckoutSession(amount: number, userEmail?: st
             currency: "inr",
             product_data: {
               name: "Mandir Samiti Bahpura - Donation",
-              description: "Thank you for supporting our temple and community services.",
+              description: "Thank you for supporting our temple.",
               images: ["https://picsum.photos/seed/donate/400/400"],
             },
-            unit_amount: amount * 100, // Stripe expects amount in smallest currency unit (Paisa for INR)
+            unit_amount: amount * 100,
           },
           quantity: 1,
         },
@@ -167,7 +166,63 @@ export async function createStripeCheckoutSession(amount: number, userEmail?: st
       sessionId: session.id 
     };
   } catch (error: any) {
-    console.error("Stripe session creation failed:", error);
-    return { success: false, message: error.message || "Failed to initialize payment." };
+    console.error("Stripe error:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * CASHFREE INTEGRATION
+ */
+export async function createCashfreeOrder(amount: number, userEmail?: string, userId?: string) {
+  if (!process.env.CASHFREE_APP_ID || !process.env.CASHFREE_SECRET_KEY) {
+    return { success: false, message: "Cashfree service unavailable." };
+  }
+
+  const headersList = await headers();
+  const host = headersList.get("host");
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const origin = `${protocol}://${host}`;
+
+  const url = process.env.NEXT_PUBLIC_CASHFREE_MODE === 'production' 
+    ? 'https://api.cashfree.com/pg/orders' 
+    : 'https://sandbox.cashfree.com/pg/orders';
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-id': process.env.CASHFREE_APP_ID,
+        'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+        'x-api-version': '2023-08-01'
+      },
+      body: JSON.stringify({
+        order_amount: amount,
+        order_currency: "INR",
+        customer_details: {
+          customer_id: userId || `guest_${Date.now()}`,
+          customer_email: userEmail || "guest@example.com",
+          customer_phone: "9999999999"
+        },
+        order_meta: {
+          return_url: `${origin}/dashboard?success=true&order_id={order_id}`
+        }
+      })
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      return {
+        success: true,
+        paymentSessionId: data.payment_session_id,
+        orderId: data.order_id
+      };
+    } else {
+      return { success: false, message: data.message || "Failed to create Cashfree order." };
+    }
+  } catch (error: any) {
+    console.error("Cashfree order creation failed:", error);
+    return { success: false, message: error.message };
   }
 }
