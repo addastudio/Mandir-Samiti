@@ -598,7 +598,7 @@ export default function AdminPage() {
 
         <Tabs defaultValue="overview" className="w-full">
           <div className="pb-6 pt-2">
-            <TabsList className="flex w-full items-center justify-start gap-2 overflow-x-auto bg-muted/40 p-1.5 rounded-xl border border-primary/10 shadow-sm no-scrollbar">
+            <TabsList className="flex w-full items-center justify-start gap-2 overflow-x-auto bg-muted/40 p-1.5 rounded-xl border border-primary/10 shadow-sm no-scrollbar flex-nowrap">
               <TabsTrigger value="overview" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}</TabsTrigger>
               <TabsTrigger value="events" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
               <TabsTrigger value="notices" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}</TabsTrigger>
@@ -986,7 +986,7 @@ export default function AdminPage() {
 
           <TabsContent value="requests" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {requests?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(r => (
+              {requests?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.timestamp || a.createdAt).getTime()).map(r => (
                 <Card key={r.id} className="border-l-4 border-l-primary">
                   <CardHeader className="py-3 px-4 flex flex-row justify-between items-center bg-muted/30">
                     <CardTitle className="text-xs uppercase font-black">{r.requestType}</CardTitle>
