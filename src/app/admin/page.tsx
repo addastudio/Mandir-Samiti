@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -13,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus, Wand2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -41,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { getEmailServiceStatus } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 
 const ROLE_HIERARCHY: Record<string, number> = {
   'president': 100,
@@ -52,10 +52,7 @@ const ROLE_HIERARCHY: Record<string, number> = {
   'devotee': 10,
 };
 
-export default function AdminPage(props: {
-  params: Promise<any>;
-  searchParams: Promise<any>;
-}) {
+export default function AdminPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -92,6 +89,13 @@ export default function AdminPage(props: {
 
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
+
+  // AI Content Form States
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDesc, setEventDescription] = useState("");
+  const [noticeTitle, setNoticeTitle] = useState("");
+  const [noticeContent, setNoticeContent] = useState("");
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -198,6 +202,35 @@ export default function AdminPage(props: {
     return Array.from(userMap.values());
   }, [allUsers, allAdmins, language]);
 
+  const handleAiGenerate = async (type: 'event' | 'notice') => {
+    const topic = type === 'event' ? eventTitle : noticeTitle;
+    if (!topic) {
+      toast({ variant: "destructive", title: "Missing Topic", description: "Please enter a topic first." });
+      return;
+    }
+
+    setIsAiGenerating(true);
+    try {
+      const result = await generateTempleContent({
+        topic,
+        type,
+        language: language as 'hi' | 'en'
+      });
+      if (type === 'event') {
+        setEventTitle(result.title);
+        setEventDescription(result.content);
+      } else {
+        setNoticeTitle(result.title);
+        setNoticeContent(result.content);
+      }
+      toast({ title: "AI Generation Successful", description: "Content has been updated." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "AI Error", description: "Could not generate content. Ensure AI is configured." });
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
   if (!mounted || isUserLoading || isAdminLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -260,6 +293,8 @@ export default function AdminPage(props: {
     toast({ title: language === 'hi' ? "ईवेंट सफलतापूर्वक जोड़ा गया" : "Event Added Successfully" });
     (e.target as HTMLFormElement).reset();
     setEventMediaPreview(null);
+    setEventTitle("");
+    setEventDescription("");
     setIsSubmitting(false);
   };
 
@@ -311,6 +346,8 @@ export default function AdminPage(props: {
     logAction("CREATE", "Notice", title);
     toast({ title: language === 'hi' ? "सूचना सफलतापूर्वक जोड़ी गई" : "Notice Added Successfully" });
     (e.target as HTMLFormElement).reset();
+    setNoticeTitle("");
+    setNoticeContent("");
     setIsSubmitting(false);
   };
 
@@ -506,7 +543,19 @@ export default function AdminPage(props: {
           <TabsContent value="events" className="space-y-6 outline-none mt-4">
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5">
-                <CardTitle className="text-lg">{language === 'hi' ? 'नया कार्यक्रम जोड़ें' : 'Add New Event'}</CardTitle>
+                <CardTitle className="text-lg flex items-center justify-between">
+                  {language === 'hi' ? 'नया कार्यक्रम जोड़ें' : 'Add New Event'}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2 text-xs border-primary/20 hover:bg-primary/5"
+                    onClick={() => handleAiGenerate('event')}
+                    disabled={isAiGenerating || !eventTitle}
+                  >
+                    {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                    {language === 'hi' ? 'AI से विवरण लिखें' : 'Generate with AI'}
+                  </Button>
+                </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddEvent} className="space-y-4">
@@ -514,7 +563,7 @@ export default function AdminPage(props: {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="title">{language === 'hi' ? 'ईवेंट का नाम' : 'Event Title'}</Label>
-                        <Input id="title" name="title" required className="bg-secondary/10" />
+                        <Input id="title" name="title" required className="bg-secondary/10" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder={language === 'hi' ? 'उदाहरण: महा शिवरात्रि उत्सव' : 'e.g., Maha Shivratri Celebration'} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="date">{language === 'hi' ? 'तारीख और समय' : 'Date & Time'}</Label>
@@ -522,7 +571,7 @@ export default function AdminPage(props: {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="description">{language === 'hi' ? 'विवरण' : 'Description'}</Label>
-                        <Textarea id="description" name="description" required className="bg-secondary/10 min-h-[100px]" />
+                        <Textarea id="description" name="description" required className="bg-secondary/10 min-h-[100px]" value={eventDesc} onChange={(e) => setEventDescription(e.target.value)} />
                       </div>
                     </div>
 
@@ -666,14 +715,26 @@ export default function AdminPage(props: {
           <TabsContent value="notices" className="space-y-6 outline-none mt-4">
             <Card className="border-primary/20 shadow-md">
               <CardHeader className="bg-primary/5">
-                <CardTitle className="text-lg">{language === 'hi' ? 'नई सूचना जोड़ें' : 'Add Notice'}</CardTitle>
+                <CardTitle className="text-lg flex items-center justify-between">
+                  {language === 'hi' ? 'नई सूचना जोड़ें' : 'Add Notice'}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2 text-xs border-primary/20 hover:bg-primary/5"
+                    onClick={() => handleAiGenerate('notice')}
+                    disabled={isAiGenerating || !noticeTitle}
+                  >
+                    {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    {language === 'hi' ? 'AI संदेश लिखें' : 'Draft with AI'}
+                  </Button>
+                </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleAddNotice} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="notice-title">{language === 'hi' ? 'शीर्षक' : 'Title'}</Label>
-                      <Input id="notice-title" name="title" required className="bg-secondary/10" />
+                      <Input id="notice-title" name="title" required className="bg-secondary/10" value={noticeTitle} onChange={(e) => setNoticeTitle(e.target.value)} placeholder={language === 'hi' ? 'उदाहरण: मंदिर की सफाई सूचना' : 'e.g., Temple Cleaning Drive'} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="importance">{language === 'hi' ? 'महत्व' : 'Importance'}</Label>
@@ -685,7 +746,7 @@ export default function AdminPage(props: {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="content">{language === 'hi' ? 'संदेश' : 'Message'}</Label>
-                    <Textarea id="content" name="content" required className="bg-secondary/10 min-h-[100px]" />
+                    <Textarea id="content" name="content" required className="bg-secondary/10 min-h-[100px]" value={noticeContent} onChange={(e) => setNoticeContent(e.target.value)} />
                   </div>
                   <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>{isSubmitting ? '...' : (language === 'hi' ? 'जारी करें' : 'Post Notice')}</Button>
                 </form>
