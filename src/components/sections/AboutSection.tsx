@@ -1,21 +1,36 @@
+
 "use client";
 
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, History, Target } from "lucide-react";
+import { Users, History, Target, Loader2 } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 export function AboutSection() {
   const { t, language } = useLanguage();
+  const firestore = useFirestore();
   const galleryImage = PlaceHolderImages.find((img) => img.id === "gallery-1");
 
-  const members = [
+  const membersRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "mandir_samiti_members");
+  }, [firestore]);
+
+  const { data: firebaseMembers, isLoading } = useCollection(membersRef);
+
+  const fallbackMembers = [
     { name: t.member1Name, role: t.member1Role },
     { name: t.member2Name, role: t.member2Role },
     { name: t.member3Name, role: t.member3Role },
   ];
+
+  const members = firebaseMembers && firebaseMembers.length > 0 
+    ? [...firebaseMembers].sort((a,b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+    : fallbackMembers;
 
   return (
     <section id="about" className="py-16 sm:py-20 md:py-28 overflow-hidden">
@@ -106,28 +121,37 @@ export function AboutSection() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 sm:p-8">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
-                {members.map((member, index) => (
-                  <div key={index} className="text-center pt-6 sm:pt-0 sm:px-4">
-                    <p
-                      className={cn(
-                        "font-bold text-lg sm:text-xl",
-                        language === "hi" ? "font-hindi" : ""
-                      )}
-                    >
-                      {member.name}
-                    </p>
-                    <p
-                      className={cn(
-                        "text-xs sm:text-sm text-muted-foreground mt-1 uppercase tracking-widest font-medium opacity-80",
-                        language === "hi" ? "font-hindi" : ""
-                      )}
-                    >
-                      {member.role}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className={cn(
+                  "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0",
+                  members.length > 1 && "sm:divide-x divide-border/40"
+                )}>
+                  {members.map((member, index) => (
+                    <div key={index} className="text-center pt-6 sm:pt-0 sm:px-4">
+                      <p
+                        className={cn(
+                          "font-bold text-lg sm:text-xl",
+                          language === "hi" ? "font-hindi" : ""
+                        )}
+                      >
+                        {member.name}
+                      </p>
+                      <p
+                        className={cn(
+                          "text-xs sm:text-sm text-muted-foreground mt-1 uppercase tracking-widest font-medium opacity-80",
+                          language === "hi" ? "font-hindi" : ""
+                        )}
+                      >
+                        {member.role}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

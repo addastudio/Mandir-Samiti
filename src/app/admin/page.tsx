@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv, Search, BarChart3, TrendingUp } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv, Search, BarChart3, TrendingUp, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -155,6 +155,11 @@ export default function AdminPage() {
     return collection(firestore, "testimonials");
   }, [firestore]);
 
+  const membersRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "mandir_samiti_members");
+  }, [firestore]);
+
   const usersRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, "users");
@@ -184,6 +189,7 @@ export default function AdminPage() {
   const { data: gallery } = useCollection(galleryRef);
   const { data: sevaPrograms } = useCollection(sevaRef);
   const { data: testimonials } = useCollection(testimonialsRef);
+  const { data: committeeMembers } = useCollection(membersRef);
   const { data: allUsers } = useCollection(usersRef);
   const { data: allAdmins } = useCollection(adminsRef);
   const { data: notices } = useCollection(noticesRef);
@@ -423,6 +429,24 @@ export default function AdminPage() {
     setIsSubmitting(false);
   };
 
+  const handleAddMember = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!membersRef) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const memberData = {
+      name,
+      role: formData.get("role") as string,
+      displayOrder: Number(formData.get("displayOrder") || 0),
+    };
+    addDocumentNonBlocking(membersRef, memberData);
+    logAction("CREATE", "Committee Member", name);
+    toast({ title: "Member Added" });
+    (e.target as HTMLFormElement).reset();
+    setIsSubmitting(false);
+  };
+
   const handleAddTestimonial = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!testimonialsRef) return;
@@ -579,6 +603,7 @@ export default function AdminPage() {
               <TabsTrigger value="events" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
               <TabsTrigger value="notices" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}</TabsTrigger>
               <TabsTrigger value="seva" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><UtensilsCrossed className="h-4 w-4" /> {language === 'hi' ? 'सेवा' : 'Seva'}</TabsTrigger>
+              <TabsTrigger value="committee" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><UserCheck className="h-4 w-4" /> {language === 'hi' ? 'समिति' : 'Committee'}</TabsTrigger>
               <TabsTrigger value="testimonials" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Quote className="h-4 w-4" /> {language === 'hi' ? 'अनुभव' : 'Reviews'}</TabsTrigger>
               <TabsTrigger value="gallery" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
               <TabsTrigger value="requests" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}</TabsTrigger>
@@ -850,6 +875,38 @@ export default function AdminPage() {
                   </Card>
                 );
               })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="committee" className="space-y-6">
+            <Card>
+              <CardHeader><CardTitle>{language === 'hi' ? 'समिति सदस्य जोड़ें' : 'Add Samiti Member'}</CardTitle></CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddMember} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2"><Label>Member Name</Label><Input name="name" required placeholder="e.g. Mr. Ram Singh" /></div>
+                    <div className="space-y-2"><Label>Official Role</Label><Input name="role" required placeholder="e.g. President" /></div>
+                    <div className="space-y-2"><Label>Display Order (Num)</Label><Input name="displayOrder" type="number" defaultValue="0" /></div>
+                  </div>
+                  <Button type="submit" disabled={isSubmitting}>Add Member</Button>
+                </form>
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {committeeMembers?.sort((a,b) => (a.displayOrder || 0) - (b.displayOrder || 0)).map(m => (
+                <Card key={m.id} className="relative group">
+                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDelete('mandir_samiti_members', m.id, m.name)}><Trash2 className="h-4 w-4" /></Button>
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-lg font-bold">{m.name}</CardTitle>
+                    <CardDescription className="uppercase tracking-widest text-xs font-medium text-primary">{m.role}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+              {committeeMembers?.length === 0 && (
+                <div className="col-span-full py-10 text-center text-muted-foreground italic border-2 border-dashed rounded-xl">
+                  {language === 'hi' ? 'कोई आधिकारिक सदस्य नहीं जोड़ा गया है। वेबसाइट डिफ़ॉल्ट सदस्यों को दिखाएगी।' : 'No official members added. The website will show default members.'}
+                </div>
+              )}
             </div>
           </TabsContent>
 

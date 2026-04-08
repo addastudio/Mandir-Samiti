@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "AdminActivityLog": {
@@ -62,6 +63,18 @@
       },
       "required": ["name", "quote"]
     },
+    "MandirSamitiMember": {
+      "title": "MandirSamitiMember",
+      "description": "An official member of the temple committee.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "displayOrder": { "type": "number" }
+      },
+      "required": ["name", "role"]
+    },
     "WebsiteSettings": {
       "title": "WebsiteSettings",
       "description": "Global website configuration.",
@@ -87,6 +100,10 @@
     "/seva_programs/{programId}": {
       "schema": { "$ref": "#/entities/SevaProgram" },
       "description": "Dynamic community service programs."
+    },
+    "/mandir_samiti_members/{memberId}": {
+      "schema": { "$ref": "#/entities/MandirSamitiMember" },
+      "description": "Official committee members for public display."
     },
     "/testimonials/{testimonialId}": {
       "schema": { "$ref": "#/entities/Testimonial" },
