@@ -361,6 +361,54 @@ export default function AdminPage() {
     setIsSubmitting(false);
   };
 
+  const handleAddNotice = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!noticesRef) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get("title") as string;
+    const noticeData = {
+      title,
+      content: formData.get("content") as string,
+      importance: formData.get("importance") as string,
+      createdAt: new Date().toISOString(),
+    };
+    addDocumentNonBlocking(noticesRef, noticeData);
+    logAction("CREATE", "Notice", title);
+    toast({ title: "Notice Posted" });
+    (e.target as HTMLFormElement).reset();
+    setNoticeTitle("");
+    setNoticeContent("");
+    setIsSubmitting(false);
+  };
+
+  const handleAddGallery = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!galleryRef) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const caption = formData.get("caption") as string;
+    const imageURL = galleryMediaPreview || (formData.get("imageURL") as string);
+
+    if (!imageURL) {
+      toast({ variant: "destructive", title: "Missing Media", description: "Please upload an image or provide a URL." });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const galleryData = {
+      caption,
+      imageURL,
+      createdAt: new Date().toISOString(),
+    };
+    addDocumentNonBlocking(galleryRef, galleryData);
+    logAction("CREATE", "Gallery", caption);
+    toast({ title: "Media Added to Gallery" });
+    (e.target as HTMLFormElement).reset();
+    setGalleryMediaPreview(null);
+    setIsSubmitting(false);
+  };
+
   const handleDelete = (col: string, id: string, title: string = "Item") => {
     if (!firestore) return;
     deleteDocumentNonBlocking(doc(firestore, col, id));
