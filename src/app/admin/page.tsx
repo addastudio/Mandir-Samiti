@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv, Search, BarChart3, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -70,6 +70,9 @@ export default function AdminPage() {
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   
+  // Search and Filter States
+  const [userSearch, setUserSearch] = useState("");
+  
   const [pendingRoleUpdate, setPendingRoleUpdate] = useState<{
     userId: string;
     targetCurrentRole: string;
@@ -89,12 +92,15 @@ export default function AdminPage() {
 
   const [isResigningInProgress, setIsResigningInProgress] = useState(false);
   const [resignPassword, setResignPassword] = useState("");
+  
+  // Previews
   const [galleryMediaPreview, setGalleryMediaPreview] = useState<string | null>(null);
   const [testimonialMediaPreview, setTestimonialMediaPreview] = useState<string | null>(null);
   const [eventMediaPreview, setEventMediaPreview] = useState<string | null>(null);
   const [editEventMediaPreview, setEditEventMediaPreview] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<{ isLive: boolean; provider: string } | null>(null);
 
+  // Edit States
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
 
@@ -220,6 +226,11 @@ export default function AdminPage() {
     return Array.from(userMap.values());
   }, [allUsers, allAdmins, language]);
 
+  const filteredUsers = combinedUserList.filter(u => 
+    u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
+    u.email?.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
   const handleAiGenerate = async (type: 'event' | 'notice') => {
     const topic = type === 'event' ? eventTitle : noticeTitle;
     if (!topic) {
@@ -290,12 +301,6 @@ export default function AdminPage() {
     const title = formData.get("title") as string;
     const imageURL = eventMediaPreview || (formData.get("image") as string);
 
-    if (imageURL && imageURL.length > 1000000) {
-      toast({ variant: "destructive", title: "File Too Large", description: "Max 1MB" });
-      setIsSubmitting(false);
-      return;
-    }
-
     const eventData = {
       title,
       date: formData.get("date") as string,
@@ -309,6 +314,94 @@ export default function AdminPage() {
     setEventMediaPreview(null);
     setEventTitle("");
     setEventDescription("");
+    setIsSubmitting(false);
+  };
+
+  const handleUpdateEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firestore || !editingEvent) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get("title") as string;
+    const imageURL = editEventMediaPreview || editingEvent.image;
+
+    const eventData = {
+      title,
+      date: formData.get("date") as string,
+      description: formData.get("description") as string,
+      image: imageURL,
+    };
+    updateDocumentNonBlocking(doc(firestore, "events", editingEvent.id), eventData);
+    logAction("UPDATE", "Event", title);
+    toast({ title: "Event Updated" });
+    setEditingEvent(null);
+    setEditEventMediaPreview(null);
+    setIsSubmitting(false);
+  };
+
+  const handleAddNotice = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!noticesRef) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get("title") as string;
+    const noticeData = {
+      title,
+      content: formData.get("content") as string,
+      importance: formData.get("importance") as string,
+      createdAt: new Date().toISOString(),
+    };
+    addDocumentNonBlocking(noticesRef, noticeData);
+    logAction("CREATE", "Notice", title);
+    toast({ title: "Notice Posted" });
+    (e.target as HTMLFormElement).reset();
+    setNoticeTitle("");
+    setNoticeContent("");
+    setIsSubmitting(false);
+  };
+
+  const handleUpdateNotice = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firestore || !editingNotice) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const title = formData.get("title") as string;
+    const noticeData = {
+      title,
+      content: formData.get("content") as string,
+      importance: formData.get("importance") as string,
+    };
+    updateDocumentNonBlocking(doc(firestore, "notices", editingNotice.id), noticeData);
+    logAction("UPDATE", "Notice", title);
+    toast({ title: "Notice Updated" });
+    setEditingNotice(null);
+    setIsSubmitting(false);
+  };
+
+  const handleAddGallery = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!galleryRef) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const caption = formData.get("caption") as string;
+    const imageURL = galleryMediaPreview || (formData.get("imageURL") as string);
+
+    if (!imageURL) {
+      toast({ variant: "destructive", title: "Missing Media", description: "Please upload an image or provide a URL." });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const galleryData = {
+      caption,
+      imageURL,
+      createdAt: new Date().toISOString(),
+    };
+    addDocumentNonBlocking(galleryRef, galleryData);
+    logAction("CREATE", "Gallery", caption);
+    toast({ title: "Media Added to Gallery" });
+    (e.target as HTMLFormElement).reset();
+    setGalleryMediaPreview(null);
     setIsSubmitting(false);
   };
 
@@ -358,54 +451,6 @@ export default function AdminPage() {
     setDocumentNonBlocking(websiteSettingsRef, { liveAartiUrl }, { merge: true });
     logAction("UPDATE", "Settings", "Website Configuration");
     toast({ title: "Settings Updated" });
-    setIsSubmitting(false);
-  };
-
-  const handleAddNotice = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!noticesRef) return;
-    setIsSubmitting(true);
-    const formData = new FormData(e.currentTarget);
-    const title = formData.get("title") as string;
-    const noticeData = {
-      title,
-      content: formData.get("content") as string,
-      importance: formData.get("importance") as string,
-      createdAt: new Date().toISOString(),
-    };
-    addDocumentNonBlocking(noticesRef, noticeData);
-    logAction("CREATE", "Notice", title);
-    toast({ title: "Notice Posted" });
-    (e.target as HTMLFormElement).reset();
-    setNoticeTitle("");
-    setNoticeContent("");
-    setIsSubmitting(false);
-  };
-
-  const handleAddGallery = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!galleryRef) return;
-    setIsSubmitting(true);
-    const formData = new FormData(e.currentTarget);
-    const caption = formData.get("caption") as string;
-    const imageURL = galleryMediaPreview || (formData.get("imageURL") as string);
-
-    if (!imageURL) {
-      toast({ variant: "destructive", title: "Missing Media", description: "Please upload an image or provide a URL." });
-      setIsSubmitting(false);
-      return;
-    }
-
-    const galleryData = {
-      caption,
-      imageURL,
-      createdAt: new Date().toISOString(),
-    };
-    addDocumentNonBlocking(galleryRef, galleryData);
-    logAction("CREATE", "Gallery", caption);
-    toast({ title: "Media Added to Gallery" });
-    (e.target as HTMLFormElement).reset();
-    setGalleryMediaPreview(null);
     setIsSubmitting(false);
   };
 
@@ -495,7 +540,7 @@ export default function AdminPage() {
               <h1 className={cn("text-xl sm:text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                 {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
               </h1>
-              <Badge variant="outline" className="mt-1 bg-primary/5">{currentRole}</Badge>
+              <Badge variant="outline" className="mt-1 bg-primary/5 capitalize">{currentRole}</Badge>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -527,9 +572,10 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="events" className="w-full">
+        <Tabs defaultValue="overview" className="w-full">
           <div className="pb-6 pt-2">
             <TabsList className="flex w-full items-center justify-start gap-2 overflow-x-auto bg-muted/40 p-1.5 rounded-xl border border-primary/10 shadow-sm no-scrollbar">
+              <TabsTrigger value="overview" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}</TabsTrigger>
               <TabsTrigger value="events" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
               <TabsTrigger value="notices" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}</TabsTrigger>
               <TabsTrigger value="seva" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><UtensilsCrossed className="h-4 w-4" /> {language === 'hi' ? 'सेवा' : 'Seva'}</TabsTrigger>
@@ -541,6 +587,95 @@ export default function AdminPage() {
               <TabsTrigger value="settings" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Settings className="h-4 w-4" /> {language === 'hi' ? 'सेटिंग्स' : 'Settings'}</TabsTrigger>
             </TabsList>
           </div>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-primary/5 border-primary/10">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                    {language === 'hi' ? 'कुल भक्त' : 'Total Devotees'}
+                    <Users className="h-4 w-4 text-primary" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{allUsers?.length || 0}</div>
+                  <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><TrendingUp className="h-3 w-3" /> {language === 'hi' ? 'निरंतर वृद्धि' : 'Growing community'}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-accent/5 border-accent/10">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                    {language === 'hi' ? 'आगामी कार्यक्रम' : 'Upcoming Events'}
+                    <Calendar className="h-4 w-4 text-accent" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{events?.filter(e => new Date(e.date) > new Date()).length || 0}</div>
+                  <p className="text-[10px] text-muted-foreground mt-1">{language === 'hi' ? 'अगले ३० दिनों में' : 'In next 30 days'}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-green-50 border-green-100">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                    {language === 'hi' ? 'लंबित निवेदन' : 'Pending Requests'}
+                    <MessageSquare className="h-4 w-4 text-green-600" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-700">{requests?.filter(r => r.status === 'pending').length || 0}</div>
+                  <p className="text-[10px] text-muted-foreground mt-1">{language === 'hi' ? 'त्वरित कार्रवाई आवश्यक' : 'Immediate action needed'}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-amber-50 border-amber-100">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                    {language === 'hi' ? 'नई सूचनाएं' : 'Recent Notices'}
+                    <Bell className="h-4 w-4 text-amber-600" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-amber-700">{notices?.filter(n => (Date.now() - new Date(n.createdAt).getTime()) < 86400000 * 7).length || 0}</div>
+                  <p className="text-[10px] text-muted-foreground mt-1">{language === 'hi' ? 'पिछले ७ दिनों में' : 'Posted this week'}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="shadow-sm border-primary/10">
+                <CardHeader><CardTitle className="text-lg">{language === 'hi' ? 'हाल की गतिविधि' : 'Recent Activity'}</CardTitle></CardHeader>
+                <CardContent className="p-0">
+                  <div className="divide-y max-h-[400px] overflow-y-auto">
+                    {activityLogs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10).map(log => (
+                      <div key={log.id} className="p-4 flex items-start gap-3 hover:bg-muted/30">
+                        <div className="bg-primary/5 p-2 rounded-full"><Activity className="h-4 w-4 text-primary" /></div>
+                        <div>
+                          <p className="text-xs"><span className="font-bold">{log.adminName}</span> {log.actionType.toLowerCase()}ed <span className="font-bold">{log.entityType}</span>: {log.entityTitle}</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">{new Date(log.timestamp).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm border-primary/10">
+                <CardHeader><CardTitle className="text-lg">{language === 'hi' ? 'शीर्ष सेवा कार्यक्रम' : 'Seva Highlights'}</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {sevaPrograms?.slice(0, 4).map(s => {
+                    const Icon = SEVA_ICONS[s.icon as keyof typeof SEVA_ICONS] || Hand;
+                    return (
+                      <div key={s.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/20">
+                        <div className="bg-primary/10 p-2 rounded-full"><Icon className="h-5 w-5 text-primary" /></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold">{s.title}</p>
+                          <p className="text-[10px] text-muted-foreground line-clamp-1">{s.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           <TabsContent value="events" className="space-y-6">
             <Card className="border-primary/20 shadow-md">
@@ -591,11 +726,83 @@ export default function AdminPage() {
             </Card>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {events?.map(e => (
-                <Card key={e.id} className="overflow-hidden">
-                  <div className="aspect-video relative"><img src={e.image} className="w-full h-full object-cover" /><Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={() => handleDelete('events', e.id, e.title)}><Trash2 className="h-4 w-4" /></Button></div>
+                <Card key={e.id} className="overflow-hidden group">
+                  <div className="aspect-video relative">
+                    <img src={e.image} className="w-full h-full object-cover" />
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setEditingEvent(e)}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete('events', e.id, e.title)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
                   <CardHeader className="p-4"><CardTitle className="text-sm truncate">{e.title}</CardTitle></CardHeader>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="notices" className="space-y-6">
+            <Card className="border-primary/20 shadow-md">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  {language === 'hi' ? 'नई सूचना जोड़ें' : 'Add Notice'}
+                  <Button variant="outline" size="sm" onClick={() => handleAiGenerate('notice')} disabled={isAiGenerating || !noticeTitle}>
+                    {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    {language === 'hi' ? 'AI संदेश' : 'AI Draft'}
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleAddNotice} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Title</Label><Input name="title" required value={noticeTitle} onChange={(e) => setNoticeTitle(e.target.value)} /></div>
+                    <div className="space-y-2"><Label>Importance</Label><select name="importance" className="h-10 w-full rounded border bg-background px-3"><option value="normal">Normal</option><option value="urgent">Urgent</option></select></div>
+                  </div>
+                  <div className="space-y-2"><Label>Content</Label><Textarea name="content" required value={noticeContent} onChange={(e) => setNoticeContent(e.target.value)} /></div>
+                  <Button type="submit" disabled={isSubmitting}>Post Notice</Button>
+                </form>
+              </CardContent>
+            </Card>
+            <div className="space-y-4">
+              {notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(n => (
+                <Card key={n.id} className={cn("border-l-4 group", n.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
+                  <CardContent className="p-4 flex justify-between items-center">
+                    <div className="min-w-0 flex-1"><h4 className="font-bold truncate">{n.title}</h4><p className="text-xs text-muted-foreground line-clamp-1">{n.content}</p></div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" onClick={() => setEditingNotice(n)}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete('notices', n.id, n.title)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder={language === 'hi' ? 'नाम या ईमेल खोजें...' : 'Search users by name or email...'} className="pl-10" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+            </div>
+            <div className="grid gap-4">
+              {filteredUsers?.sort((a,b) => (ROLE_HIERARCHY[b.role] || 0) - (ROLE_HIERARCHY[a.role] || 0)).map(u => {
+                const isUserAdmin = allAdmins?.some(a => a.id === u.id);
+                const canIManage = !u.isGhost && canManageUser(u.id, u.role);
+                return (
+                  <Card key={u.id} className={cn("p-4 flex flex-col md:flex-row justify-between items-center gap-4", u.isGhost && "opacity-50")}>
+                    <div className="flex items-center gap-4"><div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary shrink-0">{u.name?.charAt(0)}</div><div><p className="font-bold flex items-center gap-2">{u.name}{isUserAdmin && <Badge className="text-[8px]">ADMIN</Badge>}</p><p className="text-xs text-muted-foreground">{u.email}</p><p className="text-[10px] uppercase opacity-50">{u.role || 'devotee'}</p></div></div>
+                    <div className="flex items-center gap-2">
+                      {!u.isGhost && (
+                        <><select disabled={!canIManage} className="h-8 rounded border bg-background px-2 text-xs" value={u.role || 'devotee'} onChange={(e) => setPendingRoleUpdate({ userId: u.id, targetCurrentRole: u.role || 'devotee', newRole: e.target.value, userName: u.name || 'User' })}><option value="devotee">Devotee</option><option value="member">Member</option><option value="official">Official</option><option value="president">President</option></select><Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" className="h-8 text-xs" onClick={() => setPendingAdminToggle({ userId: u.id, isCurrentAdmin: !!isUserAdmin, userName: u.name || 'User', role: u.role || 'devotee' })}>{isUserAdmin ? 'Revoke' : 'Grant'} Admin</Button></>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+              {filteredUsers.length === 0 && (
+                <div className="py-20 text-center text-muted-foreground">
+                  <Ghost className="h-12 w-12 mx-auto opacity-20" />
+                  <p className="mt-4">{language === 'hi' ? 'कोई उपयोगकर्ता नहीं मिला।' : 'No users found matching your search.'}</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -689,40 +896,6 @@ export default function AdminPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="notices" className="space-y-6">
-            <Card className="border-primary/20 shadow-md">
-              <CardHeader className="bg-primary/5">
-                <CardTitle className="text-lg flex items-center justify-between">
-                  {language === 'hi' ? 'नई सूचना जोड़ें' : 'Add Notice'}
-                  <Button variant="outline" size="sm" onClick={() => handleAiGenerate('notice')} disabled={isAiGenerating || !noticeTitle}>
-                    {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                    {language === 'hi' ? 'AI संदेश' : 'AI Draft'}
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <form onSubmit={handleAddNotice} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Title</Label><Input name="title" required value={noticeTitle} onChange={(e) => setNoticeTitle(e.target.value)} /></div>
-                    <div className="space-y-2"><Label>Importance</Label><select name="importance" className="h-10 w-full rounded border bg-background px-3"><option value="normal">Normal</option><option value="urgent">Urgent</option></select></div>
-                  </div>
-                  <div className="space-y-2"><Label>Content</Label><Textarea name="content" required value={noticeContent} onChange={(e) => setNoticeContent(e.target.value)} /></div>
-                  <Button type="submit" disabled={isSubmitting}>Post Notice</Button>
-                </form>
-              </CardContent>
-            </Card>
-            <div className="space-y-4">
-              {notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(n => (
-                <Card key={n.id} className={cn("border-l-4", n.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div className="min-w-0 flex-1"><h4 className="font-bold truncate">{n.title}</h4><p className="text-xs text-muted-foreground line-clamp-1">{n.content}</p></div>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete('notices', n.id, n.title)}><Trash2 className="h-4 w-4" /></Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
           <TabsContent value="gallery" className="space-y-6">
             <Card><CardHeader><CardTitle>Add Gallery Media</CardTitle></CardHeader>
               <CardContent><form onSubmit={handleAddGallery} className="space-y-4">
@@ -756,7 +929,7 @@ export default function AdminPage() {
 
           <TabsContent value="requests" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {requests?.map(r => (
+              {requests?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(r => (
                 <Card key={r.id} className="border-l-4 border-l-primary">
                   <CardHeader className="py-3 px-4 flex flex-row justify-between items-center bg-muted/30">
                     <CardTitle className="text-xs uppercase font-black">{r.requestType}</CardTitle>
@@ -773,33 +946,22 @@ export default function AdminPage() {
                   </CardContent>
                 </Card>
               ))}
+              {requests?.length === 0 && (
+                <div className="col-span-full py-20 text-center text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mx-auto opacity-20" />
+                  <p className="mt-4">{language === 'hi' ? 'कोई निवेदन नहीं है।' : 'No devotee requests yet.'}</p>
+                </div>
+              )}
             </div>
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-4">
-            {combinedUserList?.sort((a,b) => (ROLE_HIERARCHY[b.role] || 0) - (ROLE_HIERARCHY[a.role] || 0)).map(u => {
-              const isUserAdmin = allAdmins?.some(a => a.id === u.id);
-              const canIManage = !u.isGhost && canManageUser(u.id, u.role);
-              return (
-                <Card key={u.id} className={cn("p-4 flex flex-col md:flex-row justify-between items-center gap-4", u.isGhost && "opacity-50")}>
-                  <div className="flex items-center gap-4"><div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">{u.name?.charAt(0)}</div><div><p className="font-bold flex items-center gap-2">{u.name}{isUserAdmin && <Badge className="text-[8px]">ADMIN</Badge>}</p><p className="text-xs text-muted-foreground">{u.email}</p><p className="text-[10px] uppercase opacity-50">{u.role || 'devotee'}</p></div></div>
-                  <div className="flex items-center gap-2">
-                    {!u.isGhost && (
-                      <><select disabled={!canIManage} className="h-8 rounded border bg-background px-2 text-xs" value={u.role || 'devotee'} onChange={(e) => setPendingRoleUpdate({ userId: u.id, targetCurrentRole: u.role || 'devotee', newRole: e.target.value, userName: u.name || 'User' })}><option value="devotee">Devotee</option><option value="member">Member</option><option value="official">Official</option><option value="president">President</option></select><Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" className="h-8 text-xs" onClick={() => setPendingAdminToggle({ userId: u.id, isCurrentAdmin: !!isUserAdmin, userName: u.name || 'User', role: u.role || 'devotee' })}>{isUserAdmin ? 'Revoke' : 'Grant'} Admin</Button></>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-4">
             <Card className="overflow-hidden"><CardHeader className="bg-muted/30"><CardTitle className="text-lg">Recent Admin Logs</CardTitle></CardHeader>
               <CardContent className="p-0">
-                <div className="divide-y">
-                  {activityLogs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 30).map(log => (
-                    <div key={log.id} className="p-4 flex items-start gap-4 text-xs">
-                      <div className="bg-primary/5 p-2 rounded-full"><Activity className="h-4 w-4 text-primary" /></div>
+                <div className="divide-y max-h-[600px] overflow-y-auto">
+                  {activityLogs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map(log => (
+                    <div key={log.id} className="p-4 flex items-start gap-4 text-xs hover:bg-muted/30">
+                      <div className="bg-primary/5 p-2 rounded-full shrink-0"><Activity className="h-4 w-4 text-primary" /></div>
                       <div className="flex-1">
                         <p><span className="font-bold text-primary">{log.adminName}</span> {log.actionType.toLowerCase()}ed <span className="font-bold">{log.entityType}</span>: {log.entityTitle}</p>
                         <p className="text-[10px] text-muted-foreground mt-1">{new Date(log.timestamp).toLocaleString()}</p>
@@ -836,10 +998,64 @@ export default function AdminPage() {
         </Tabs>
       </main>
 
+      {/* Edit Event Dialog */}
+      <Dialog open={!!editingEvent} onOpenChange={(o) => !o && setEditingEvent(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>{language === 'hi' ? 'कार्यक्रम संपादित करें' : 'Edit Event'}</DialogTitle></DialogHeader>
+          {editingEvent && (
+            <form onSubmit={handleUpdateEvent} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="space-y-2"><Label>Title</Label><Input name="title" defaultValue={editingEvent.title} required /></div>
+                  <div className="space-y-2"><Label>Date</Label><Input name="date" type="datetime-local" defaultValue={editingEvent.date} required /></div>
+                  <div className="space-y-2"><Label>Description</Label><Textarea name="description" defaultValue={editingEvent.description} required /></div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Image</Label>
+                  <div className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center gap-2 cursor-pointer h-40" onClick={() => document.getElementById('edit-event-img')?.click()}>
+                    <input id="edit-event-img" type="file" className="hidden" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => setEditEventMediaPreview(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                    }} />
+                    {editEventMediaPreview || editingEvent.image ? <img src={editEventMediaPreview || editingEvent.image} className="h-full object-cover rounded" /> : <Upload className="h-8 w-8" />}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setEditingEvent(null)}>Cancel</Button>
+                <Button type="submit" disabled={isSubmitting}>Update Event</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Notice Dialog */}
+      <Dialog open={!!editingNotice} onOpenChange={(o) => !o && setEditingNotice(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{language === 'hi' ? 'सूचना संपादित करें' : 'Edit Notice'}</DialogTitle></DialogHeader>
+          {editingNotice && (
+            <form onSubmit={handleUpdateNotice} className="space-y-4">
+              <div className="space-y-2"><Label>Title</Label><Input name="title" defaultValue={editingNotice.title} required /></div>
+              <div className="space-y-2"><Label>Importance</Label><select name="importance" defaultValue={editingNotice.importance} className="h-10 w-full rounded border bg-background px-3"><option value="normal">Normal</option><option value="urgent">Urgent</option></select></div>
+              <div className="space-y-2"><Label>Content</Label><Textarea name="content" defaultValue={editingNotice.content} required /></div>
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setEditingNotice(null)}>Cancel</Button>
+                <Button type="submit" disabled={isSubmitting}>Update Notice</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Confirmation Dialogs */}
       <AlertDialog open={!!pendingRoleUpdate} onOpenChange={(o) => !o && setPendingRoleUpdate(null)}>
         <AlertDialogContent className="w-[95%] max-w-md">
-          <AlertDialogHeader><AlertDialogTitle>Confirm Role Change</AlertDialogTitle><AlertDialogDescription>Enter password to change {pendingRoleUpdate?.userName}'s role.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Confirm Role Change</AlertDialogTitle><AlertDialogDescription>Enter password to change {pendingRoleUpdate?.userName}'s role to {pendingRoleUpdate?.newRole}.</AlertDialogDescription></AlertDialogHeader>
           <div className="py-4"><Input type="password" value={adminConfirmPassword} onChange={(e) => setAdminConfirmPassword(e.target.value)} placeholder="Admin Password" /></div>
           <AlertDialogFooter><AlertDialogCancel onClick={() => setAdminConfirmPassword("")}>Cancel</AlertDialogCancel><AlertDialogAction onClick={confirmRoleUpdate} disabled={isActionProcessing || !adminConfirmPassword}>Confirm</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
