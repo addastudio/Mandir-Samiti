@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "AdminActivityLog": {
@@ -8,7 +9,7 @@
         "id": { "type": "string" },
         "adminId": { "type": "string" },
         "adminName": { "type": "string" },
-        "actionType": { "type": "string", "enum": ["CREATE", "DELETE", "UPDATE"] },
+        "actionType": { "type": "string", "enum": ["CREATE", "DELETE", "UPDATE", "GRANT_ADMIN", "REMOVE_ADMIN", "UPDATE_ROLE", "RESIGN"] },
         "entityType": { "type": "string" },
         "entityTitle": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" }
@@ -37,6 +38,30 @@
         "mode": { "type": "string" },
         "status": { "type": "string" }
       }
+    },
+    "SevaProgram": {
+      "title": "SevaProgram",
+      "description": "A community service program.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "icon": { "type": "string", "enum": ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] }
+      },
+      "required": ["title", "description", "icon"]
+    },
+    "Testimonial": {
+      "title": "Testimonial",
+      "description": "Devotee feedback.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "quote": { "type": "string" },
+        "imageURL": { "type": "string" }
+      },
+      "required": ["name", "quote"]
     }
   },
   "auth": {
@@ -52,6 +77,15 @@
     "/notices/{noticeId}": { "description": "Temple announcements." },
     "/prayer_requests/{requestId}": { "description": "Devotee prayer and ritual requests." },
     "/roles_admin/{adminId}": { "description": "Registry of administrative UIDs." },
+    "/seva_programs/{programId}": {
+      "schema": { "$ref": "#/entities/SevaProgram" },
+      "description": "Dynamic community service programs."
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": { "$ref": "#/entities/Testimonial" },
+      "description": "Devotee testimonials."
+    },
+    "/settings/website": { "description": "Global website configuration (e.g. Live Aarti URL)." },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "User profiles."

@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -20,49 +21,81 @@ import {
   UtensilsCrossed,
   HeartHandshake,
   BookOpenCheck,
+  Users,
+  Hand,
+  Shield,
+  Loader2
 } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import React from "react";
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
+
+const SEVA_ICONS = {
+  UtensilsCrossed: UtensilsCrossed,
+  HeartHandshake: HeartHandshake,
+  BookOpenCheck: BookOpenCheck,
+  Users: Users,
+  Hand: Hand,
+  Shield: Shield
+};
 
 export function SevaSection() {
   const { t, language } = useLanguage();
+  const firestore = useFirestore();
 
-  const sevaPrograms = [
+  const sevaRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "seva_programs");
+  }, [firestore]);
+
+  const testimonialsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "testimonials");
+  }, [firestore]);
+
+  const { data: firebaseSeva, isLoading: isSevaLoading } = useCollection(sevaRef);
+  const { data: firebaseTestimonials, isLoading: isTestimonialsLoading } = useCollection(testimonialsRef);
+
+  const fallbackSeva = [
     {
       title: t.sevaBhandara,
       description: t.sevaBhandaraDesc,
-      icon: UtensilsCrossed,
+      icon: "UtensilsCrossed",
     },
     {
       title: t.sevaHealth,
       description: t.sevaHealthDesc,
-      icon: HeartHandshake,
+      icon: "HeartHandshake",
     },
     {
       title: t.sevaCharity,
       description: t.sevaCharityDesc,
-      icon: BookOpenCheck,
+      icon: "BookOpenCheck",
     },
   ];
 
-  const testimonials = [
+  const fallbackTestimonials = [
     {
       quote: t.testimonial1,
       name: t.testimonial1Name,
-      imageId: "testimonial-1",
+      imageURL: "https://picsum.photos/seed/115/100/100",
     },
     {
       quote: t.testimonial2,
       name: t.testimonial2Name,
-      imageId: "testimonial-2",
+      imageURL: "https://picsum.photos/seed/116/100/100",
     },
     {
       quote: t.testimonial3,
       name: t.testimonial3Name,
-      imageId: "testimonial-3",
+      imageURL: "https://picsum.photos/seed/117/100/100",
     },
   ];
+
+  const sevaPrograms = firebaseSeva && firebaseSeva.length > 0 ? firebaseSeva : fallbackSeva;
+  const testimonials = firebaseTestimonials && firebaseTestimonials.length > 0 ? firebaseTestimonials : fallbackTestimonials;
 
   return (
     <section id="seva" className="bg-secondary/50 py-16 sm:py-20 md:py-28">
@@ -80,27 +113,32 @@ export function SevaSection() {
         </div>
 
         <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
-          {sevaPrograms.map((program, index) => (
-            <Card key={index} className="text-center shadow-lg border-primary/5 hover:border-primary/20 transition-colors">
-              <CardHeader className="p-5 sm:p-6">
-                <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-primary/10 transition-transform group-hover:scale-110">
-                  <program.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                </div>
-                <CardTitle
-                  className={cn("pt-4 text-xl sm:text-2xl", language === "hi" ? "font-hindi" : "")}
-                >
-                  {program.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-5 sm:p-6 pt-0">
-                <CardDescription
-                  className={cn("text-sm sm:text-base leading-relaxed", language === "hi" ? "font-hindi" : "")}
-                >
-                  {program.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
+          {isSevaLoading ? (
+            <div className="col-span-full flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          ) : sevaPrograms.map((program, index) => {
+            const Icon = SEVA_ICONS[program.icon as keyof typeof SEVA_ICONS] || Hand;
+            return (
+              <Card key={index} className="text-center shadow-lg border-primary/5 hover:border-primary/20 transition-colors group">
+                <CardHeader className="p-5 sm:p-6">
+                  <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-primary/10 transition-transform group-hover:scale-110">
+                    <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                  </div>
+                  <CardTitle
+                    className={cn("pt-4 text-xl sm:text-2xl", language === "hi" ? "font-hindi" : "")}
+                  >
+                    {program.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-5 sm:p-6 pt-0">
+                  <CardDescription
+                    className={cn("text-sm sm:text-base leading-relaxed", language === "hi" ? "font-hindi" : "")}
+                  >
+                    {program.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <div className="mt-16 sm:mt-20 md:mt-24">
@@ -113,56 +151,57 @@ export function SevaSection() {
             {t.testimonialsTitle}
           </h3>
           <div className="relative px-8 sm:px-12 max-w-5xl mx-auto">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-4">
-                {testimonials.map((testimonial, index) => {
-                  const image = PlaceHolderImages.find(
-                    (img) => img.id === testimonial.imageId
-                  );
-                  return (
-                    <CarouselItem
-                      key={index}
-                      className="pl-4 basis-full xs:basis-1/2 lg:basis-1/3"
-                    >
-                      <Card className="h-full flex flex-col shadow-md border-primary/5">
-                        <CardContent className="flex flex-col h-full p-5 sm:p-6">
-                          <p
-                            className={cn(
-                              "italic text-muted-foreground text-sm sm:text-base mb-6 flex-grow",
-                              language === "hi" ? "font-hindi" : ""
-                            )}
-                          >
-                            &ldquo;{testimonial.quote}&rdquo;
-                          </p>
-                           <div className="flex items-center gap-3 mt-auto border-t pt-4">
-                             <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                                {image && <AvatarImage src={image.imageUrl} alt={testimonial.name} data-ai-hint={image.imageHint}/>}
-                               <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
-                             </Avatar>
-                             <p
-                                className={cn(
-                                  "font-semibold text-xs sm:text-sm",
-                                  language === "hi" ? "font-hindi" : ""
-                                )}
-                              >
-                                {testimonial.name}
-                              </p>
-                           </div>
-                        </CardContent>
-                      </Card>
-                    </CarouselItem>
-                  );
-                })}
-              </CarouselContent>
-              <CarouselPrevious className="-left-4 sm:-left-8" />
-              <CarouselNext className="-right-4 sm:-right-8" />
-            </Carousel>
+            {isTestimonialsLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+            ) : (
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-4">
+                  {testimonials.map((testimonial, index) => {
+                    return (
+                      <CarouselItem
+                        key={index}
+                        className="pl-4 basis-full xs:basis-1/2 lg:basis-1/3"
+                      >
+                        <Card className="h-full flex flex-col shadow-md border-primary/5">
+                          <CardContent className="flex flex-col h-full p-5 sm:p-6">
+                            <p
+                              className={cn(
+                                "italic text-muted-foreground text-sm sm:text-base mb-6 flex-grow",
+                                language === "hi" ? "font-hindi" : ""
+                              )}
+                            >
+                              &ldquo;{testimonial.quote}&rdquo;
+                            </p>
+                             <div className="flex items-center gap-3 mt-auto border-t pt-4">
+                               <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                                  <AvatarImage src={testimonial.imageURL} alt={testimonial.name} />
+                                 <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                               </Avatar>
+                               <p
+                                  className={cn(
+                                    "font-semibold text-xs sm:text-sm",
+                                    language === "hi" ? "font-hindi" : ""
+                                  )}
+                                >
+                                  {testimonial.name}
+                                </p>
+                             </div>
+                          </CardContent>
+                        </Card>
+                      </CarouselItem>
+                    );
+                  })}
+                </CarouselContent>
+                <CarouselPrevious className="-left-4 sm:-left-8" />
+                <CarouselNext className="-right-4 sm:-right-8" />
+              </Carousel>
+            )}
           </div>
         </div>
       </div>
