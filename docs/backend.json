@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "AdminActivityLog": {
@@ -62,6 +61,14 @@
         "imageURL": { "type": "string" }
       },
       "required": ["name", "quote"]
+    },
+    "WebsiteSettings": {
+      "title": "WebsiteSettings",
+      "description": "Global website configuration.",
+      "type": "object",
+      "properties": {
+        "liveAartiUrl": { "type": "string", "description": "YouTube URL for Live Darshan." }
+      }
     }
   },
   "auth": {
@@ -85,7 +92,10 @@
       "schema": { "$ref": "#/entities/Testimonial" },
       "description": "Devotee testimonials."
     },
-    "/settings/website": { "description": "Global website configuration (e.g. Live Aarti URL)." },
+    "/settings/website": { 
+      "schema": { "$ref": "#/entities/WebsiteSettings" },
+      "description": "Global website configuration (e.g. Live Aarti URL)." 
+    },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "User profiles."

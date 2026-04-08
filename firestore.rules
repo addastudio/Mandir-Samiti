@@ -82,6 +82,11 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    match /settings/website {
+      allow get: if true; // Allow public to read settings (Live Aarti URL)
+      allow write: if isAdmin(); // Only admins can update configuration
+    }
+
     match /users/{userId} {
       allow get: if isSignedIn();
       allow list: if isAdmin();
