@@ -12,12 +12,14 @@ This is a professional, bilingual (Hindi/English) website for the Mandir Samiti 
 ## Documentation
 - [Website Details](./docs/WEBSITE_DETAILS.md): Architecture and Design overview.
 - [Zero-Cost Plan](./docs/ZERO_COST_PLAN.md): **Recommended** plan for non-profits to host for free.
+- [Supabase Alternative](./docs/SUPABASE_PLAN.md): Alternative backend roadmap using Supabase.
 - [Migration Guide](./docs/MIGRATION_GUIDE.md): Full instructions for GitHub and Production deployment.
 
 ## Tech Stack
 - **Framework:** Next.js 15 (App Router)
-- **Database:** Firebase Firestore
+- **Database:** Firebase Firestore (Alternative: Supabase)
 - **Auth:** Firebase Authentication
 - **Styling:** Tailwind CSS + ShadCN UI
 - **Payments:** Stripe
 - **Email:** Resend
+

@@ -19,7 +19,7 @@ Firebase's "Spark Plan" is free forever and perfect for a temple's traffic level
   - **Storage:** 1GB of data (plenty for thousands of notices/events).
 - **Authentication:** 
   - **Free Limit:** Unlimited for standard Email/Password and Google Sign-in.
-- **Action:** Ensure your project is on the **Spark Plan** in the Firebase Console Settings.
+- **Alternative:** See the [Supabase Plan](./SUPABASE_PLAN.md) for a PostgreSQL-based alternative.
 
 ## 3. Email: Resend (Free Tier)
 Used for sending OTPs and contact form alerts.
