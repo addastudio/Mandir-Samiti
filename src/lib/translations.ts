@@ -155,6 +155,15 @@ export type TranslationKeys = {
   dashboard2FAPinPlaceholder: string;
   dashboard2FAUpdateSuccess: string;
   dashboardDeleteResignFirst: string;
+  dashboardTierLabel: string;
+  dashboardTierSupporter: string;
+  dashboardTierPillar: string;
+  dashboardTierPatron: string;
+  dashboardSettingsTab: string;
+  dashboardLanguagePref: string;
+  dashboardEventsTab: string;
+  dashboardNoEvents: string;
+  dashboardHistorySearch: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -329,6 +338,15 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboard2FAPinPlaceholder: '6-अंकों का पिन',
     dashboard2FAUpdateSuccess: 'सुरक्षा सेटिंग्स अपडेट की गईं।',
     dashboardDeleteResignFirst: 'खाता हटाने से पहले कृपया अपने पद से इस्तीफा दें।',
+    dashboardTierLabel: 'सहयोग स्तर',
+    dashboardTierSupporter: 'भक्त (Supporter)',
+    dashboardTierPillar: 'स्तंभ (Pillar)',
+    dashboardTierPatron: 'संरक्षक (Patron)',
+    dashboardSettingsTab: 'सेटिंग्स',
+    dashboardLanguagePref: 'भाषा प्राथमिकता',
+    dashboardEventsTab: 'मंदिर कार्यक्रम',
+    dashboardNoEvents: 'कोई आगामी कार्यक्रम नहीं मिला।',
+    dashboardHistorySearch: 'इतिहास में खोजें...',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -412,7 +430,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     testimonial1: 'This temple gives me peace and solace. The committee members are very supportive.',
     testimonial1Name: 'Sunita Sharma',
     testimonial2: 'The Bhandara program is a wonderful initiative. It’s a great way to serve the community.',
-    testimonial2Name: 'Rajesh Kumar',
+    testimonial2Name: 'Rajesh कुमार',
     testimonial3: 'The festival celebrations here are amazing. It brings all of us together.',
     testimonial3Name: 'Amit Patel',
     donateTitle: 'Support Our Temple & Community',
@@ -493,6 +511,15 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboard2FAPinPlaceholder: '6-digit PIN',
     dashboard2FAUpdateSuccess: 'Security settings updated.',
     dashboardDeleteResignFirst: 'Please resign from your position before deleting your account.',
+    dashboardTierLabel: 'Patronage Level',
+    dashboardTierSupporter: 'Supporter',
+    dashboardTierPillar: 'Pillar',
+    dashboardTierPatron: 'Patron',
+    dashboardSettingsTab: 'Settings',
+    dashboardLanguagePref: 'Language Preference',
+    dashboardEventsTab: 'Temple Events',
+    dashboardNoEvents: 'No upcoming events found.',
+    dashboardHistorySearch: 'Search history...',
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
     prayerFormType: 'Request Type',

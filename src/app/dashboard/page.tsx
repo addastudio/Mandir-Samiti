@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -38,19 +38,19 @@ function DashboardContent() {
   const auth = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [historySearch, setHistorySearch] = useState("");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Handle successful donation redirection toast
   useEffect(() => {
     if (mounted && searchParams.get('success') === 'true') {
       toast({
@@ -59,7 +59,6 @@ function DashboardContent() {
           ? "आपके उदार योगदान के लिए धन्यवाद। हम आपकी सहायता की सराहना करते हैं।" 
           : "Thank you for your generous contribution. We appreciate your support!",
       });
-      // Clear the query params to avoid showing the toast multiple times
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [mounted, searchParams, toast, language]);
@@ -74,6 +73,11 @@ function DashboardContent() {
     return query(collection(firestore, "prayer_requests"), where("userId", "==", user.uid));
   }, [firestore, user]);
 
+  const eventsRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, "events");
+  }, [firestore]);
+
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -86,6 +90,7 @@ function DashboardContent() {
 
   const { data: donations, isLoading: isDonationsLoading } = useCollection(donationsRef);
   const { data: userRequests, isLoading: isRequestsLoading } = useCollection(requestsQuery);
+  const { data: events, isLoading: isEventsLoading } = useCollection(eventsRef);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
   const { data: adminDoc } = useDoc(adminRoleRef);
 
@@ -114,28 +119,21 @@ function DashboardContent() {
 
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
-
     if (userProfile?.role && !['devotee'].includes(userProfile.role)) {
       toast({ variant: "destructive", title: "Resignation Required", description: t.dashboardDeleteResignFirst });
       return;
     }
-
     setIsDeleting(true);
     try {
-      // Re-authenticate if using password provider
       if (user.providerData.some(p => p.providerId === 'password')) {
         const credential = EmailAuthProvider.credential(user.email!, confirmPassword);
         await reauthenticateWithCredential(user, credential);
       }
-      
       const userRef = doc(firestore, "users", user.uid);
       const adminRef = doc(firestore, "roles_admin", user.uid);
-      
       await deleteDoc(userRef).catch(() => {});
       await deleteDoc(adminRef).catch(() => {});
-      
       await deleteUser(user);
-      
       toast({ title: "Account Deleted", description: "Your account has been successfully removed." });
       router.push("/");
     } catch (error: any) {
@@ -163,7 +161,31 @@ function DashboardContent() {
 
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
   const isVerified = userProfile?.isVerified ?? true;
-  const sortedDonations = donations ? [...donations].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : [];
+  
+  const getTier = (amount: number) => {
+    if (amount >= 5000) return { label: t.dashboardTierPatron, color: 'bg-primary text-primary-foreground', icon: Sparkles };
+    if (amount >= 1000) return { label: t.dashboardTierPillar, color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Star };
+    return { label: t.dashboardTierSupporter, color: 'bg-secondary text-secondary-foreground', icon: Heart };
+  };
+
+  const tier = getTier(totalDonated);
+  const TierIcon = tier.icon;
+
+  const filteredDonations = donations 
+    ? [...donations]
+        .filter(d => 
+          d.amount?.toString().includes(historySearch) || 
+          d.mode?.toLowerCase().includes(historySearch.toLowerCase()) ||
+          new Date(d.date).toLocaleDateString().includes(historySearch)
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    : [];
+
+  const upcomingEvents = events
+    ? [...events]
+        .filter(e => new Date(e.date) >= new Date())
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    : [];
 
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-24 sm:pt-28">
@@ -225,42 +247,13 @@ function DashboardContent() {
                   <label className="text-[10px] font-semibold text-muted-foreground uppercase">{t.dashboardMemberSince}</label>
                   <p className="font-medium text-sm">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
                 </div>
-                <div className="pt-4 border-t">
-                  <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-destructive w-full justify-start gap-2 h-8 text-xs">
-                        <Trash2 className="h-4 w-4" />{t.dashboardDeleteAccount}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="w-[95%] max-w-md">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
-                        <AlertDialogDescription>{t.dashboardDeleteConfirmDesc}</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="del-password">{t.dashboardDeletePasswordLabel}</Label>
-                          <Input 
-                            id="del-password" 
-                            type="password" 
-                            value={confirmPassword} 
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder={t.dashboardDeletePasswordPlaceholder}
-                          />
-                        </div>
-                      </div>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setConfirmPassword("")}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleDeleteAccount} 
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90" 
-                          disabled={isDeleting || !confirmPassword}
-                        >
-                          {isDeleting ? '...' : 'Delete'}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                <div className="pt-4 border-t space-y-3">
+                   <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.dashboardTierLabel}</span>
+                      <Badge className={cn("text-[10px] gap-1 px-2 py-0.5", tier.color)}>
+                        <TierIcon className="h-3 w-3" /> {tier.label}
+                      </Badge>
+                   </div>
                 </div>
               </CardContent>
             </Card>
@@ -281,19 +274,33 @@ function DashboardContent() {
           <div className="lg:col-span-8">
             <Card className="border-primary/20 shadow-md h-full overflow-hidden flex flex-col">
               <Tabs defaultValue="donations" className="w-full flex-grow flex flex-col">
-                <CardHeader className="border-b bg-white p-0">
-                  <TabsList className="w-full justify-start h-12 bg-transparent border-b-0 p-0 rounded-none">
+                <div className="border-b bg-white overflow-x-auto no-scrollbar">
+                  <TabsList className="w-full justify-start h-12 bg-transparent border-b-0 p-0 rounded-none min-w-max">
                     <TabsTrigger value="donations" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger>
                     <TabsTrigger value="requests" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><MessageSquare className="h-4 w-4 mr-2" />{t.dashboardMyRequests}</TabsTrigger>
+                    <TabsTrigger value="events" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Calendar className="h-4 w-4 mr-2" />{t.dashboardEventsTab}</TabsTrigger>
+                    <TabsTrigger value="settings" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Settings className="h-4 w-4 mr-2" />{t.dashboardSettingsTab}</TabsTrigger>
                   </TabsList>
-                </CardHeader>
+                </div>
+
                 <TabsContent value="donations" className="m-0 flex-grow">
+                  <div className="p-4 border-b bg-muted/10">
+                    <div className="relative max-w-sm">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        placeholder={t.dashboardHistorySearch} 
+                        className="pl-10 h-9 text-xs" 
+                        value={historySearch} 
+                        onChange={(e) => setHistorySearch(e.target.value)} 
+                      />
+                    </div>
+                  </div>
                   <CardContent className="p-0">
                     {isDonationsLoading ? (
                       <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                    ) : sortedDonations.length > 0 ? (
+                    ) : filteredDonations.length > 0 ? (
                       <div className="divide-y">
-                        {sortedDonations.map(d => (
+                        {filteredDonations.map(d => (
                           <div key={d.id} className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:bg-muted/30 transition-colors">
                             <div className="flex items-start gap-4">
                               <div className={cn(
@@ -334,6 +341,7 @@ function DashboardContent() {
                     )}
                   </CardContent>
                 </TabsContent>
+
                 <TabsContent value="requests" className="m-0 flex-grow">
                   <CardContent className="p-0">
                     <div className="p-4 bg-muted/20 flex justify-end">
@@ -367,6 +375,93 @@ function DashboardContent() {
                       </div>
                     )}
                   </CardContent>
+                </TabsContent>
+
+                <TabsContent value="events" className="m-0 flex-grow">
+                  <CardContent className="p-6">
+                    {isEventsLoading ? (
+                      <div className="py-10 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                    ) : upcomingEvents.length > 0 ? (
+                      <div className="grid gap-4">
+                        {upcomingEvents.map(e => (
+                          <Card key={e.id} className="overflow-hidden flex items-stretch border-primary/10 hover:shadow-md transition-shadow">
+                            {e.image && <div className="w-24 sm:w-32 shrink-0"><img src={e.image} className="h-full w-full object-cover" /></div>}
+                            <div className="p-4 flex flex-col justify-center min-w-0">
+                              <h4 className="font-bold text-sm sm:text-base truncate">{e.title}</h4>
+                              <p className="text-xs text-primary font-medium mt-1 flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(e.date).toLocaleDateString()}</p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 mt-2">{e.description}</p>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-20 text-center text-muted-foreground px-4">
+                        <Calendar className="h-12 w-12 mx-auto opacity-20 mb-4" />
+                        <p>{t.dashboardNoEvents}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="settings" className="m-0 flex-grow p-6 space-y-8">
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">{t.dashboardLanguagePref}</h3>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant={language === 'hi' ? 'default' : 'outline'} 
+                        className="flex-1 h-12 gap-2" 
+                        onClick={() => setLanguage('hi')}
+                      >
+                        <span className="text-lg">🇮🇳</span> हिंदी
+                      </Button>
+                      <Button 
+                        variant={language === 'en' ? 'default' : 'outline'} 
+                        className="flex-1 h-12 gap-2" 
+                        onClick={() => setLanguage('en')}
+                      >
+                        <span className="text-lg">🇬🇧</span> English
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-8 border-t">
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-destructive">{language === 'hi' ? 'खतरनाक जोन' : 'Danger Zone'}</h3>
+                    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full justify-start gap-2 h-12">
+                          <Trash2 className="h-4 w-4" />{t.dashboardDeleteAccount}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="w-[95%] max-w-md">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>{t.dashboardDeleteConfirmDesc}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="del-password">{t.dashboardDeletePasswordLabel}</Label>
+                            <Input 
+                              id="del-password" 
+                              type="password" 
+                              value={confirmPassword} 
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              placeholder={t.dashboardDeletePasswordPlaceholder}
+                            />
+                          </div>
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setConfirmPassword("")}>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleDeleteAccount} 
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+                            disabled={isDeleting || !confirmPassword}
+                          >
+                            {isDeleting ? '...' : 'Delete'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TabsContent>
               </Tabs>
             </Card>
