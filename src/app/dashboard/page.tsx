@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updateProfile } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2 } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,7 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Progress } from "@/components/ui/progress";
 
 function DashboardContent() {
   const { user, isUserLoading } = useUser();
@@ -206,13 +207,38 @@ function DashboardContent() {
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
   const isVerified = userProfile?.isVerified ?? true;
   
-  const getTier = (amount: number) => {
-    if (amount >= 5000) return { label: t.dashboardTierPatron, color: 'bg-primary text-primary-foreground', icon: Sparkles };
-    if (amount >= 1000) return { label: t.dashboardTierPillar, color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Star };
-    return { label: t.dashboardTierSupporter, color: 'bg-secondary text-secondary-foreground', icon: Heart };
+  const getTierInfo = (amount: number) => {
+    if (amount >= 5000) {
+      return { 
+        label: t.dashboardTierPatron, 
+        color: 'bg-primary text-primary-foreground', 
+        icon: Sparkles,
+        progress: 100,
+        nextTier: null,
+        needed: 0
+      };
+    }
+    if (amount >= 1000) {
+      return { 
+        label: t.dashboardTierPillar, 
+        color: 'bg-amber-100 text-amber-700 border-amber-200', 
+        icon: Star,
+        progress: ((amount - 1000) / (5000 - 1000)) * 100,
+        nextTier: t.dashboardTierPatron,
+        needed: 5000 - amount
+      };
+    }
+    return { 
+      label: t.dashboardTierSupporter, 
+      color: 'bg-secondary text-secondary-foreground', 
+      icon: Heart,
+      progress: (amount / 1000) * 100,
+      nextTier: t.dashboardTierPillar,
+      needed: 1000 - amount
+    };
   };
 
-  const tier = getTier(totalDonated);
+  const tier = getTierInfo(totalDonated);
   const TierIcon = tier.icon;
 
   const filteredDonations = donations 
@@ -276,46 +302,77 @@ function DashboardContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 space-y-6">
-            <Card className="border-primary/20 shadow-md">
+            <Card className="border-primary/20 shadow-md overflow-hidden">
               <CardHeader className="bg-primary/5 py-4 px-5 flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">{t.dashboardProfileInfo}</CardTitle>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleRefreshStatus} disabled={isRefreshing}>
                   <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
                 </Button>
               </CardHeader>
-              <CardContent className="pt-6 px-5 space-y-5">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-muted-foreground uppercase">{t.dashboardEmail}</label>
-                  <div className="font-medium text-sm flex items-center gap-2 min-w-0">
-                    <span className="truncate">{user.email}</span>
-                    {isVerified ? (
-                      <Badge className="bg-green-100 text-green-700 h-5 text-[9px] shrink-0">Verified</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-destructive h-5 text-[9px] shrink-0">Unverified</Badge>
+              <CardContent className="pt-6 px-5 space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.dashboardTierLabel}</span>
+                    <Badge className={cn("text-[10px] gap-1 px-2 py-0.5 shadow-sm", tier.color)}>
+                      <TierIcon className="h-3 w-3" /> {tier.label}
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-end">
+                      <p className="text-[10px] text-muted-foreground font-medium">
+                        {tier.nextTier 
+                          ? (language === 'hi' ? `${tier.nextTier} बनने की प्रगति` : `Progress to ${tier.nextTier}`)
+                          : (language === 'hi' ? 'उच्चतम स्तर प्राप्त!' : 'Highest Honor Achieved!')}
+                      </p>
+                      {tier.nextTier && <span className="text-[10px] font-bold text-primary">₹{totalDonated} / ₹{tier.needed + totalDonated}</span>}
+                    </div>
+                    <Progress value={tier.progress} className="h-2 bg-secondary" />
+                    {tier.nextTier && (
+                      <p className="text-[10px] italic text-muted-foreground leading-tight">
+                        {language === 'hi' 
+                          ? `केवल ₹${tier.needed} और दान करके मंदिर के ${tier.nextTier} बनें।` 
+                          : `Contribute ₹${tier.needed} more to become a Temple ${tier.nextTier}.`}
+                      </p>
                     )}
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-muted-foreground uppercase">{t.dashboardMemberSince}</label>
-                  <p className="font-medium text-sm">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
-                </div>
-                <div className="pt-4 border-t space-y-3">
-                   <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.dashboardTierLabel}</span>
-                      <Badge className={cn("text-[10px] gap-1 px-2 py-0.5", tier.color)}>
-                        <TierIcon className="h-3 w-3" /> {tier.label}
-                      </Badge>
-                   </div>
+
+                <div className="pt-4 border-t space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tighter">{t.dashboardEmail}</label>
+                    <div className="font-medium text-sm flex items-center gap-2 min-w-0">
+                      <span className="truncate">{user.email}</span>
+                      {isVerified ? (
+                        <Badge className="bg-green-100 text-green-700 h-5 text-[9px] shrink-0">Verified</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-destructive h-5 text-[9px] shrink-0">Unverified</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tighter">{t.dashboardMemberSince}</label>
+                    <p className="font-medium text-sm">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-accent/20 bg-gradient-to-br from-white to-accent/5 p-5 shadow-sm">
-              <CardDescription className="text-xs font-bold uppercase tracking-widest">{t.dashboardTotalContribution}</CardDescription>
-              <CardTitle className="text-3xl font-bold flex items-center gap-1 text-primary mt-1"><IndianRupee className="h-7 w-7" />{totalDonated}</CardTitle>
-              <div className="mt-4 pt-4 border-t border-accent/10">
+            <Card className="border-accent/20 bg-gradient-to-br from-white to-accent/5 p-5 shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Trophy className="h-24 w-24 text-accent" />
+              </div>
+              <CardDescription className="text-xs font-bold uppercase tracking-widest relative z-10">{t.dashboardTotalContribution}</CardDescription>
+              <CardTitle className="text-3xl font-bold flex items-center gap-1 text-primary mt-1 relative z-10">
+                <IndianRupee className="h-7 w-7" />{totalDonated}
+              </CardTitle>
+              <p className="text-[10px] text-muted-foreground mt-2 relative z-10 flex items-center gap-1">
+                <TrendingUp className="h-3 w-3 text-green-500" />
+                {language === 'hi' ? 'आपका दान मंदिर के विकास में सहायक है।' : 'Your Sewa builds a stronger temple.'}
+              </p>
+              <div className="mt-4 pt-4 border-t border-accent/10 relative z-10">
                 <Link href="/donate">
-                  <Button variant="secondary" className="w-full h-10 text-xs font-bold uppercase tracking-wider" size="sm">
+                  <Button variant="secondary" className="w-full h-10 text-xs font-bold uppercase tracking-wider group-hover:scale-105 transition-transform" size="sm">
                     {t.navDonate}
                   </Button>
                 </Link>
