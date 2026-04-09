@@ -139,55 +139,56 @@ export default function AdminPage() {
   }, [firestore]);
   const { data: websiteSettings } = useDoc(websiteSettingsRef);
 
+  // CRITICAL: All admin-only collections are conditional on adminDoc existence to prevent permission errors
   const eventsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "events");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const galleryRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "gallery");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const sevaRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "seva_programs");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const testimonialsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "testimonials");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const membersRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "mandir_samiti_members");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const usersRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "users");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const adminsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "roles_admin");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const noticesRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "notices");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const requestsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "prayer_requests");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const activityLogsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "admin_activity_logs");
-  }, [firestore]);
+  }, [firestore, adminDoc]);
 
   const { data: events } = useCollection(eventsRef);
   const { data: gallery } = useCollection(galleryRef);
@@ -523,7 +524,7 @@ export default function AdminPage() {
         const credential = EmailAuthProvider.credential(user.email!, adminConfirmPassword);
         await reauthenticateWithCredential(user, credential);
       }
-      const { userId, targetCurrentRole, name: targetRoleName, newRole, userName } = pendingRoleUpdate as any;
+      const { userId, targetCurrentRole, newRole, userName } = pendingRoleUpdate as any;
       updateDocumentNonBlocking(doc(firestore, "users", userId), { role: newRole });
       logAction("UPDATE_ROLE", "User Role", `${userName}: ${targetCurrentRole} to ${newRole}`);
       setPendingRoleUpdate(null);
@@ -767,7 +768,7 @@ export default function AdminPage() {
                             reader.readAsDataURL(file);
                           }
                         }} />
-                        {eventMediaPreview ? <img src={eventMediaPreview} className="aspect-video w-full object-cover rounded" /> : <Upload className="h-8 w-8 text-muted-foreground" />}
+                        {eventMediaPreview ? <img src={eventMediaPreview} className="aspect-video w-full object-cover rounded" alt="Preview" /> : <Upload className="h-8 w-8 text-muted-foreground" />}
                       </div>
                     </div>
                   </div>
@@ -779,7 +780,7 @@ export default function AdminPage() {
               {events?.map(e => (
                 <Card key={e.id} className="overflow-hidden group">
                   <div className="aspect-video relative">
-                    <img src={e.image} className="w-full h-full object-cover" />
+                    <img src={e.image} className="w-full h-full object-cover" alt={e.title} />
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setEditingEvent(e)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete('events', e.id, e.title)}><Trash2 className="h-4 w-4" /></Button>
@@ -972,7 +973,7 @@ export default function AdminPage() {
                             reader.readAsDataURL(file);
                           }
                         }} />
-                        {testimonialMediaPreview ? <img src={testimonialMediaPreview} className="h-full aspect-square object-cover rounded-full" /> : <Upload className="h-6 w-6 text-muted-foreground" />}
+                        {testimonialMediaPreview ? <img src={testimonialMediaPreview} className="h-full aspect-square object-cover rounded-full" alt="Preview" /> : <Upload className="h-6 w-6 text-muted-foreground" />}
                       </div>
                     </div>
                   </div>
@@ -985,7 +986,7 @@ export default function AdminPage() {
                 <Card key={t.id} className="relative">
                   <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive" onClick={() => handleDelete('testimonials', t.id, t.name)}><Trash2 className="h-4 w-4" /></Button>
                   <CardHeader className="flex flex-row items-center gap-3">
-                    <img src={t.imageURL} className="h-10 w-10 rounded-full object-cover" />
+                    <img src={t.imageURL} className="h-10 w-10 rounded-full object-cover" alt={t.name} />
                     <CardTitle className="text-sm">{t.name}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-xs italic">"{t.quote}"</CardContent>
@@ -1008,7 +1009,7 @@ export default function AdminPage() {
                           reader.readAsDataURL(file);
                         }
                       }} />
-                      {galleryMediaPreview ? <img src={galleryMediaPreview} className="h-full object-cover rounded" /> : <Upload className="h-8 w-8 text-muted-foreground" />}
+                      {galleryMediaPreview ? <img src={galleryMediaPreview} className="h-full object-cover rounded" alt="Preview" /> : <Upload className="h-8 w-8 text-muted-foreground" />}
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -1020,7 +1021,7 @@ export default function AdminPage() {
               </form></CardContent></Card>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {gallery?.map(g => (
-                <div key={g.id} className="relative aspect-square rounded-lg overflow-hidden group border"><img src={g.imageURL} className="w-full h-full object-cover" /><div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center"><Button variant="destructive" size="icon" onClick={() => handleDelete('gallery', g.id, g.caption)}><Trash2 className="h-4 w-4" /></Button></div></div>
+                <div key={g.id} className="relative aspect-square rounded-lg overflow-hidden group border"><img src={g.imageURL} className="w-full h-full object-cover" alt={g.caption} /><div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center"><Button variant="destructive" size="icon" onClick={() => handleDelete('gallery', g.id, g.caption)}><Trash2 className="h-4 w-4" /></Button></div></div>
               ))}
             </div>
           </TabsContent>
@@ -1119,7 +1120,7 @@ export default function AdminPage() {
                         reader.readAsDataURL(file);
                       }
                     }} />
-                    {editEventMediaPreview || editingEvent.image ? <img src={editEventMediaPreview || editingEvent.image} className="h-full object-cover rounded" /> : <Upload className="h-8 w-8" />}
+                    {editEventMediaPreview || editingEvent.image ? <img src={editEventMediaPreview || editingEvent.image} className="h-full object-cover rounded" alt="Preview" /> : <Upload className="h-8 w-8" />}
                   </div>
                 </div>
               </div>
