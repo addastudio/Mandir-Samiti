@@ -518,7 +518,7 @@ export default function AdminPage() {
         const credential = EmailAuthProvider.credential(user.email!, adminConfirmPassword);
         await reauthenticateWithCredential(user, credential);
       }
-      const { userId, targetCurrentRole, newRole, userName } = pendingRoleUpdate;
+      const { userId, targetCurrentRole, name: targetRoleName, newRole, userName } = pendingRoleUpdate as any;
       updateDocumentNonBlocking(doc(firestore, "users", userId), { role: newRole });
       logAction("UPDATE_ROLE", "User Role", `${userName}: ${targetCurrentRole} to ${newRole}`);
       setPendingRoleUpdate(null);
@@ -835,10 +835,21 @@ export default function AdminPage() {
                 const canIManage = !u.isGhost && canManageUser(u.id, u.role);
                 return (
                   <Card key={u.id} className={cn("p-4 flex flex-col md:flex-row justify-between items-center gap-4", u.isGhost && "opacity-50")}>
-                    <div className="flex items-center gap-4"><div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary shrink-0">{u.name?.charAt(0)}</div><div><p className="font-bold flex items-center gap-2">{u.name}{isUserAdmin && <Badge className="text-[8px]">ADMIN</Badge>}</p><p className="text-xs text-muted-foreground">{u.email}</p><p className="text-[10px] uppercase opacity-50">{u.role || 'devotee'}</p></div></div>
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary shrink-0">{u.name?.charAt(0)}</div>
+                      <div>
+                        {/* REPLACED <p> WITH <div> TO FIX HYDRATION ERROR (div-in-p) */}
+                        <div className="font-bold flex items-center gap-2">
+                          {u.name}
+                          {isUserAdmin && <Badge className="text-[8px]">ADMIN</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                        <p className="text-[10px] uppercase opacity-50">{u.role || 'devotee'}</p>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
                       {!u.isGhost && (
-                        <><select disabled={!canIManage} className="h-8 rounded border bg-background px-2 text-xs" value={u.role || 'devotee'} onChange={(e) => setPendingRoleUpdate({ userId: u.id, targetCurrentRole: u.role || 'devotee', newRole: e.target.value, userName: u.name || 'User' })}><option value="devotee">Devotee</option><option value="member">Member</option><option value="official">Official</option><option value="president">President</option></select><Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" className="h-8 text-xs" onClick={() => setPendingAdminToggle({ userId: u.id, isCurrentAdmin: !!isUserAdmin, userName: u.name || 'User', role: u.role || 'devotee' })}>{isUserAdmin ? 'Revoke' : 'Grant'} Admin</Button></>
+                        <><select disabled={!canIManage} className="h-8 rounded border bg-background px-2 text-xs" value={u.role || 'devotee'} onChange={(e) => setPendingRoleUpdate({ userId: u.id, targetCurrentRole: u.role || 'devotee', newRole: e.target.value, userName: u.name || 'User' } as any)}><option value="devotee">Devotee</option><option value="member">Member</option><option value="official">Official</option><option value="president">President</option></select><Button disabled={!canIManage} variant={isUserAdmin ? "outline" : "default"} size="sm" className="h-8 text-xs" onClick={() => setPendingAdminToggle({ userId: u.id, isCurrentAdmin: !!isUserAdmin, userName: u.name || 'User', role: u.role || 'devotee' })}>{isUserAdmin ? 'Revoke' : 'Grant'} Admin</Button></>
                       )}
                     </div>
                   </Card>
