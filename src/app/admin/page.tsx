@@ -20,7 +20,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -597,19 +596,42 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <div className="pb-6 pt-2 overflow-x-auto no-scrollbar touch-scroll">
-            <TabsList className="inline-flex w-max min-w-full items-center justify-start gap-2 bg-muted/40 p-1.5 rounded-xl border border-primary/10 shadow-sm flex-nowrap h-auto">
-              <TabsTrigger value="overview" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}</TabsTrigger>
-              <TabsTrigger value="events" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
-              <TabsTrigger value="notices" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}</TabsTrigger>
-              <TabsTrigger value="seva" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><UtensilsCrossed className="h-4 w-4" /> {language === 'hi' ? 'सेवा' : 'Seva'}</TabsTrigger>
-              <TabsTrigger value="committee" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><UserCheck className="h-4 w-4" /> {language === 'hi' ? 'समिति' : 'Committee'}</TabsTrigger>
-              <TabsTrigger value="testimonials" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Quote className="h-4 w-4" /> {language === 'hi' ? 'अनुभव' : 'Reviews'}</TabsTrigger>
-              <TabsTrigger value="gallery" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
-              <TabsTrigger value="requests" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}</TabsTrigger>
-              <TabsTrigger value="users" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}</TabsTrigger>
-              <TabsTrigger value="activity" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Activity className="h-4 w-4" /> {language === 'hi' ? 'गतिविधि' : 'Activity'}</TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2 bg-background border data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-2 px-4 text-xs sm:text-sm shrink-0 rounded-lg"><Settings className="h-4 w-4" /> {language === 'hi' ? 'सेटिंग्स' : 'Settings'}</TabsTrigger>
+          {/* HORIZONTAL NAVIGATION SCROLL CONTAINER */}
+          <div className="w-full overflow-x-auto no-scrollbar touch-scroll pb-4 pt-2">
+            <TabsList className="inline-flex h-auto w-max min-w-full items-center justify-start gap-2 rounded-xl border border-primary/10 bg-muted/40 p-1.5 shadow-sm flex-nowrap">
+              <TabsTrigger value="overview" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}
+              </TabsTrigger>
+              <TabsTrigger value="events" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}
+              </TabsTrigger>
+              <TabsTrigger value="notices" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notice'}
+              </TabsTrigger>
+              <TabsTrigger value="seva" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <UtensilsCrossed className="h-4 w-4" /> {language === 'hi' ? 'सेवा' : 'Seva'}
+              </TabsTrigger>
+              <TabsTrigger value="committee" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <UserCheck className="h-4 w-4" /> {language === 'hi' ? 'समिति' : 'Committee'}
+              </TabsTrigger>
+              <TabsTrigger value="testimonials" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Quote className="h-4 w-4" /> {language === 'hi' ? 'अनुभव' : 'Reviews'}
+              </TabsTrigger>
+              <TabsTrigger value="gallery" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}
+              </TabsTrigger>
+              <TabsTrigger value="requests" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}
+              </TabsTrigger>
+              <TabsTrigger value="users" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Users className="h-4 w-4" /> {language === 'hi' ? 'उपयोगकर्ता' : 'Users'}
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Activity className="h-4 w-4" /> {language === 'hi' ? 'गतिविधि' : 'Activity'}
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Settings className="h-4 w-4" /> {language === 'hi' ? 'सेटिंग्स' : 'Settings'}
+              </TabsTrigger>
             </TabsList>
           </div>
 
