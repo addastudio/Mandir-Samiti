@@ -425,13 +425,13 @@ function DashboardContent() {
           <div className="lg:col-span-8">
             <Card className="border-primary/20 shadow-md h-full overflow-hidden flex flex-col">
               <Tabs defaultValue="donations" className="w-full flex-grow flex flex-col">
-                <div className="border-b bg-white overflow-x-auto no-scrollbar">
-                  <TabsList className="w-full justify-start h-12 bg-transparent border-b-0 p-0 rounded-none min-w-max">
-                    <TabsTrigger value="donations" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger>
-                    <TabsTrigger value="requests" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><MessageSquare className="h-4 w-4 mr-2" />{t.dashboardMyRequests}</TabsTrigger>
-                    <TabsTrigger value="events" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Calendar className="h-4 w-4 mr-2" />{t.dashboardEventsTab}</TabsTrigger>
-                    <TabsTrigger value="profile" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><UserIcon className="h-4 w-4 mr-2" />{t.dashboardProfileTab}</TabsTrigger>
-                    <TabsTrigger value="settings" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Settings className="h-4 w-4 mr-2" />{t.dashboardSettingsTab}</TabsTrigger>
+                <div className="border-b bg-white overflow-x-auto touch-scroll py-1">
+                  <TabsList className="flex w-max min-w-full justify-start h-12 bg-transparent border-b-0 p-0 rounded-none flex-nowrap">
+                    <TabsTrigger value="donations" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger>
+                    <TabsTrigger value="requests" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><MessageSquare className="h-4 w-4 mr-2" />{t.dashboardMyRequests}</TabsTrigger>
+                    <TabsTrigger value="events" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Calendar className="h-4 w-4 mr-2" />{t.dashboardEventsTab}</TabsTrigger>
+                    <TabsTrigger value="profile" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><UserIcon className="h-4 w-4 mr-2" />{t.dashboardProfileTab}</TabsTrigger>
+                    <TabsTrigger value="settings" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Settings className="h-4 w-4 mr-2" />{t.dashboardSettingsTab}</TabsTrigger>
                   </TabsList>
                 </div>
 
