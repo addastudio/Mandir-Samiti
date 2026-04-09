@@ -50,7 +50,7 @@ function DashboardContent() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
 
-  // Default User Profile Photo
+  // Default User Profile Photo - Neutral Standard Avatar
   const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
 
   // Profile Form States
@@ -162,10 +162,18 @@ function DashboardContent() {
 
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
-    if (userProfile?.role && !['devotee'].includes(userProfile.role)) {
-      toast({ variant: "destructive", title: "Resignation Required", description: t.dashboardDeleteResignFirst });
+    
+    // FIX: Only block deletion if the user is an active administrator in roles_admin.
+    // This allows regular devotees and members without admin access to delete their accounts freely.
+    if (adminDoc) {
+      toast({ 
+        variant: "destructive", 
+        title: language === 'hi' ? "इस्तीफा आवश्यक" : "Resignation Required", 
+        description: t.dashboardDeleteResignFirst 
+      });
       return;
     }
+
     setIsDeleting(true);
     try {
       if (user.providerData.some(p => p.providerId === 'password')) {
@@ -173,9 +181,7 @@ function DashboardContent() {
         await reauthenticateWithCredential(user, credential);
       }
       const userRef = doc(firestore, "users", user.uid);
-      const adminRef = doc(firestore, "roles_admin", user.uid);
       await deleteDoc(userRef).catch(() => {});
-      await deleteDoc(adminRef).catch(() => {});
       await deleteUser(user);
       toast({ title: "Account Deleted", description: "Your account has been successfully removed." });
       router.push("/");
