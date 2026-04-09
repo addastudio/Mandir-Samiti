@@ -30,18 +30,19 @@ export function initializeFirebase() {
 
 /**
  * Provides access to initialized SDKs.
- * Uses initializeFirestore with long polling to ensure better connectivity in 
- * cloud development environments where WebSockets might be restricted.
+ * Specifically forces long polling and disables auto-detection to ensure 
+ * connectivity in environments with restrictive WebSocket proxies.
  */
 export function getSdks(firebaseApp: FirebaseApp) {
   let firestore: Firestore;
   try {
-    // Using initializeFirestore instead of getFirestore to set experimental settings
+    // initializeFirestore is used to apply experimental connectivity settings
     firestore = initializeFirestore(firebaseApp, {
       experimentalForceLongPolling: true,
+      experimentalAutoDetectLongPolling: false,
     });
   } catch (e) {
-    // Fallback if firestore is already initialized
+    // Fallback if firestore is already initialized (e.g., during hot reload)
     firestore = getFirestore(firebaseApp);
   }
 
