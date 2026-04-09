@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updateProfile } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -354,6 +354,48 @@ function DashboardContent() {
                     <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tighter">{t.dashboardMemberSince}</label>
                     <p className="font-medium text-sm">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Patronage Honors Card */}
+            <Card className="border-amber-200 shadow-sm overflow-hidden bg-amber-50/30">
+              <CardHeader className="bg-amber-100/50 py-3 px-5 border-b border-amber-200">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-900">
+                  <Sparkles className="h-4 w-4" /> {t.dashboardTierHonorsTitle}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-5 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <div className="bg-secondary p-2 rounded-lg h-fit"><Heart className="h-4 w-4 text-secondary-foreground" /></div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{t.dashboardTierSupporter}</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierSupporterDesc}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="bg-amber-100 p-2 rounded-lg h-fit border border-amber-200"><Star className="h-4 w-4 text-amber-700" /></div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{t.dashboardTierPillar} (₹1,000+)</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierPillarDesc}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="bg-primary p-2 rounded-lg h-fit"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{t.dashboardTierPatron} (₹5,000+)</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierPatronDesc}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-amber-200">
+                  <p className="text-[9px] italic text-amber-800 opacity-70">
+                    <Info className="h-3 w-3 inline mr-1" />
+                    {language === 'hi' 
+                      ? 'सहयोग स्तर पिछले १२ महीनों के कुल दान पर आधारित होते हैं।' 
+                      : 'Patronage levels are based on total contributions over the last 12 months.'}
+                  </p>
                 </div>
               </CardContent>
             </Card>

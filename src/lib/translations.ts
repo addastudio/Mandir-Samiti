@@ -159,6 +159,10 @@ export type TranslationKeys = {
   dashboardTierSupporter: string;
   dashboardTierPillar: string;
   dashboardTierPatron: string;
+  dashboardTierSupporterDesc: string;
+  dashboardTierPillarDesc: string;
+  dashboardTierPatronDesc: string;
+  dashboardTierHonorsTitle: string;
   dashboardSettingsTab: string;
   dashboardLanguagePref: string;
   dashboardEventsTab: string;
@@ -275,7 +279,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     donateUpi: 'UPI / QR कोड के माध्यम से दान करें',
     donateUpiId: 'mandir.bahpura@upi',
     donateBtn: 'अभी दान करें',
-    donateTransparency: 'आपका योगदान हमारे समुदाय को मजबूत करता है।',
+    donateTransparency: 'आपका योगदान हमारे समुदाय को मजबूत करता. है।',
     donateOnlineTitle: 'सुरक्षित ऑनलाइन दान (Stripe)',
     donateOnlineDesc: 'क्रेडिट कार्ड, डेबिट कार्ड या नेट बैंकिंग के माध्यम से सुरक्षित दान करें।',
     donateOnlineBtn: 'ऑनलाइन दान प्रक्रिया शुरू करें',
@@ -347,6 +351,10 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardTierSupporter: 'भक्त (Supporter)',
     dashboardTierPillar: 'स्तंभ (Pillar)',
     dashboardTierPatron: 'संरक्षक (Patron)',
+    dashboardTierSupporterDesc: 'समर्पित सेवा में आपका प्रारंभिक कदम।',
+    dashboardTierPillarDesc: 'एक आधारभूत योगदानकर्ता जो हमारी दैनिक अनुष्ठानों को बनाए रखता है।',
+    dashboardTierPatronDesc: 'हमारी विरासत के रक्षक, जो मंदिर के बड़े विकास कार्यों को सक्षम बनाते हैं।',
+    dashboardTierHonorsTitle: 'सहयोग सम्मान विवरण',
     dashboardSettingsTab: 'सेटिंग्स',
     dashboardLanguagePref: 'भाषा प्राथमिकता',
     dashboardEventsTab: 'मंदिर कार्यक्रम',
@@ -525,6 +533,10 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardTierSupporter: 'Supporter',
     dashboardTierPillar: 'Pillar',
     dashboardTierPatron: 'Patron',
+    dashboardTierSupporterDesc: 'Your initial step into dedicated service.',
+    dashboardTierPillarDesc: 'A foundational contributor sustaining our daily rituals.',
+    dashboardTierPatronDesc: 'A guardian of our legacy, enabling major temple developments.',
+    dashboardTierHonorsTitle: 'Patronage Honors Detail',
     dashboardSettingsTab: 'Settings',
     dashboardLanguagePref: 'Language Preference',
     dashboardEventsTab: 'Temple Events',
