@@ -85,7 +85,7 @@ export async function submitContactForm(prevState: any, formData: FormData) {
 export async function sendVerificationOtp(email: string, otp: string) {
   if (resend) {
     try {
-      await resend.emails.send({
+      const { data, error } = await resend.emails.send({
         from: 'Mandir Samiti Bahpura <onboarding@resend.dev>',
         to: email,
         subject: 'Mandir Samiti Bahpura - OTP Verification Code',
@@ -102,12 +102,19 @@ export async function sendVerificationOtp(email: string, otp: string) {
           </div>
         `,
       });
-      return { success: true };
+
+      if (error) {
+        console.error("Resend API Error:", error);
+      } else {
+        console.log("Email sent successfully via Resend:", data?.id);
+        return { success: true, isLive: true };
+      }
     } catch (error) {
       console.error("Failed to send real email via Resend:", error);
     }
   }
 
+  // Fallback simulation for development
   console.log("");
   console.log("==========================================");
   console.log("      [SIMULATED EMAIL SERVICE LOG]      ");
@@ -120,7 +127,7 @@ export async function sendVerificationOtp(email: string, otp: string) {
   console.log("==========================================");
   console.log("");
   
-  return { success: true };
+  return { success: true, isLive: false };
 }
 
 /**

@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -30,8 +29,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle } from "lucide-react";
-import { sendVerificationOtp } from "@/app/actions";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle, MailCheck } from "lucide-react";
+import { sendVerificationOtp, getEmailServiceStatus } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
@@ -46,6 +45,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isEmailLive, setIsEmailLive] = useState(false);
 
   // Default User Avatar
   const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
@@ -67,6 +67,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     setMounted(true);
+    getEmailServiceStatus().then(status => setIsEmailLive(status.isLive));
   }, []);
 
   useEffect(() => {
@@ -99,7 +100,9 @@ export default function SignupPage() {
 
       toast({
         title: language === 'hi' ? 'सत्यापन संदेश भेजा गया' : 'Verification Sent',
-        description: language === 'hi' ? 'कृपया अपना ईमेल सिमुलेशन जांचें।' : 'Please check your simulated email log.',
+        description: isEmailLive 
+          ? (language === 'hi' ? 'कृपया अपना ईमेल जांचें।' : 'Please check your email.')
+          : (language === 'hi' ? 'कृपया अपना ईमेल सिमुलेशन जांचें।' : 'Please check your simulated email log.'),
       });
 
       setIsOtpStep(true);
@@ -121,7 +124,9 @@ export default function SignupPage() {
       
       toast({
         title: t.signupOtpSent,
-        description: language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been simulated.',
+        description: isEmailLive 
+          ? (language === 'hi' ? 'एक नया ईमेल भेजा गया है।' : 'A new email has been sent.')
+          : (language === 'hi' ? 'एक नया कोड भेजा गया है (सिमुलेशन)।' : 'A new code has been simulated.'),
       });
       setResendCooldown(60);
     } catch (err: any) {
@@ -322,7 +327,7 @@ export default function SignupPage() {
         <Card className="w-full max-w-md shadow-lg border-primary/20">
           <CardHeader className="text-center">
             <div className="mx-auto h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-              <ShieldCheck className="h-8 w-8 text-primary" />
+              <MailCheck className="h-8 w-8 text-primary" />
             </div>
             <CardTitle className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : '')}>
               {t.signupOtpTitle}
@@ -333,24 +338,37 @@ export default function SignupPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             
-            <Alert variant="default" className="bg-amber-100 border-amber-300 ring-4 ring-amber-500/20">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-              <AlertTitle className="text-amber-800 text-sm font-black uppercase tracking-tighter">
-                {language === 'hi' ? 'महत्वपूर्ण: विकास मोड' : 'PROTOTYPE MODE: READ THIS'}
-              </AlertTitle>
-              <AlertDescription className="text-amber-900 font-medium mt-2">
-                <p className="text-base font-bold bg-white/50 p-2 rounded border border-amber-400">
+            {!isEmailLive && (
+              <Alert variant="default" className="bg-amber-100 border-amber-300 ring-4 ring-amber-500/20">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                <AlertTitle className="text-amber-800 text-sm font-black uppercase tracking-tighter">
+                  {language === 'hi' ? 'विकास मोड' : 'DEVELOPMENT MODE'}
+                </AlertTitle>
+                <AlertDescription className="text-amber-900 font-medium mt-2">
+                  <p className="text-base font-bold bg-white/50 p-2 rounded border border-amber-400">
+                    {language === 'hi' 
+                      ? `सत्यापन कोड: ${generatedOtp}` 
+                      : `Your Verification Code: ${generatedOtp}`}
+                  </p>
+                  <p className="mt-2 text-[10px] leading-tight opacity-80">
+                    {language === 'hi' 
+                      ? "असली ईमेल सेवा कॉन्फ़िगर नहीं है। ऊपर दिया गया कोड उपयोग करें।" 
+                      : "Real email service not configured. Use the code above."}
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isEmailLive && (
+              <div className="bg-green-50 border border-green-100 rounded-lg p-4 flex items-center gap-3">
+                <MailCheck className="h-5 w-5 text-green-600" />
+                <p className="text-xs text-green-800">
                   {language === 'hi' 
-                    ? `सत्यापन कोड: ${generatedOtp}` 
-                    : `Your Verification Code: ${generatedOtp}`}
+                    ? `हमने ${email} पर एक सुरक्षित कोड भेजा है।` 
+                    : `A secure code was sent to ${email}.`}
                 </p>
-                <p className="mt-2 text-[10px] leading-tight opacity-80">
-                  {language === 'hi' 
-                    ? "चूंकि यह एक प्रोटोटाइप है, असली ईमेल नहीं भेजा गया है। ऊपर दिया गया कोड उपयोग करें।" 
-                    : "Real emails are not sent in this sandbox. Use the code above to proceed."}
-                </p>
-              </AlertDescription>
-            </Alert>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Input 
