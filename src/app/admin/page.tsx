@@ -72,7 +72,7 @@ export default function AdminPage() {
   const [mounted, setMounted] = useState(false);
   
   // Default Man Profile
-  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/man-avatar/200/200", []);
+  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/avatar-man-1/200/200", []);
 
   // Search and Filter States
   const [userSearch, setUserSearch] = useState("");
@@ -849,7 +849,7 @@ export default function AdminPage() {
                       </Avatar>
                       <div>
                         <div className="font-bold flex items-center gap-2">
-                          {u.name}
+                          <span>{u.name}</span>
                           {isUserAdmin && <Badge className="text-[8px]">ADMIN</Badge>}
                         </div>
                         <p className="text-xs text-muted-foreground">{u.email}</p>

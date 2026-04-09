@@ -33,7 +33,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
 
-  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/man-avatar/200/200", []);
+  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/avatar-man-1/200/200", []);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;

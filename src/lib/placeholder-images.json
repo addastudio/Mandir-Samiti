@@ -105,7 +105,7 @@
     {
       "id": "default-man-profile",
       "description": "Default profile picture for male users.",
-      "imageUrl": "https://picsum.photos/seed/man-avatar/200/200",
+      "imageUrl": "https://picsum.photos/seed/avatar-man-1/200/200",
       "imageHint": "man portrait"
     }
   ]

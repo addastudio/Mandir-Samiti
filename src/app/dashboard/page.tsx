@@ -51,7 +51,7 @@ function DashboardContent() {
   const [historySearch, setHistorySearch] = useState("");
 
   // Default Man Profile
-  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/man-avatar/200/200", []);
+  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/avatar-man-1/200/200", []);
 
   // Profile Form States
   const [profileName, setProfileName] = useState("");
