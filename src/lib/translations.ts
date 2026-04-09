@@ -164,6 +164,11 @@ export type TranslationKeys = {
   dashboardEventsTab: string;
   dashboardNoEvents: string;
   dashboardHistorySearch: string;
+  dashboardProfileTab: string;
+  dashboardUpdateName: string;
+  dashboardUpdatePhoto: string;
+  dashboardUpdateBtn: string;
+  dashboardProfileSuccess: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -329,7 +334,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardDeletePasswordPlaceholder: 'पासवर्ड',
     dashboardVerifyRequiredTitle: 'ईमेल सत्यापन आवश्यक है',
     dashboardVerifyRequiredDesc: 'डैशबोर्ड तक पहुंचने के लिए कृपया अपने ईमेल पर भेजे गए लिंक पर क्लिक करके सत्यापन पूरा करें।',
-    dashboardVerifyRefresh: 'सत्यापन की स्थिति जांचें',
+    dashboardVerifyRefresh: 'Refresh Status',
     dashboardSecurityTab: 'सुरक्षा',
     dashboard2FAEnable: '2-स्टेप सत्यापन सक्षम करें',
     dashboard2FADisabled: '2-स्टेप सत्यापन वर्तमान में अक्षम है।',
@@ -347,6 +352,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardEventsTab: 'मंदिर कार्यक्रम',
     dashboardNoEvents: 'कोई आगामी कार्यक्रम नहीं मिला।',
     dashboardHistorySearch: 'इतिहास में खोजें...',
+    dashboardProfileTab: 'प्रोफ़ाइल',
+    dashboardUpdateName: 'नाम बदलें',
+    dashboardUpdatePhoto: 'प्रोफ़ाइल फोटो',
+    dashboardUpdateBtn: 'विवरण सुरक्षित करें',
+    dashboardProfileSuccess: 'प्रोफ़ाइल सफलतापूर्वक अपडेट की गई!',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -520,6 +530,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardEventsTab: 'Temple Events',
     dashboardNoEvents: 'No upcoming events found.',
     dashboardHistorySearch: 'Search history...',
+    dashboardProfileTab: 'Profile',
+    dashboardUpdateName: 'Update Name',
+    dashboardUpdatePhoto: 'Profile Photo',
+    dashboardUpdateBtn: 'Save Changes',
+    dashboardProfileSuccess: 'Profile updated successfully!',
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
     prayerFormType: 'Request Type',

@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { collection, doc, query, where, deleteDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart } from "lucide-react";
+import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updateProfile } from "firebase/auth";
+import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function DashboardContent() {
   const { user, isUserLoading } = useUser();
@@ -46,6 +47,11 @@ function DashboardContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
+
+  // Profile Form States
+  const [profileName, setProfileName] = useState("");
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -95,6 +101,13 @@ function DashboardContent() {
   const { data: adminDoc } = useDoc(adminRoleRef);
 
   useEffect(() => {
+    if (userProfile) {
+      setProfileName(userProfile.name || user?.displayName || "");
+      setProfilePhotoPreview(user?.photoURL || null);
+    }
+  }, [userProfile, user]);
+
+  useEffect(() => {
     if (mounted && !isUserLoading && !user) router.push("/login");
   }, [user, isUserLoading, router, mounted]);
 
@@ -114,6 +127,33 @@ function DashboardContent() {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !firestore) return;
+    setIsUpdatingProfile(true);
+    try {
+      // 1. Update Auth Profile
+      await updateProfile(user, {
+        displayName: profileName,
+        photoURL: profilePhotoPreview
+      });
+
+      // 2. Update Firestore Doc
+      const userRef = doc(firestore, "users", user.uid);
+      await updateDoc(userRef, {
+        name: profileName,
+        photoURL: profilePhotoPreview
+      });
+
+      toast({ title: "Success", description: t.dashboardProfileSuccess });
+      router.refresh();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
@@ -207,7 +247,15 @@ function DashboardContent() {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-5 sm:p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="bg-primary/10 p-2 sm:p-3 rounded-full shrink-0"><UserIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" /></div>
+            <div className="relative">
+              <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary shadow-sm">
+                <AvatarImage src={user.photoURL || ""} />
+                <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                  {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-1 -right-1 bg-green-500 h-4 w-4 rounded-full border-2 border-white" />
+            </div>
             <div className="space-y-0.5 min-w-0">
               <h1 className={cn("text-xl sm:text-2xl font-bold flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                 {t.dashboardWelcome}, <span className="truncate max-w-[150px] sm:max-w-none">{user.displayName || user.email?.split('@')[0]}</span>
@@ -279,6 +327,7 @@ function DashboardContent() {
                     <TabsTrigger value="donations" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger>
                     <TabsTrigger value="requests" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><MessageSquare className="h-4 w-4 mr-2" />{t.dashboardMyRequests}</TabsTrigger>
                     <TabsTrigger value="events" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Calendar className="h-4 w-4 mr-2" />{t.dashboardEventsTab}</TabsTrigger>
+                    <TabsTrigger value="profile" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><UserIcon className="h-4 w-4 mr-2" />{t.dashboardProfileTab}</TabsTrigger>
                     <TabsTrigger value="settings" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Settings className="h-4 w-4 mr-2" />{t.dashboardSettingsTab}</TabsTrigger>
                   </TabsList>
                 </div>
@@ -401,6 +450,76 @@ function DashboardContent() {
                       </div>
                     )}
                   </CardContent>
+                </TabsContent>
+
+                <TabsContent value="profile" className="m-0 flex-grow p-6">
+                  <form onSubmit={handleUpdateProfile} className="space-y-8 max-w-lg mx-auto">
+                    <div className="space-y-4">
+                      <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.dashboardUpdatePhoto}</Label>
+                      <div className="flex flex-col items-center gap-4">
+                        <div 
+                          className="relative group cursor-pointer"
+                          onClick={() => document.getElementById('profile-img-input')?.click()}
+                        >
+                          <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-xl ring-1 ring-primary/10">
+                            <AvatarImage src={profilePhotoPreview || ""} />
+                            <AvatarFallback className="bg-primary/5 text-primary text-3xl font-bold">
+                              {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Camera className="h-8 w-8 text-white" />
+                          </div>
+                          <div className="absolute bottom-1 right-1 bg-primary text-white p-1.5 rounded-full shadow-lg">
+                            <Upload className="h-4 w-4" />
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground italic">{language === 'hi' ? 'फोटो बदलने के लिए क्लिक करें' : 'Click to change profile picture'}</p>
+                        <input 
+                          id="profile-img-input" 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => setProfilePhotoPreview(reader.result as string);
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label htmlFor="prof-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.dashboardUpdateName}</Label>
+                        <Input 
+                          id="prof-name" 
+                          value={profileName} 
+                          onChange={(e) => setProfileName(e.target.value)}
+                          placeholder="Your Name"
+                          className="h-12 text-base"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.dashboardEmail}</Label>
+                        <Input 
+                          value={user.email || ""} 
+                          disabled 
+                          className="h-12 bg-muted/50 text-muted-foreground"
+                        />
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {language === 'hi' ? 'ईमेल पता बदला नहीं जा सकता।' : 'Email address cannot be changed.'}</p>
+                      </div>
+                    </div>
+
+                    <Button type="submit" className="w-full h-12 gap-2 shadow-lg" disabled={isUpdatingProfile}>
+                      {isUpdatingProfile ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                      {t.dashboardUpdateBtn}
+                    </Button>
+                  </form>
                 </TabsContent>
 
                 <TabsContent value="settings" className="m-0 flex-grow p-6 space-y-8">
