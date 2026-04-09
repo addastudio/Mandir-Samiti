@@ -33,7 +33,8 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
 
-  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/avatar-man-1/200/200", []);
+  // Default User Photo
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -96,7 +97,7 @@ export function Header() {
       return (
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
           <Avatar className="h-10 w-10 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer">
-            <AvatarImage src={user.photoURL || userProfile?.photoURL || defaultManPhoto} />
+            <AvatarImage src={user.photoURL || userProfile?.photoURL || defaultUserPhoto} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold">
               <UserIcon className="h-6 w-6" />
             </AvatarFallback>
@@ -194,7 +195,6 @@ export function Header() {
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
         <div className="hidden items-center gap-4 lg:flex">
           <NavLinks />
           <div className="h-6 w-px bg-border/60" />
@@ -226,7 +226,6 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile Navigation Trigger */}
         <div className="flex items-center gap-1 sm:gap-2 lg:hidden">
           <div className="hidden xs:block">
             <LanguageSwitcher />

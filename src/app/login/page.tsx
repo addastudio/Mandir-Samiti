@@ -46,8 +46,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   
-  // Default Man Profile
-  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/avatar-man-1/200/200", []);
+  // Default User Photo
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
 
   const [isVerificationStep, setIsVerificationStep] = useState(false);
   const [otp, setOtp] = useState("");
@@ -214,7 +214,7 @@ export default function LoginPage() {
       const userDocRef = doc(firestore, "users", tempUserForPassword.uid);
       const userDoc = await getDoc(userDocRef);
       
-      const photoToUse = tempUserForPassword.photoURL || defaultManPhoto;
+      const photoToUse = tempUserForPassword.photoURL || defaultUserPhoto;
 
       if (!userDoc.exists()) {
         const userData = {
@@ -231,7 +231,6 @@ export default function LoginPage() {
         await updateDoc(userDocRef, { isVerified: true });
       }
 
-      // Sync back to auth profile
       await updateProfile(tempUserForPassword, { photoURL: photoToUse });
 
       toast({ title: "Success", description: "Account secured successfully!" });

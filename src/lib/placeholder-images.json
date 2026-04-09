@@ -103,10 +103,10 @@
       "imageHint": "young volunteer"
     },
     {
-      "id": "default-man-profile",
-      "description": "Default profile picture for male users.",
-      "imageUrl": "https://picsum.photos/seed/avatar-man-1/200/200",
-      "imageHint": "man portrait"
+      "id": "default-user-avatar",
+      "description": "Standard default avatar for temple website users.",
+      "imageUrl": "https://picsum.photos/seed/standard-avatar/200/200",
+      "imageHint": "user avatar"
     }
   ]
 }

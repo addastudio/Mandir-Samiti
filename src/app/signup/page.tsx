@@ -47,8 +47,8 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  // Default Man Profile
-  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/avatar-man-1/200/200", []);
+  // Default User Avatar
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
 
   // OTP Step State
   const [isOtpStep, setIsOtpStep] = useState(false);
@@ -150,7 +150,7 @@ export default function SignupPage() {
       const user = userCredential.user;
       await updateProfile(user, { 
         displayName: name,
-        photoURL: defaultManPhoto
+        photoURL: defaultUserPhoto
       });
       
       const userDocRef = doc(firestore, "users", user.uid);
@@ -161,7 +161,7 @@ export default function SignupPage() {
         role: "devotee",
         language: language,
         isVerified: true,
-        photoURL: defaultManPhoto,
+        photoURL: defaultUserPhoto,
         twoFactorEnabled: false,
       };
 
@@ -235,7 +235,7 @@ export default function SignupPage() {
       const userDocRef = doc(firestore, "users", tempUserForPassword.uid);
       const userDoc = await getDoc(userDocRef);
       
-      const photoToUse = tempUserForPassword.photoURL || defaultManPhoto;
+      const photoToUse = tempUserForPassword.photoURL || defaultUserPhoto;
 
       if (!userDoc.exists()) {
         const userData = {
@@ -252,7 +252,6 @@ export default function SignupPage() {
         await updateDoc(userDocRef, { isVerified: true });
       }
 
-      // Also sync back to Auth profile if we added the default man profile
       await updateProfile(tempUserForPassword, { photoURL: photoToUse });
 
       toast({ title: "Success", description: "Account secured and created successfully!" });

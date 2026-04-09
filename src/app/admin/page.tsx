@@ -71,8 +71,8 @@ export default function AdminPage() {
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   
-  // Default Man Profile
-  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/avatar-man-1/200/200", []);
+  // Default User Profile
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
 
   // Search and Filter States
   const [userSearch, setUserSearch] = useState("");
@@ -601,9 +601,8 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          {/* DEFINITIVE SCROLL CONTAINER FOR HORIZONTAL NAVIGATION */}
           <div className="w-full overflow-x-auto touch-scroll pb-4 pt-2 px-1">
-            <TabsList className="inline-flex h-auto min-w-max items-center justify-start gap-2 rounded-xl border border-primary/10 bg-muted/40 p-1.5 shadow-sm flex-nowrap">
+            <TabsList className="inline-flex h-auto w-max min-w-full items-center justify-start gap-2 rounded-xl border border-primary/10 bg-muted/40 p-1.5 shadow-sm flex-nowrap">
               <TabsTrigger value="overview" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}
               </TabsTrigger>
@@ -842,7 +841,7 @@ export default function AdminPage() {
                   <Card key={u.id} className={cn("p-4 flex flex-col md:flex-row justify-between items-center gap-4", u.isGhost && "opacity-50")}>
                     <div className="flex items-center gap-4">
                       <Avatar className="h-10 w-10 shrink-0 border border-primary/10">
-                        <AvatarImage src={u.photoURL || defaultManPhoto} />
+                        <AvatarImage src={u.photoURL || defaultUserPhoto} />
                         <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
                           {u.name?.charAt(0)}
                         </AvatarFallback>
@@ -1151,7 +1150,6 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation Dialogs */}
       <AlertDialog open={!!pendingRoleUpdate} onOpenChange={(o) => !o && setPendingRoleUpdate(null)}>
         <AlertDialogContent className="w-[95%] max-w-md">
           <AlertDialogHeader><AlertDialogTitle>Confirm Role Change</AlertDialogTitle><AlertDialogDescription>Enter password to change {pendingRoleUpdate?.userName}'s role to {pendingRoleUpdate?.newRole}.</AlertDialogDescription></AlertDialogHeader>

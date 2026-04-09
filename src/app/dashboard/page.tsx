@@ -50,8 +50,8 @@ function DashboardContent() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
 
-  // Default Man Profile
-  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/avatar-man-1/200/200", []);
+  // Default User Profile Photo
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
 
   // Profile Form States
   const [profileName, setProfileName] = useState("");
@@ -108,9 +108,9 @@ function DashboardContent() {
   useEffect(() => {
     if (userProfile) {
       setProfileName(userProfile.name || user?.displayName || "");
-      setProfilePhotoPreview(userProfile.photoURL || user?.photoURL || defaultManPhoto);
+      setProfilePhotoPreview(userProfile.photoURL || user?.photoURL || defaultUserPhoto);
     }
-  }, [userProfile, user, defaultManPhoto]);
+  }, [userProfile, user, defaultUserPhoto]);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) router.push("/login");
@@ -140,13 +140,11 @@ function DashboardContent() {
     if (!user || !firestore) return;
     setIsUpdatingProfile(true);
     try {
-      // 1. Update Auth Profile
       await updateProfile(user, {
         displayName: profileName,
         photoURL: profilePhotoPreview
       });
 
-      // 2. Update Firestore Doc
       const userRef = doc(firestore, "users", user.uid);
       await updateDoc(userRef, {
         name: profileName,
@@ -279,7 +277,7 @@ function DashboardContent() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary shadow-sm">
-                <AvatarImage src={user.photoURL || userProfile?.photoURL || defaultManPhoto} />
+                <AvatarImage src={user.photoURL || userProfile?.photoURL || defaultUserPhoto} />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
                   {user.displayName?.charAt(0) || user.email?.charAt(0)}
                 </AvatarFallback>
@@ -358,7 +356,6 @@ function DashboardContent() {
               </CardContent>
             </Card>
 
-            {/* Patronage Honors Card */}
             <Card className="border-amber-200 shadow-sm overflow-hidden bg-amber-50/30">
               <CardHeader className="bg-amber-100/50 py-3 px-5 border-b border-amber-200">
                 <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-900">
@@ -565,7 +562,7 @@ function DashboardContent() {
                           onClick={() => document.getElementById('profile-img-input')?.click()}
                         >
                           <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-xl ring-1 ring-primary/10">
-                            <AvatarImage src={profilePhotoPreview || defaultManPhoto} />
+                            <AvatarImage src={profilePhotoPreview || defaultUserPhoto} />
                             <AvatarFallback className="bg-primary/5 text-primary text-3xl font-bold">
                               {user.displayName?.charAt(0) || user.email?.charAt(0)}
                             </AvatarFallback>
