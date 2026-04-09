@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -40,6 +41,8 @@ import {
 import { getEmailServiceStatus } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const ROLE_HIERARCHY: Record<string, number> = {
   'president': 100,
@@ -68,6 +71,9 @@ export default function AdminPage() {
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   
+  // Default Man Profile
+  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/man-avatar/200/200", []);
+
   // Search and Filter States
   const [userSearch, setUserSearch] = useState("");
   
@@ -835,9 +841,13 @@ export default function AdminPage() {
                 return (
                   <Card key={u.id} className={cn("p-4 flex flex-col md:flex-row justify-between items-center gap-4", u.isGhost && "opacity-50")}>
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary shrink-0">{u.name?.charAt(0)}</div>
+                      <Avatar className="h-10 w-10 shrink-0 border border-primary/10">
+                        <AvatarImage src={u.photoURL || defaultManPhoto} />
+                        <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
+                          {u.name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
                       <div>
-                        {/* REPLACED <p> WITH <div> TO FIX HYDRATION ERROR (div-in-p) */}
                         <div className="font-bold flex items-center gap-2">
                           {u.name}
                           {isUserAdmin && <Badge className="text-[8px]">ADMIN</Badge>}

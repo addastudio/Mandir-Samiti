@@ -32,6 +32,7 @@ import {
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 function DashboardContent() {
   const { user, isUserLoading } = useUser();
@@ -47,6 +48,9 @@ function DashboardContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
+
+  // Default Man Profile
+  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/man-avatar/200/200", []);
 
   // Profile Form States
   const [profileName, setProfileName] = useState("");
@@ -103,9 +107,9 @@ function DashboardContent() {
   useEffect(() => {
     if (userProfile) {
       setProfileName(userProfile.name || user?.displayName || "");
-      setProfilePhotoPreview(user?.photoURL || null);
+      setProfilePhotoPreview(userProfile.photoURL || user?.photoURL || defaultManPhoto);
     }
-  }, [userProfile, user]);
+  }, [userProfile, user, defaultManPhoto]);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) router.push("/login");
@@ -249,7 +253,7 @@ function DashboardContent() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary shadow-sm">
-                <AvatarImage src={user.photoURL || ""} />
+                <AvatarImage src={user.photoURL || userProfile?.photoURL || defaultManPhoto} />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
                   {user.displayName?.charAt(0) || user.email?.charAt(0)}
                 </AvatarFallback>
@@ -462,7 +466,7 @@ function DashboardContent() {
                           onClick={() => document.getElementById('profile-img-input')?.click()}
                         >
                           <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-xl ring-1 ring-primary/10">
-                            <AvatarImage src={profilePhotoPreview || ""} />
+                            <AvatarImage src={profilePhotoPreview || defaultManPhoto} />
                             <AvatarFallback className="bg-primary/5 text-primary text-3xl font-bold">
                               {user.displayName?.charAt(0) || user.email?.charAt(0)}
                             </AvatarFallback>

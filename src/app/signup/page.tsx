@@ -33,6 +33,7 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function SignupPage() {
   const { t, language } = useLanguage();
@@ -45,6 +46,9 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Default Man Profile
+  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/man-avatar/200/200", []);
 
   // OTP Step State
   const [isOtpStep, setIsOtpStep] = useState(false);
@@ -144,7 +148,10 @@ export default function SignupPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      await updateProfile(user, { displayName: name });
+      await updateProfile(user, { 
+        displayName: name,
+        photoURL: defaultManPhoto
+      });
       
       const userDocRef = doc(firestore, "users", user.uid);
       const userData = {
@@ -154,6 +161,7 @@ export default function SignupPage() {
         role: "devotee",
         language: language,
         isVerified: true,
+        photoURL: defaultManPhoto,
         twoFactorEnabled: false,
       };
 
@@ -227,6 +235,8 @@ export default function SignupPage() {
       const userDocRef = doc(firestore, "users", tempUserForPassword.uid);
       const userDoc = await getDoc(userDocRef);
       
+      const photoToUse = tempUserForPassword.photoURL || defaultManPhoto;
+
       if (!userDoc.exists()) {
         const userData = {
           id: tempUserForPassword.uid,
@@ -235,11 +245,15 @@ export default function SignupPage() {
           role: "devotee",
           language: language,
           isVerified: true, 
+          photoURL: photoToUse
         };
         await setDoc(userDocRef, userData, { merge: true });
       } else {
         await updateDoc(userDocRef, { isVerified: true });
       }
+
+      // Also sync back to Auth profile if we added the default man profile
+      await updateProfile(tempUserForPassword, { photoURL: photoToUse });
 
       toast({ title: "Success", description: "Account secured and created successfully!" });
       router.push("/dashboard");

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -21,6 +22,7 @@ import TempleIcon from "@/components/icons/TempleIcon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export function Header() {
   const { t, language } = useLanguage();
@@ -31,12 +33,20 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
 
+  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/man-avatar/200/200", []);
+
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "roles_admin", user.uid);
   }, [firestore, user]);
 
   const { data: adminDoc } = useDoc(adminRoleRef);
+
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userProfile } = useDoc(userDocRef);
 
   const navItems = [
     { href: "/#home", label: t.navHome, isAnchor: true },
@@ -86,7 +96,7 @@ export function Header() {
       return (
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
           <Avatar className="h-10 w-10 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer">
-            <AvatarImage src={user.photoURL || ""} />
+            <AvatarImage src={user.photoURL || userProfile?.photoURL || defaultManPhoto} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold">
               <UserIcon className="h-6 w-6" />
             </AvatarFallback>

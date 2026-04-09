@@ -25,6 +25,7 @@ import {
   linkWithCredential,
   EmailAuthProvider,
   type User,
+  updateProfile
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -32,6 +33,7 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle } from "lucide-react";
 import { sendVerificationOtp } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -44,6 +46,9 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   
+  // Default Man Profile
+  const defaultManPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-man-profile')?.imageUrl || "https://picsum.photos/seed/man-avatar/200/200", []);
+
   const [isVerificationStep, setIsVerificationStep] = useState(false);
   const [otp, setOtp] = useState("");
   const [storedOtp, setStoredOtp] = useState("");
@@ -209,6 +214,8 @@ export default function LoginPage() {
       const userDocRef = doc(firestore, "users", tempUserForPassword.uid);
       const userDoc = await getDoc(userDocRef);
       
+      const photoToUse = tempUserForPassword.photoURL || defaultManPhoto;
+
       if (!userDoc.exists()) {
         const userData = {
           id: tempUserForPassword.uid,
@@ -217,11 +224,15 @@ export default function LoginPage() {
           role: "devotee",
           language: language,
           isVerified: true, 
+          photoURL: photoToUse
         };
         await setDoc(userDocRef, userData, { merge: true });
       } else {
         await updateDoc(userDocRef, { isVerified: true });
       }
+
+      // Sync back to auth profile
+      await updateProfile(tempUserForPassword, { photoURL: photoToUse });
 
       toast({ title: "Success", description: "Account secured successfully!" });
       router.push("/dashboard");

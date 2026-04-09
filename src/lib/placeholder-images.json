@@ -101,6 +101,12 @@
       "description": "Portrait of a young volunteer serving food.",
       "imageUrl": "https://picsum.photos/seed/117/100/100",
       "imageHint": "young volunteer"
+    },
+    {
+      "id": "default-man-profile",
+      "description": "Default profile picture for male users.",
+      "imageUrl": "https://picsum.photos/seed/man-avatar/200/200",
+      "imageHint": "man portrait"
     }
   ]
 }
