@@ -597,8 +597,8 @@ export default function AdminPage() {
 
         <Tabs defaultValue="overview" className="w-full">
           {/* HORIZONTAL NAVIGATION SCROLL CONTAINER */}
-          <div className="w-full overflow-x-auto no-scrollbar touch-scroll pb-4 pt-2">
-            <TabsList className="inline-flex h-auto w-max min-w-full items-center justify-start gap-2 rounded-xl border border-primary/10 bg-muted/40 p-1.5 shadow-sm flex-nowrap">
+          <div className="w-full overflow-x-auto touch-scroll pb-4 pt-2 px-1">
+            <TabsList className="inline-flex h-auto min-w-max items-center justify-start gap-2 rounded-xl border border-primary/10 bg-muted/40 p-1.5 shadow-sm flex-nowrap">
               <TabsTrigger value="overview" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}
               </TabsTrigger>
