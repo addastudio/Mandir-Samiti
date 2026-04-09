@@ -3,7 +3,7 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore, initializeFirestore, Firestore } from 'firebase/firestore'
 
 /**
  * Initializes Firebase SDKs.
@@ -28,11 +28,27 @@ export function initializeFirebase() {
   return getSdks(firebaseApp);
 }
 
+/**
+ * Provides access to initialized SDKs.
+ * Uses initializeFirestore with long polling to ensure better connectivity in 
+ * cloud development environments where WebSockets might be restricted.
+ */
 export function getSdks(firebaseApp: FirebaseApp) {
+  let firestore: Firestore;
+  try {
+    // Using initializeFirestore instead of getFirestore to set experimental settings
+    firestore = initializeFirestore(firebaseApp, {
+      experimentalForceLongPolling: true,
+    });
+  } catch (e) {
+    // Fallback if firestore is already initialized
+    firestore = getFirestore(firebaseApp);
+  }
+
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
+    firestore
   };
 }
 
