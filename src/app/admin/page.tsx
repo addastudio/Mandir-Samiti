@@ -300,8 +300,9 @@ export default function AdminPage() {
     return allDonations.filter(d => {
       const u = combinedUserList.find(user => user.id === d.userId);
       const searchStr = donationSearch.toLowerCase();
+      const devName = (d.devoteeName || u?.name || 'Unknown').toLowerCase();
       return (
-        u?.name?.toLowerCase().includes(searchStr) ||
+        devName.includes(searchStr) ||
         d.amount?.toString().includes(searchStr) ||
         d.mode?.toLowerCase().includes(searchStr) ||
         d.status?.toLowerCase().includes(searchStr)
@@ -463,11 +464,11 @@ export default function AdminPage() {
     if (!firestore) return;
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
-    const targetUserId = formData.get("devoteeId") as string;
+    const devoteeName = formData.get("devoteeName") as string;
     const amount = Number(formData.get("amount"));
     
-    if (!targetUserId) {
-      toast({ variant: "destructive", title: "Select Devotee", description: "Please select a devotee for this record." });
+    if (!devoteeName) {
+      toast({ variant: "destructive", title: "Missing Name", description: "Please enter the devotee name." });
       setIsSubmitting(false);
       return;
     }
@@ -477,14 +478,16 @@ export default function AdminPage() {
       mode: formData.get("mode") as string,
       status: "completed",
       date: new Date().toISOString(),
-      userId: targetUserId,
+      devoteeName: devoteeName,
+      userId: null, // Pure manual record
       recordedBy: user?.uid,
       isManual: true
     };
 
-    const userDonationsRef = collection(firestore, "users", targetUserId, "donations");
-    addDocumentNonBlocking(userDonationsRef, donationData);
-    logAction("CREATE", "Manual Donation", `₹${amount} for ${combinedUserList.find(u => u.id === targetUserId)?.name}`);
+    // Store in a top-level donations collection so collectionGroup query picks it up
+    const donationsRef = collection(firestore, "donations");
+    addDocumentNonBlocking(donationsRef, donationData);
+    logAction("CREATE", "Manual Donation", `₹${amount} for ${devoteeName}`);
     toast({ title: "Donation Recorded" });
     (e.target as HTMLFormElement).reset();
     setIsSubmitting(false);
@@ -846,13 +849,8 @@ export default function AdminPage() {
                   <CardContent className="pt-6">
                     <form onSubmit={handleAddManualDonation} className="space-y-4">
                       <div className="space-y-2">
-                        <Label>{language === 'hi' ? 'भक्त चुनें' : 'Select Devotee'}</Label>
-                        <select name="devoteeId" className="w-full h-10 rounded border bg-background px-3 text-sm" required>
-                          <option value="">-- {language === 'hi' ? 'भक्त चुनें' : 'Select Devotee'} --</option>
-                          {allUsers?.map(u => (
-                            <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-                          ))}
-                        </select>
+                        <Label>{language === 'hi' ? 'भक्त का नाम' : 'Devotee Name'}</Label>
+                        <Input name="devoteeName" required placeholder={language === 'hi' ? 'नाम दर्ज करें' : 'e.g. Mr. Ram Singh'} />
                       </div>
                       <div className="space-y-2">
                         <Label>{language === 'hi' ? 'राशि (₹)' : 'Amount (₹)'}</Label>
@@ -908,12 +906,13 @@ export default function AdminPage() {
                         <TableBody>
                           {filteredDonations.map(d => {
                             const devotee = combinedUserList.find(u => u.id === d.userId);
+                            const displayName = d.devoteeName || devotee?.name || 'Unknown';
                             return (
                               <TableRow key={d.id} className="hover:bg-muted/20">
                                 <TableCell>
                                   <div className="flex flex-col">
-                                    <span className="font-bold text-xs truncate max-w-[120px]">{devotee?.name || 'Unknown'}</span>
-                                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{devotee?.email}</span>
+                                    <span className="font-bold text-xs truncate max-w-[120px]">{displayName}</span>
+                                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{devotee?.email || (d.isManual ? 'Manual Entry' : 'N/A')}</span>
                                   </div>
                                 </TableCell>
                                 <TableCell className="font-bold text-primary">₹{d.amount}</TableCell>
