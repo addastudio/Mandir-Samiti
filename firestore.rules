@@ -99,5 +99,10 @@ service cloud.firestore {
         allow read, write: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
       }
     }
+
+    // Collection Group rule for global donation management
+    match /{path=**}/donations/{donationId} {
+      allow read, write: if isAdmin();
+    }
   }
 }

@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc } from "firebase/firestore";
+import { collection, doc, collectionGroup, query } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv, Search, BarChart3, TrendingUp, UserCheck, User as UserIcon } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, ArrowLeft, Upload, Settings, Activity, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv, Search, BarChart3, TrendingUp, UserCheck, User as UserIcon, IndianRupee, HandCoins, Filter, FilterX, Download, Pencil, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -42,6 +42,14 @@ import { getEmailServiceStatus } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const ROLE_HIERARCHY: Record<string, number> = {
   'president': 100,
@@ -72,6 +80,7 @@ export default function AdminPage() {
   
   // Search and Filter States
   const [userSearch, setUserSearch] = useState("");
+  const [donationSearch, setDonationSearch] = useState("");
   
   const [pendingRoleUpdate, setPendingRoleUpdate] = useState<{
     userId: string;
@@ -103,6 +112,7 @@ export default function AdminPage() {
   // Edit States
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
+  const [editingDonation, setEditingDonation] = useState<any | null>(null);
 
   // AI Content Form States
   const [eventTitle, setEventTitle] = useState("");
@@ -186,6 +196,12 @@ export default function AdminPage() {
     return collection(firestore, "admin_activity_logs");
   }, [firestore, adminDoc]);
 
+  // Global Donation Query using Collection Group
+  const donationsGroupRef = useMemoFirebase(() => {
+    if (!firestore || !adminDoc) return null;
+    return query(collectionGroup(firestore, "donations"));
+  }, [firestore, adminDoc]);
+
   const { data: events } = useCollection(eventsRef);
   const { data: gallery } = useCollection(galleryRef);
   const { data: sevaPrograms } = useCollection(sevaRef);
@@ -196,6 +212,7 @@ export default function AdminPage() {
   const { data: notices } = useCollection(noticesRef);
   const { data: requests } = useCollection(requestsRef);
   const { data: activityLogs } = useCollection(activityLogsRef);
+  const { data: allDonations } = useCollection(donationsGroupRef);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -237,6 +254,22 @@ export default function AdminPage() {
     u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
     u.email?.toLowerCase().includes(userSearch.toLowerCase())
   );
+
+  const filteredDonations = React.useMemo(() => {
+    if (!allDonations) return [];
+    return allDonations.filter(d => {
+      const u = combinedUserList.find(user => user.id === d.userId);
+      const searchStr = donationSearch.toLowerCase();
+      return (
+        u?.name?.toLowerCase().includes(searchStr) ||
+        d.amount?.toString().includes(searchStr) ||
+        d.mode?.toLowerCase().includes(searchStr) ||
+        d.status?.toLowerCase().includes(searchStr)
+      );
+    }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [allDonations, combinedUserList, donationSearch]);
+
+  const totalCollection = allDonations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
 
   const handleAiGenerate = async (type: 'event' | 'notice') => {
     const topic = type === 'event' ? eventTitle : noticeTitle;
@@ -383,6 +416,54 @@ export default function AdminPage() {
     toast({ title: "Notice Updated" });
     setEditingNotice(null);
     setIsSubmitting(false);
+  };
+
+  const handleAddManualDonation = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!firestore) return;
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const targetUserId = formData.get("devoteeId") as string;
+    const amount = Number(formData.get("amount"));
+    
+    if (!targetUserId) {
+      toast({ variant: "destructive", title: "Select Devotee", description: "Please select a devotee for this record." });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const donationData = {
+      amount,
+      mode: formData.get("mode") as string,
+      status: "completed",
+      date: new Date().toISOString(),
+      userId: targetUserId,
+      recordedBy: user?.uid,
+      isManual: true
+    };
+
+    const userDonationsRef = collection(firestore, "users", targetUserId, "donations");
+    addDocumentNonBlocking(userDonationsRef, donationData);
+    logAction("CREATE", "Manual Donation", `₹${amount} for ${combinedUserList.find(u => u.id === targetUserId)?.name}`);
+    toast({ title: "Donation Recorded" });
+    (e.target as HTMLFormElement).reset();
+    setIsSubmitting(false);
+  };
+
+  const handleDeleteDonation = (donation: any) => {
+    if (!firestore || !donation.userId) return;
+    const donationRef = doc(firestore, "users", donation.userId, "donations", donation.id);
+    deleteDocumentNonBlocking(donationRef);
+    logAction("DELETE", "Donation", `₹${donation.amount} from ${combinedUserList.find(u => u.id === donation.userId)?.name}`);
+    toast({ title: "Donation Record Removed" });
+  };
+
+  const handleUpdateDonationStatus = (donation: any, newStatus: string) => {
+    if (!firestore || !donation.userId) return;
+    const donationRef = doc(firestore, "users", donation.userId, "donations", donation.id);
+    updateDocumentNonBlocking(donationRef, { status: newStatus });
+    logAction("UPDATE", "Donation Status", `${donation.id}: ${newStatus}`);
+    toast({ title: "Status Updated" });
   };
 
   const handleAddGallery = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -603,6 +684,9 @@ export default function AdminPage() {
               <TabsTrigger value="overview" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}
               </TabsTrigger>
+              <TabsTrigger value="donations" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <HandCoins className="h-4 w-4" /> {language === 'hi' ? 'दान संग्रह' : 'Donations'}
+              </TabsTrigger>
               <TabsTrigger value="events" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}
               </TabsTrigger>
@@ -614,9 +698,6 @@ export default function AdminPage() {
               </TabsTrigger>
               <TabsTrigger value="committee" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <UserCheck className="h-4 w-4" /> {language === 'hi' ? 'समिति' : 'Committee'}
-              </TabsTrigger>
-              <TabsTrigger value="testimonials" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Quote className="h-4 w-4" /> {language === 'hi' ? 'अनुभव' : 'Reviews'}
               </TabsTrigger>
               <TabsTrigger value="gallery" className="shrink-0 gap-2 rounded-lg border bg-background py-2 px-4 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}
@@ -641,25 +722,25 @@ export default function AdminPage() {
               <Card className="bg-primary/5 border-primary/10">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-                    {language === 'hi' ? 'कुल भक्त' : 'Total Devotees'}
-                    <Users className="h-4 w-4 text-primary" />
+                    {language === 'hi' ? 'कुल संग्रह' : 'Total Collection'}
+                    <IndianRupee className="h-4 w-4 text-primary" />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{allUsers?.length || 0}</div>
-                  <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><TrendingUp className="h-3 w-3" /> {language === 'hi' ? 'निरंतर वृद्धि' : 'Growing community'}</p>
+                  <div className="text-2xl font-bold">₹{totalCollection.toLocaleString()}</div>
+                  <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><TrendingUp className="h-3 w-3 text-green-600" /> {language === 'hi' ? 'मंदिर उन्नति कोष' : 'Temple growth fund'}</p>
                 </CardContent>
               </Card>
               <Card className="bg-accent/5 border-accent/10">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-                    {language === 'hi' ? 'आगामी कार्यक्रम' : 'Upcoming Events'}
-                    <Calendar className="h-4 w-4 text-accent" />
+                    {language === 'hi' ? 'कुल भक्त' : 'Total Devotees'}
+                    <Users className="h-4 w-4 text-accent" />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{events?.filter(e => new Date(e.date) > new Date()).length || 0}</div>
-                  <p className="text-[10px] text-muted-foreground mt-1">{language === 'hi' ? 'अगले ३० दिनों में' : 'In next 30 days'}</p>
+                  <div className="text-2xl font-bold">{allUsers?.length || 0}</div>
+                  <p className="text-[10px] text-muted-foreground mt-1">{language === 'hi' ? 'सक्रिय समुदाय' : 'Active community members'}</p>
                 </CardContent>
               </Card>
               <Card className="bg-green-50 border-green-100">
@@ -677,13 +758,13 @@ export default function AdminPage() {
               <Card className="bg-amber-50 border-amber-100">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-                    {language === 'hi' ? 'नई सूचनाएं' : 'Recent Notices'}
-                    <Bell className="h-4 w-4 text-amber-600" />
+                    {language === 'hi' ? 'आगामी कार्यक्रम' : 'Upcoming Events'}
+                    <Calendar className="h-4 w-4 text-amber-600" />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-amber-700">{notices?.filter(n => (Date.now() - new Date(n.createdAt).getTime()) < 86400000 * 7).length || 0}</div>
-                  <p className="text-[10px] text-muted-foreground mt-1">{language === 'hi' ? 'पिछले ७ दिनों में' : 'Posted this week'}</p>
+                  <div className="text-2xl font-bold text-amber-700">{events?.filter(e => new Date(e.date) > new Date()).length || 0}</div>
+                  <p className="text-[10px] text-muted-foreground mt-1">{language === 'hi' ? 'अगले ३० दिनों में' : 'In next 30 days'}</p>
                 </CardContent>
               </Card>
             </div>
@@ -722,6 +803,134 @@ export default function AdminPage() {
                   })}
                 </CardContent>
               </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="donations" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-4">
+                <Card className="border-primary/20 shadow-md h-fit sticky top-20">
+                  <CardHeader className="bg-primary/5">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Plus className="h-5 w-5 text-primary" />
+                      {language === 'hi' ? 'नया दान दर्ज करें' : 'Record Manual Donation'}
+                    </CardTitle>
+                    <CardDescription>
+                      {language === 'hi' ? 'कैश या चेक के माध्यम से प्राप्त दान यहाँ दर्ज करें।' : 'For cash or check donations received at the temple.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <form onSubmit={handleAddManualDonation} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>{language === 'hi' ? 'भक्त चुनें' : 'Select Devotee'}</Label>
+                        <select name="devoteeId" className="w-full h-10 rounded border bg-background px-3 text-sm" required>
+                          <option value="">-- {language === 'hi' ? 'भक्त चुनें' : 'Select Devotee'} --</option>
+                          {allUsers?.map(u => (
+                            <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{language === 'hi' ? 'राशि (₹)' : 'Amount (₹)'}</Label>
+                        <Input name="amount" type="number" required placeholder="e.g. 501" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{language === 'hi' ? 'माध्यम' : 'Payment Mode'}</Label>
+                        <select name="mode" className="w-full h-10 rounded border bg-background px-3 text-sm">
+                          <option value="Cash">Cash (नकद)</option>
+                          <option value="Check">Check (चेक)</option>
+                          <option value="Direct Transfer">Direct Bank Transfer</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <HandCoins className="h-4 w-4 mr-2" />}
+                        {language === 'hi' ? 'रिकॉर्ड सहेजें' : 'Save Record'}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="lg:col-span-8 space-y-4">
+                <Card className="shadow-sm overflow-hidden">
+                  <CardHeader className="bg-muted/30 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <CardTitle className="text-lg">{language === 'hi' ? 'दान संग्रह लेजर' : 'Donation Ledger'}</CardTitle>
+                      <CardDescription>{language === 'hi' ? 'सभी ऑनलाइन और मैन्युअल रिकॉर्ड।' : 'All online and manual contribution records.'}</CardDescription>
+                    </div>
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        placeholder={language === 'hi' ? 'खोजें...' : 'Search records...'} 
+                        className="pl-9 h-9 text-xs" 
+                        value={donationSearch}
+                        onChange={(e) => setDonationSearch(e.target.value)}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="w-full overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/10">
+                            <TableHead className="w-[150px]">{language === 'hi' ? 'भक्त' : 'Devotee'}</TableHead>
+                            <TableHead>{language === 'hi' ? 'राशि' : 'Amount'}</TableHead>
+                            <TableHead>{language === 'hi' ? 'तारीख' : 'Date'}</TableHead>
+                            <TableHead>{language === 'hi' ? 'माध्यम' : 'Mode'}</TableHead>
+                            <TableHead>{language === 'hi' ? 'स्थिति' : 'Status'}</TableHead>
+                            <TableHead className="text-right">{language === 'hi' ? 'क्रिया' : 'Actions'}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredDonations.map(d => {
+                            const devotee = combinedUserList.find(u => u.id === d.userId);
+                            return (
+                              <TableRow key={d.id} className="hover:bg-muted/20">
+                                <TableCell>
+                                  <div className="flex flex-col">
+                                    <span className="font-bold text-xs truncate max-w-[120px]">{devotee?.name || 'Unknown'}</span>
+                                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{devotee?.email}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="font-bold text-primary">₹{d.amount}</TableCell>
+                                <TableCell className="text-[10px] opacity-70">{new Date(d.date).toLocaleDateString()}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="text-[9px] uppercase tracking-tighter h-5">{d.mode}</Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge className={cn("text-[9px] uppercase h-5", d.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
+                                    {d.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-7 w-7 text-destructive" 
+                                      onClick={() => handleDeleteDonation(d)}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          {filteredDonations.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">
+                                {language === 'hi' ? 'कोई रिकॉर्ड नहीं मिला।' : 'No records found.'}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
