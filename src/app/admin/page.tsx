@@ -71,8 +71,8 @@ export default function AdminPage() {
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   
-  // Default User Profile
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
+  // Default Standard Neutral Avatar
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
 
   // Search and Filter States
   const [userSearch, setUserSearch] = useState("");
@@ -162,6 +162,11 @@ export default function AdminPage() {
 
   const membersRef = useMemoFirebase(() => {
     if (!firestore || !adminDoc) return null;
+    return doc(firestore, "mandir_samiti_members", "list"); // Placeholder for complex member management if needed, but current logic uses collection
+  }, [firestore, adminDoc]);
+
+  const membersColRef = useMemoFirebase(() => {
+    if (!firestore || !adminDoc) return null;
     return collection(firestore, "mandir_samiti_members");
   }, [firestore, adminDoc]);
 
@@ -194,7 +199,7 @@ export default function AdminPage() {
   const { data: gallery } = useCollection(galleryRef);
   const { data: sevaPrograms } = useCollection(sevaRef);
   const { data: testimonials } = useCollection(testimonialsRef);
-  const { data: committeeMembers } = useCollection(membersRef);
+  const { data: committeeMembers } = useCollection(membersColRef);
   const { data: allUsers } = useCollection(usersRef);
   const { data: allAdmins } = useCollection(adminsRef);
   const { data: notices } = useCollection(noticesRef);
@@ -436,7 +441,7 @@ export default function AdminPage() {
 
   const handleAddMember = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!membersRef) return;
+    if (!membersColRef) return;
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
@@ -445,7 +450,7 @@ export default function AdminPage() {
       role: formData.get("role") as string,
       displayOrder: Number(formData.get("displayOrder") || 0),
     };
-    addDocumentNonBlocking(membersRef, memberData);
+    addDocumentNonBlocking(membersColRef, memberData);
     logAction("CREATE", "Committee Member", name);
     toast({ title: "Member Added" });
     (e.target as HTMLFormElement).reset();

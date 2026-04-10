@@ -57,8 +57,8 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [isEmailLive, setIsEmailLive] = useState(false);
   
-  // Default User Photo
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
+  // Default Standard Neutral Avatar
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
 
   const [isVerificationStep, setIsVerificationStep] = useState(false);
   const [otp, setOtp] = useState("");
@@ -255,7 +255,7 @@ export default function LoginPage() {
         };
         await setDoc(userDocRef, userData, { merge: true });
       } else {
-        await updateDoc(userDocRef, { isVerified: true });
+        await updateDoc(userDocRef, { isVerified: true, photoURL: photoToUse });
       }
 
       await updateProfile(tempUserForPassword, { photoURL: photoToUse });

@@ -48,8 +48,8 @@ export default function SignupPage() {
   const [mounted, setMounted] = useState(false);
   const [isEmailLive, setIsEmailLive] = useState(false);
 
-  // Default User Avatar
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
+  // Default Standard Neutral Avatar
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
 
   // OTP Step State
   const [isOtpStep, setIsOtpStep] = useState(false);
@@ -261,7 +261,7 @@ export default function SignupPage() {
         };
         await setDoc(userDocRef, userData, { merge: true });
       } else {
-        await updateDoc(userDocRef, { isVerified: true });
+        await updateDoc(userDocRef, { isVerified: true, photoURL: photoToUse });
       }
 
       await updateProfile(tempUserForPassword, { photoURL: photoToUse });

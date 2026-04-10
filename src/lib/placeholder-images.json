@@ -104,9 +104,9 @@
     },
     {
       "id": "default-user-avatar",
-      "description": "Standard default avatar for temple website users.",
-      "imageUrl": "https://picsum.photos/seed/standard-avatar/200/200",
-      "imageHint": "user avatar"
+      "description": "Standard neutral avatar for all users.",
+      "imageUrl": "https://picsum.photos/seed/profile-neutral/200/200",
+      "imageHint": "neutral person"
     }
   ]
 }

@@ -49,8 +49,8 @@ function DashboardContent() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
 
-  // Default User Profile Photo - Neutral Standard Avatar
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/standard-avatar/200/200", []);
+  // Default Standard Neutral Avatar
+  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
 
   // Profile Form States
   const [profileName, setProfileName] = useState("");
@@ -141,13 +141,13 @@ function DashboardContent() {
     try {
       await updateProfile(user, {
         displayName: profileName,
-        photoURL: profilePhotoPreview
+        photoURL: profilePhotoPreview || defaultUserPhoto
       });
 
       const userRef = doc(firestore, "users", user.uid);
       await updateDoc(userRef, {
         name: profileName,
-        photoURL: profilePhotoPreview
+        photoURL: profilePhotoPreview || defaultUserPhoto
       });
 
       toast({ title: "Success", description: t.dashboardProfileSuccess });
@@ -162,6 +162,7 @@ function DashboardContent() {
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
     
+    // Only block deletion if they are an active admin in the administrative registry
     if (adminDoc) {
       toast({ 
         variant: "destructive", 
@@ -325,7 +326,7 @@ function DashboardContent() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary shadow-sm">
-                <AvatarImage src={user.photoURL || userProfile?.photoURL || defaultUserPhoto} />
+                <AvatarImage src={profilePhotoPreview || user.photoURL || userProfile?.photoURL || defaultUserPhoto} />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
                   {user.displayName?.charAt(0) || user.email?.charAt(0)}
                 </AvatarFallback>
@@ -632,7 +633,7 @@ function DashboardContent() {
                           onClick={() => document.getElementById('profile-img-input')?.click()}
                         >
                           <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-xl ring-1 ring-primary/10">
-                            <AvatarImage src={profilePhotoPreview || defaultUserPhoto} />
+                            <AvatarImage src={profilePhotoPreview || user.photoURL || userProfile?.photoURL || defaultUserPhoto} />
                             <AvatarFallback className="bg-primary/5 text-primary text-3xl font-bold">
                               {user.displayName?.charAt(0) || user.email?.charAt(0)}
                             </AvatarFallback>
