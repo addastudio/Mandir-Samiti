@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
@@ -23,14 +24,20 @@ import {
   Facebook,
   Instagram,
   Youtube,
+  ShieldCheck,
 } from "lucide-react";
+import { RecaptchaWidget } from "@/components/RecaptchaWidget";
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
   const { t, language } = useLanguage();
 
   return (
-    <Button type="submit" disabled={pending} className={cn('w-full sm:w-auto min-w-[140px] font-bold h-11 sm:h-12', language === 'hi' ? 'font-hindi text-lg' : '')}>
+    <Button 
+      type="submit" 
+      disabled={pending || disabled} 
+      className={cn('w-full sm:w-auto min-w-[140px] font-bold h-11 sm:h-12', language === 'hi' ? 'font-hindi text-lg' : '')}
+    >
       {pending ? (language === 'hi' ? "भेज रहा है..." : "Sending...") : t.contactFormSend}
     </Button>
   );
@@ -42,6 +49,7 @@ export function ContactSection() {
   const initialState = { message: "", success: false, errors: {} };
   const [state, formAction] = useActionState(submitContactForm, initialState);
   const [formKey, setFormKey] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
     if(state.message) {
@@ -51,6 +59,13 @@ export function ContactSection() {
           description: t.contactFormSuccess,
         });
         setFormKey(prev => prev + 1); 
+        setCaptchaToken(null);
+      } else if (state.message.includes("Captcha")) {
+        toast({
+          variant: "destructive",
+          title: language === 'hi' ? "सुरक्षा जांच विफल" : "Security Check Failed",
+          description: t.captchaError,
+        });
       }
     }
   }, [state, toast, t, language]);
@@ -127,22 +142,38 @@ export function ContactSection() {
               </CardHeader>
               <CardContent className="p-5 sm:p-8">
                 <form key={formKey} action={formAction} className="space-y-5">
+                  <input type="hidden" name="captchaToken" value={captchaToken || ""} />
+                  
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <Input name="name" placeholder={t.contactFormName} className={cn("h-11 sm:h-12 bg-secondary/30", language === 'hi' ? 'font-hindi' : '')} />
+                      <Input name="name" placeholder={t.contactFormName} className={cn("h-11 sm:h-12 bg-secondary/30", language === 'hi' ? 'font-hindi' : '')} required />
                       {state.errors?.name && <p className="text-xs font-medium text-destructive">{state.errors.name[0]}</p>}
                     </div>
                     <div className="space-y-2">
-                      <Input name="email" type="email" placeholder={t.contactFormEmail} className={cn("h-11 sm:h-12 bg-secondary/30", language === 'hi' ? 'font-hindi' : '')} />
+                      <Input name="email" type="email" placeholder={t.contactFormEmail} className={cn("h-11 sm:h-12 bg-secondary/30", language === 'hi' ? 'font-hindi' : '')} required />
                        {state.errors?.email && <p className="text-xs font-medium text-destructive">{state.errors.email[0]}</p>}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Textarea name="message" placeholder={t.contactFormMessage} className={cn("min-h-[140px] sm:min-h-[160px] bg-secondary/30 resize-none", language === 'hi' ? 'font-hindi' : '')} />
+                    <Textarea name="message" placeholder={t.contactFormMessage} className={cn("min-h-[140px] sm:min-h-[160px] bg-secondary/30 resize-none", language === 'hi' ? 'font-hindi' : '')} required />
                      {state.errors?.message && <p className="text-xs font-medium text-destructive">{state.errors.message[0]}</p>}
                   </div>
+
+                  <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
+                    <div className="flex items-center gap-2 mb-3 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                      <ShieldCheck className="h-3 w-3 text-primary" />
+                      {language === 'hi' ? 'सुरक्षा जांच' : 'Security Verification'}
+                    </div>
+                    <RecaptchaWidget onChange={(token) => setCaptchaToken(token)} />
+                    {!captchaToken && (
+                      <p className="text-[10px] text-center text-primary font-bold italic mt-2 animate-pulse">
+                        {t.captchaRequired}
+                      </p>
+                    )}
+                  </div>
+
                   <div className="pt-2">
-                    <SubmitButton />
+                    <SubmitButton disabled={!captchaToken} />
                   </div>
                 </form>
               </CardContent>

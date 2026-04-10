@@ -43,6 +43,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { RecaptchaWidget } from "@/components/RecaptchaWidget";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -55,6 +56,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isEmailLive, setIsEmailLive] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   
   const [isVerificationStep, setIsVerificationStep] = useState(false);
   const [otp, setOtp] = useState("");
@@ -91,7 +93,10 @@ export default function LoginPage() {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth || !firestore) return;
+    if (!auth || !firestore || !captchaToken) {
+      toast({ variant: "destructive", title: t.captchaRequired });
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -113,7 +118,7 @@ export default function LoginPage() {
         setStoredOtp(currentOtp);
         setIsVerificationStep(true);
         setResendCooldown(60);
-        await sendVerificationOtp(email, currentOtp);
+        await sendVerificationOtp(email, currentOtp, captchaToken);
         
         toast({
           title: language === 'hi' ? 'सत्यापन आवश्यक' : 'Verification Required',
@@ -140,14 +145,14 @@ export default function LoginPage() {
   };
 
   const handleResendOtp = async () => {
-    if (!firestore || !tempUserId || !email || resendCooldown > 0) return;
+    if (!firestore || !tempUserId || !email || resendCooldown > 0 || !captchaToken) return;
     setIsResending(true);
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
     try {
       const userDocRef = doc(firestore, "users", tempUserId);
       await updateDoc(userDocRef, { verificationOtp: newOtp });
       setStoredOtp(newOtp);
-      await sendVerificationOtp(email, newOtp);
+      await sendVerificationOtp(email, newOtp, captchaToken);
       
       toast({
         title: t.signupOtpSent,
@@ -499,8 +504,17 @@ export default function LoginPage() {
                 </Dialog>
               </div>
             </div>
+
+            <div className="bg-muted/30 p-3 rounded-lg border">
+              <div className="flex items-center gap-2 mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                <ShieldCheck className="h-3 w-3 text-primary" />
+                {language === 'hi' ? 'सुरक्षा सत्यापन' : 'Security Verification'}
+              </div>
+              <RecaptchaWidget onChange={(token) => setCaptchaToken(token)} />
+            </div>
+
             {error && <p className="text-sm text-destructive font-medium p-2 rounded bg-destructive/5">{error}</p>}
-            <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading}>
+            <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading || !captchaToken}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : (language === "hi" ? "लॉग इन करें" : "Login")}
             </Button>
           </form>

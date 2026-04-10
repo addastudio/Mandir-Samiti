@@ -225,6 +225,10 @@ export type TranslationKeys = {
   adminConfirmAdminToggleTitle: string;
   adminConfirmAdminAddDesc: string;
   adminConfirmAdminRemoveDesc: string;
+
+  // Security
+  captchaRequired: string;
+  captchaError: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -419,6 +423,8 @@ export const translations: { [key: string]: TranslationKeys } = {
     adminConfirmAdminToggleTitle: 'व्यवस्थापक पहुँच की पुष्टि करें',
     adminConfirmAdminAddDesc: 'क्या आप वाकई {{name}} को प्रशासनिक पहुँच देना चाहते हैं?',
     adminConfirmAdminRemoveDesc: 'क्या आप वाकई {{name}} से प्रशासनिक पहुँच हटाना चाहते हैं?',
+    captchaRequired: 'कृपया कैप्चा पूरा करें।',
+    captchaError: 'कैप्चा सत्यापन विफल रहा। कृपया पुनः प्रयास करें।',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -450,7 +456,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     member3Name: 'Mr. Mohan Verma',
     member3Role: 'Secretary',
     eventsTitle: 'Pujas & Events',
-    eventsDailyPuja: 'Daily Puja Timings',
+    eventsDaily Puja: 'Daily Puja Timings',
     pujaTimeMorning: 'Morning Aarti: 6:00 AM',
     pujaTimeEvening: 'Evening Aarti: 7:00 PM',
     eventsAnnual: 'Annual Festivals',
@@ -470,7 +476,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     testimonial1: 'This temple gives me peace and solace. The committee members are very supportive.',
     testimonial1Name: 'Sunita Sharma',
     testimonial2: 'The Bhandara program is a wonderful initiative. It’s a great way to serve the community.',
-    testimonial2Name: 'Rajesh कुमार',
+    testimonial2Name: 'Rajesh Kumar',
     testimonial3: 'The festival celebrations here are amazing. It brings all of us together.',
     testimonial3Name: 'Amit Patel',
     donateTitle: 'Support Our Temple & Community',
@@ -511,7 +517,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     footerCopyright: '© Mandir Samiti Bahpura 2025. All rights reserved.',
     footerQuickLinks: 'Quick Links',
     backToHome: 'Back to Home',
-    browseWebsite: 'Browse Website',
+    browse Website: 'Browse Website',
     noticesTitle: 'Notice Board',
     noticesAdd: 'Add New Notice',
     noticesUrgent: 'Urgent',
@@ -611,5 +617,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     adminConfirmAdminToggleTitle: 'Confirm Admin Access',
     adminConfirmAdminAddDesc: 'Are you sure you want to grant administrative access to {{name}}?',
     adminConfirmAdminRemoveDesc: 'Are you sure you want to remove administrative access from {{name}}?',
+    captchaRequired: 'Please complete the captcha.',
+    captchaError: 'Captcha verification failed. Please try again.',
   },
 };

@@ -1,3 +1,4 @@
+
 "use server";
 
 import { z } from "zod";
@@ -11,7 +12,32 @@ const contactSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
   message: z.string().min(10, { message: "Message must be at least 10 characters." }),
+  captchaToken: z.string().min(1, { message: "Captcha is required." }),
 });
+
+/**
+ * Verifies a reCAPTCHA token with Google's API.
+ */
+async function verifyRecaptcha(token: string | null) {
+  if (!token) return false;
+  
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secretKey) {
+    console.warn("RECAPTCHA_SECRET_KEY is missing. In development mode with testing keys, this might always pass.");
+    return true; // Allow in dev if not strictly configured
+  }
+
+  try {
+    const response = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`, {
+      method: 'POST',
+    });
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error("Recaptcha verification error:", error);
+    return false;
+  }
+}
 
 /**
  * Checks which payment gateways are active based on available API keys.
@@ -38,12 +64,22 @@ export async function submitContactForm(prevState: any, formData: FormData) {
     name: formData.get("name"),
     email: formData.get("email"),
     message: formData.get("message"),
+    captchaToken: formData.get("captchaToken"),
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: "Validation failed.",
+      success: false,
+    };
+  }
+
+  // Verify reCAPTCHA
+  const isCaptchaValid = await verifyRecaptcha(validatedFields.data.captchaToken);
+  if (!isCaptchaValid) {
+    return {
+      message: "Security check failed. Please refresh and try again.",
       success: false,
     };
   }
@@ -82,7 +118,15 @@ export async function submitContactForm(prevState: any, formData: FormData) {
 /**
  * Sends a verification OTP to the user's email.
  */
-export async function sendVerificationOtp(email: string, otp: string) {
+export async function sendVerificationOtp(email: string, otp: string, captchaToken?: string) {
+  // If a captcha token is provided, verify it before sending
+  if (captchaToken) {
+    const isCaptchaValid = await verifyRecaptcha(captchaToken);
+    if (!isCaptchaValid) {
+      return { success: false, message: "Captcha verification failed." };
+    }
+  }
+
   if (resend) {
     try {
       const { data, error } = await resend.emails.send({

@@ -33,6 +33,7 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle, MailCheck } from "lucide-react";
 import { sendVerificationOtp, getEmailServiceStatus } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RecaptchaWidget } from "@/components/RecaptchaWidget";
 
 export default function SignupPage() {
   const { t, language } = useLanguage();
@@ -46,6 +47,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isEmailLive, setIsEmailLive] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // OTP Step State
   const [isOtpStep, setIsOtpStep] = useState(false);
@@ -81,6 +83,10 @@ export default function SignupPage() {
 
   const handleInitiateSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!captchaToken) {
+      toast({ variant: "destructive", title: t.captchaRequired });
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -93,7 +99,11 @@ export default function SignupPage() {
     try {
       const newOtp = generateRandomOtp();
       setGeneratedOtp(newOtp);
-      await sendVerificationOtp(email, newOtp);
+      const res = await sendVerificationOtp(email, newOtp, captchaToken);
+
+      if (res.success === false) {
+        throw new Error(res.message || "Signup initiation failed.");
+      }
 
       toast({
         title: language === 'hi' ? 'सत्यापन संदेश भेजा गया' : 'Verification Sent',
@@ -106,18 +116,19 @@ export default function SignupPage() {
       setResendCooldown(60);
     } catch (err: any) {
       setError(err.message);
+      toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResendOtp = async () => {
-    if (resendCooldown > 0) return;
+    if (resendCooldown > 0 || !captchaToken) return;
     setIsResending(true);
     const newOtp = generateRandomOtp();
     try {
       setGeneratedOtp(newOtp);
-      await sendVerificationOtp(email, newOtp);
+      await sendVerificationOtp(email, newOtp, captchaToken);
       
       toast({
         title: t.signupOtpSent,
@@ -395,7 +406,7 @@ export default function SignupPage() {
                   variant="outline" 
                   onClick={handleResendOtp} 
                   className="w-full h-12 gap-2" 
-                  disabled={isResending || resendCooldown > 0}
+                  disabled={isResending || resendCooldown > 0 || !captchaToken}
                 >
                   {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                   {language === 'hi' ? 'नया कोड भेजें' : 'Resend Code'}
@@ -450,8 +461,17 @@ export default function SignupPage() {
                 </Button>
               </div>
             </div>
+
+            <div className="pt-2 border-t mt-4">
+              <div className="flex items-center gap-2 mb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                <ShieldCheck className="h-3 w-3 text-primary" />
+                {language === 'hi' ? 'सुरक्षा सत्यापन' : 'Security Verification'}
+              </div>
+              <RecaptchaWidget onChange={(token) => setCaptchaToken(token)} />
+            </div>
+
             {error && <p className="text-sm text-destructive font-medium p-2 rounded bg-destructive/5">{error}</p>}
-            <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading}>
+            <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading || !captchaToken}>
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : (language === 'hi' ? "साइन अप शुरू करें" : "Start Signup")}
             </Button>
           </form>
