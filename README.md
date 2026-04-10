@@ -14,7 +14,8 @@ This is a professional, bilingual (Hindi/English) website for the Mandir Samiti 
 - [Technical Specification](./docs/TECHNICAL_SPECIFICATION.md): **Full Flowcharts, Pseudocode, and Architecture.**
 - [Website Details](./docs/WEBSITE_DETAILS.md): Architecture and Design overview.
 - [Zero-Cost Plan](./docs/ZERO_COST_PLAN.md): Recommended plan for non-profits to host for free.
-- [Supabase Alternative](./docs/SUPABASE_PLAN.md): Alternative backend roadmap using Supabase.
+- [Supabase Alternative](./docs/SUPABASE_PLAN.md): Alternative backend roadmap overview.
+- [Supabase Guide](./docs/SUPABASE_GUIDE.md): **Step-by-step implementation guide for Supabase.**
 - [Migration Guide](./docs/MIGRATION_GUIDE.md): Full instructions for GitHub and Production deployment.
 
 ## Tech Stack
@@ -25,3 +26,4 @@ This is a professional, bilingual (Hindi/English) website for the Mandir Samiti 
 - **Styling:** Tailwind CSS + ShadCN UI
 - **Payments:** Stripe & Cashfree
 - **Email:** Resend
+
