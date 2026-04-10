@@ -214,6 +214,13 @@ export type TranslationKeys = {
   signupGooglePasswordDesc: string;
   signupGooglePasswordBtn: string;
 
+  // Login
+  loginForgotPassword: string;
+  loginResetPassword: string;
+  loginResetDesc: string;
+  loginResetSuccess: string;
+  loginResetError: string;
+
   // Admin Confirmations
   adminConfirmAdminToggleTitle: string;
   adminConfirmAdminAddDesc: string;
@@ -404,6 +411,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     signupGooglePasswordTitle: 'खाता सुरक्षित करें',
     signupGooglePasswordDesc: 'भविष्य में खाता हटाने जैसी संवेदनशील कार्रवाइयों के लिए कृपया एक पासवर्ड सेट करें।',
     signupGooglePasswordBtn: 'पासवर्ड सेट करें और आगे बढ़ें',
+    loginForgotPassword: 'पासवर्ड भूल गए?',
+    loginResetPassword: 'पासवर्ड रीसेट करें',
+    loginResetDesc: 'पासवर्ड रीसेट लिंक प्राप्त करने के लिए अपना ईमेल दर्ज करें।',
+    loginResetSuccess: 'रीसेट ईमेल भेज दिया गया है! कृपया अपना इनबॉक्स जांचें।',
+    loginResetError: 'रीसेट ईमेल नहीं भेजा जा सका। कृपया पते की पुष्टि करें।',
     adminConfirmAdminToggleTitle: 'व्यवस्थापक पहुँच की पुष्टि करें',
     adminConfirmAdminAddDesc: 'क्या आप वाकई {{name}} को प्रशासनिक पहुँच देना चाहते हैं?',
     adminConfirmAdminRemoveDesc: 'क्या आप वाकई {{name}} से प्रशासनिक पहुँच हटाना चाहते हैं?',
@@ -591,6 +603,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     signupGooglePasswordTitle: 'Secure Your Account',
     signupGooglePasswordDesc: 'Please set a password for sensitive actions like account deletion in the future.',
     signupGooglePasswordBtn: 'Set Password & Continue',
+    loginForgotPassword: 'Forgot Password?',
+    loginResetPassword: 'Reset Password',
+    loginResetDesc: 'Enter your email to receive a password reset link.',
+    loginResetSuccess: 'Reset email sent! Please check your inbox.',
+    loginResetError: 'Could not send reset email. Please verify the address.',
     adminConfirmAdminToggleTitle: 'Confirm Admin Access',
     adminConfirmAdminAddDesc: 'Are you sure you want to grant administrative access to {{name}}?',
     adminConfirmAdminRemoveDesc: 'Are you sure you want to remove administrative access from {{name}}?',

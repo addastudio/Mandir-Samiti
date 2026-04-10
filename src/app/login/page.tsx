@@ -25,15 +25,25 @@ import {
   linkWithCredential,
   EmailAuthProvider,
   type User,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle, MailCheck } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle, MailCheck, KeyRound } from "lucide-react";
 import { sendVerificationOtp, getEmailServiceStatus } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function LoginPage() {
   const { t, language } = useLanguage();
@@ -56,6 +66,11 @@ export default function LoginPage() {
   const [tempUserId, setTempUserId] = useState("");
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Reset Password State
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   // Google Password Step State
   const [isSettingPasswordAfterGoogle, setIsSettingPasswordAfterGoogle] = useState(false);
@@ -255,6 +270,29 @@ export default function LoginPage() {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth || !resetEmail) return;
+    setIsResetting(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({
+        title: t.loginResetPassword,
+        description: t.loginResetSuccess,
+      });
+      setIsResetDialogOpen(false);
+      setResetEmail("");
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: t.loginResetError,
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   if (!mounted) return null;
 
   if (isSettingPasswordAfterGoogle) {
@@ -416,7 +454,48 @@ export default function LoginPage() {
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{language === "hi" ? "पासवर्ड" : "Password"}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{language === "hi" ? "पासवर्ड" : "Password"}</Label>
+                <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      type="button" 
+                      variant="link" 
+                      className="px-0 h-auto text-xs font-medium text-primary"
+                    >
+                      {t.loginForgotPassword}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="w-[95%] max-w-sm">
+                    <DialogHeader>
+                      <div className="mx-auto h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+                        <KeyRound className="h-6 w-6 text-primary" />
+                      </div>
+                      <DialogTitle className={cn("text-center", language === 'hi' ? 'font-hindi' : '')}>{t.loginResetPassword}</DialogTitle>
+                      <DialogDescription className={cn("text-center", language === 'hi' ? 'font-hindi' : '')}>
+                        {t.loginResetDesc}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handlePasswordReset} className="space-y-4 pt-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-email">{t.contactFormEmail}</Label>
+                        <Input 
+                          id="reset-email" 
+                          type="email" 
+                          value={resetEmail} 
+                          onChange={(e) => setResetEmail(e.target.value)} 
+                          required 
+                          placeholder="devotee@example.com"
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isResetting || !resetEmail}>
+                        {isResetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        {t.loginResetPassword}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
               <div className="relative">
                 <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-10" />
                 <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 text-muted-foreground" onClick={() => setShowPassword(!showPassword)}>
