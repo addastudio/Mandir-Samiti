@@ -94,12 +94,13 @@ export function HeroSection() {
         </div>
       </div>
 
-      <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 z-10 hidden xs:flex flex-col items-center gap-2 group cursor-pointer">
+      {/* Scroll Down Indicator */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 group cursor-pointer">
         <a href="#notices" aria-label="Scroll down" className="flex flex-col items-center gap-1">
-          <span className="text-[10px] uppercase font-bold tracking-[0.3em] text-white/50 group-hover:text-white transition-colors">
+          <span className="text-[10px] uppercase font-bold tracking-[0.3em] text-white/60 group-hover:text-white transition-colors">
             {language === 'hi' ? 'नीचे जाएँ' : 'Discover'}
           </span>
-          <ArrowDown className="h-5 w-5 sm:h-6 sm:w-6 animate-bounce text-white/70 group-hover:text-white transition-colors" />
+          <ArrowDown className="h-5 w-5 sm:h-6 sm:w-6 animate-bounce text-white/80 group-hover:text-white transition-colors" />
         </a>
       </div>
     </section>
