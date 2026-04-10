@@ -201,6 +201,7 @@ export type TranslationKeys = {
   authErrorGeneric: string;
   authError2FAPin: string;
   authErrorInvalidCredential: string;
+  authErrorUnauthorizedDomain: string;
 
   // Signup
   signupEmailSent: string;
@@ -393,6 +394,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     authErrorGeneric: 'एक अनपेक्षित त्रुटि हुई। कृपया बाद में पुनः प्रयास करें।',
     authError2FAPin: 'अमान्य पिन। कृपया पुनः प्रयास करें।',
     authErrorInvalidCredential: 'अमान्य ईमेल या पासवर्ड। कृपया पुनः प्रयास करें।',
+    authErrorUnauthorizedDomain: 'यह डोमेन Google लॉगिन के लिए अधिकृत नहीं है। कृपया Firebase कंसोल में अपना डोमेन (Authorized domains) जोड़ें।',
     signupEmailSent: 'सत्यापन ईमेल भेज दिया गया है। कृपया अपना इनबॉक्स जांचें।',
     signupOtpTitle: 'खाता सत्यापन',
     signupOtpDescription: 'कृपया आपके ईमेल पर भेजा गया 6-अंकीय सत्यापन कोड (OTP) दर्ज करें।',
@@ -579,6 +581,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     authErrorGeneric: 'An unexpected error occurred. Please try again later.',
     authError2FAPin: 'Invalid PIN. Please try again.',
     authErrorInvalidCredential: 'Invalid email or password. Please try again.',
+    authErrorUnauthorizedDomain: 'This domain is not authorized for Google Sign-in. Please add your domain to the "Authorized domains" list in the Firebase Console.',
     signupEmailSent: 'Verification email sent. Please check your inbox.',
     signupOtpTitle: 'Account Verification',
     signupOtpDescription: 'Please enter the 6-digit verification code (OTP) sent to your email.',

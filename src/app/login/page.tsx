@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -199,8 +200,14 @@ export default function LoginPage() {
         setIsLoading(false);
         return;
       }
-      setError(err.message);
-      toast({ variant: "destructive", title: "Login failed", description: err.message });
+      
+      let errorMessage = err.message;
+      if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = t.authErrorUnauthorizedDomain;
+      }
+      
+      setError(errorMessage);
+      toast({ variant: "destructive", title: "Login failed", description: errorMessage });
     } finally {
       setIsLoading(false);
     }
