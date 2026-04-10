@@ -33,7 +33,6 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Progress } from "@/components/ui/progress";
 
 function DashboardContent() {
   const { user, isUserLoading } = useUser();
@@ -213,50 +212,75 @@ function DashboardContent() {
     if (amount >= 100000) {
       return { 
         label: t.dashboardTierGrandPatron, 
-        color: 'bg-indigo-600 text-white shadow-indigo-200', 
+        badge: 'bg-indigo-600 text-white shadow-indigo-200 ring-2 ring-indigo-400', 
         icon: Crown,
         progress: 100,
         nextTier: null,
-        needed: 0
+        needed: 0,
+        variant: 'grand-patron',
+        glow: 'shadow-[0_0_25px_rgba(79,70,229,0.25)]',
+        barColor: 'bg-indigo-600',
+        textColor: 'text-indigo-900',
+        bgTheme: 'bg-indigo-50/50'
       };
     }
     if (amount >= 10000) {
       return { 
         label: t.dashboardTierGuardian, 
-        color: 'bg-emerald-600 text-white shadow-emerald-200', 
+        badge: 'bg-emerald-600 text-white shadow-emerald-200 ring-1 ring-emerald-400', 
         icon: Shield,
         progress: ((amount - 10000) / (100000 - 10000)) * 100,
         nextTier: t.dashboardTierGrandPatron,
-        needed: 100000 - amount
+        needed: 100000 - amount,
+        variant: 'guardian',
+        glow: 'shadow-[0_0_15px_rgba(16,185,129,0.15)]',
+        barColor: 'bg-emerald-600',
+        textColor: 'text-emerald-900',
+        bgTheme: 'bg-emerald-50/30'
       };
     }
     if (amount >= 5000) {
       return { 
         label: t.dashboardTierPatron, 
-        color: 'bg-primary text-primary-foreground shadow-primary/20', 
+        badge: 'bg-primary text-primary-foreground shadow-primary/30 ring-1 ring-primary/20', 
         icon: Sparkles,
         progress: ((amount - 5000) / (10000 - 5000)) * 100,
         nextTier: t.dashboardTierGuardian,
-        needed: 10000 - amount
+        needed: 10000 - amount,
+        variant: 'patron',
+        glow: 'shadow-[0_0_15px_rgba(245,158,11,0.2)]',
+        barColor: 'bg-primary',
+        textColor: 'text-primary',
+        bgTheme: 'bg-primary/5'
       };
     }
     if (amount >= 1000) {
       return { 
         label: t.dashboardTierPillar, 
-        color: 'bg-amber-100 text-amber-700 border-amber-200', 
+        badge: 'bg-amber-100 text-amber-700 border-amber-200 shadow-amber-50', 
         icon: Star,
         progress: ((amount - 1000) / (5000 - 1000)) * 100,
         nextTier: t.dashboardTierPatron,
-        needed: 5000 - amount
+        needed: 5000 - amount,
+        variant: 'pillar',
+        glow: '',
+        barColor: 'bg-amber-500',
+        textColor: 'text-amber-800',
+        bgTheme: 'bg-amber-50/20'
       };
     }
     return { 
       label: t.dashboardTierSupporter, 
-      color: 'bg-secondary text-secondary-foreground border-border/50', 
+      badge: 'bg-secondary text-secondary-foreground border-border/50', 
       icon: Heart,
       progress: (amount / 1000) * 100,
       nextTier: t.dashboardTierPillar,
-      needed: 1000 - amount
+      needed: 1000 - amount,
+      variant: 'supporter',
+      glow: '',
+      barColor: 'bg-muted-foreground/40',
+      textColor: 'text-muted-foreground',
+      bgTheme: 'bg-transparent'
     };
   };
 
@@ -324,7 +348,7 @@ function DashboardContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 space-y-6">
-            <Card className="border-primary/20 shadow-md overflow-hidden">
+            <Card className={cn("border-primary/20 shadow-md overflow-hidden transition-all duration-500", tier.glow, tier.bgTheme)}>
               <CardHeader className="bg-primary/5 py-4 px-5 flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">{t.dashboardProfileInfo}</CardTitle>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleRefreshStatus} disabled={isRefreshing}>
@@ -332,41 +356,49 @@ function DashboardContent() {
                 </Button>
               </CardHeader>
               <CardContent className="pt-6 px-5 space-y-6">
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.dashboardTierLabel}</span>
-                    <Badge className={cn("text-[10px] gap-1 px-2 py-0.5 shadow-sm border", tier.color)}>
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{t.dashboardTierLabel}</span>
+                    <Badge className={cn("text-[10px] gap-1 px-3 py-1 font-black uppercase tracking-wider", tier.badge)}>
                       <TierIcon className="h-3 w-3" /> {tier.label}
                     </Badge>
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex justify-between items-end">
-                      <p className="text-[10px] text-muted-foreground font-medium">
+                      <p className={cn("text-[10px] font-bold uppercase tracking-tight", tier.textColor)}>
                         {tier.nextTier 
-                          ? (language === 'hi' ? `${tier.nextTier} बनने की प्रगति` : `Progress to ${tier.nextTier}`)
-                          : (language === 'hi' ? 'सर्वोच्च आध्यात्मिक सम्मान प्राप्त!' : 'Highest Honor Achieved!')}
+                          ? (language === 'hi' ? `${tier.nextTier} लक्ष्य` : `Target: ${tier.nextTier}`)
+                          : (language === 'hi' ? 'सर्वोच्च आध्यात्मिक सम्मान' : 'Peak Recognition Achieved')}
                       </p>
-                      {tier.nextTier && <span className="text-[10px] font-bold text-primary">₹{totalDonated} / ₹{tier.needed + totalDonated}</span>}
+                      {tier.nextTier && <span className="text-[10px] font-black text-primary">₹{totalDonated} / ₹{tier.needed + totalDonated}</span>}
                     </div>
-                    <Progress value={tier.progress} className="h-2 bg-secondary" />
+                    
+                    {/* Custom Stylized Progress Bar */}
+                    <div className="h-2.5 w-full bg-black/5 rounded-full overflow-hidden border border-black/5">
+                      <div 
+                        className={cn("h-full transition-all duration-1000 rounded-full", tier.barColor)}
+                        style={{ width: `${tier.progress}%` }}
+                      />
+                    </div>
+
                     {tier.nextTier && (
-                      <p className="text-[10px] italic text-muted-foreground leading-tight">
+                      <p className="text-[10px] italic text-muted-foreground leading-relaxed bg-white/40 p-2 rounded border border-dashed">
                         {language === 'hi' 
-                          ? `केवल ₹${tier.needed} और दान करके मंदिर के ${tier.nextTier} बनें।` 
-                          : `Contribute ₹${tier.needed} more to become a Temple ${tier.nextTier}.`}
+                          ? `केवल ₹${tier.needed} और दान करके मंदिर के ${tier.nextTier} बनें और विशेष सम्मान प्राप्त करें।` 
+                          : `Contribute ₹${tier.needed} more to achieve ${tier.nextTier} status and receive community honors.`}
                       </p>
                     )}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t space-y-4">
+                <div className="pt-4 border-t border-black/5 space-y-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tighter">{t.dashboardEmail}</label>
                     <div className="font-medium text-sm flex items-center gap-2 min-w-0">
                       <span className="truncate">{user.email}</span>
                       {isVerified ? (
-                        <Badge className="bg-green-100 text-green-700 h-5 text-[9px] shrink-0">Verified</Badge>
+                        <Badge className="bg-green-100 text-green-700 h-5 text-[9px] shrink-0 border-0">Verified</Badge>
                       ) : (
                         <Badge variant="outline" className="text-destructive h-5 text-[9px] shrink-0">Unverified</Badge>
                       )}
@@ -388,36 +420,36 @@ function DashboardContent() {
               </CardHeader>
               <CardContent className="p-5 space-y-4">
                 <div className="space-y-3">
-                  <div className="flex gap-3">
-                    <div className="bg-secondary p-2 rounded-lg h-fit"><Heart className="h-4 w-4 text-secondary-foreground" /></div>
+                  <div className="flex gap-3 items-start group">
+                    <div className="bg-secondary p-2 rounded-lg h-fit group-hover:scale-110 transition-transform"><Heart className="h-4 w-4 text-secondary-foreground" /></div>
                     <div>
                       <p className="text-xs font-bold text-foreground">{t.dashboardTierSupporter}</p>
                       <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierSupporterDesc}</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="bg-amber-100 p-2 rounded-lg h-fit border border-amber-200"><Star className="h-4 w-4 text-amber-700" /></div>
+                  <div className="flex gap-3 items-start group">
+                    <div className="bg-amber-100 p-2 rounded-lg h-fit border border-amber-200 group-hover:scale-110 transition-transform shadow-sm"><Star className="h-4 w-4 text-amber-700" /></div>
                     <div>
                       <p className="text-xs font-bold text-foreground">{t.dashboardTierPillar} (₹1,000+)</p>
                       <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierPillarDesc}</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="bg-primary p-2 rounded-lg h-fit"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>
+                  <div className="flex gap-3 items-start group">
+                    <div className="bg-primary p-2 rounded-lg h-fit group-hover:scale-110 transition-transform shadow-md ring-1 ring-white/20"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>
                     <div>
                       <p className="text-xs font-bold text-foreground">{t.dashboardTierPatron} (₹5,000+)</p>
                       <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierPatronDesc}</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="bg-emerald-600 p-2 rounded-lg h-fit"><Shield className="h-4 w-4 text-white" /></div>
+                  <div className="flex gap-3 items-start group">
+                    <div className="bg-emerald-600 p-2 rounded-lg h-fit group-hover:scale-110 transition-transform shadow-emerald-200 shadow-lg"><Shield className="h-4 w-4 text-white" /></div>
                     <div>
                       <p className="text-xs font-bold text-foreground">{t.dashboardTierGuardian} (₹10,000+)</p>
                       <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierGuardianDesc}</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <div className="bg-indigo-600 p-2 rounded-lg h-fit"><Crown className="h-4 w-4 text-white" /></div>
+                  <div className="flex gap-3 items-start group">
+                    <div className="bg-indigo-600 p-2 rounded-lg h-fit group-hover:scale-110 transition-transform shadow-indigo-200 shadow-xl ring-2 ring-white/30"><Crown className="h-4 w-4 text-white" /></div>
                     <div>
                       <p className="text-xs font-bold text-foreground">{t.dashboardTierGrandPatron} (₹1,00,000+)</p>
                       <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierGrandPatronDesc}</p>
