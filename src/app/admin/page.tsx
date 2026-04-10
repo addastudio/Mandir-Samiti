@@ -55,7 +55,8 @@ import {
   Zap,
   Ghost,
   Clock,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -138,6 +139,9 @@ export default function AdminPage() {
     userName: string;
     role: string;
   } | null>(null);
+
+  // Deletion State
+  const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string } | null>(null);
 
   const [adminConfirmPassword, setAdminConfirmPassword] = useState("");
   const [isActionProcessing, setIsActionProcessing] = useState(false);
@@ -589,11 +593,17 @@ export default function AdminPage() {
     setIsSubmitting(false);
   };
 
-  const handleDelete = (col: string, id: string, title: string = "Item") => {
-    if (!firestore) return;
+  const handleDeleteTrigger = (col: string, id: string, title: string = "Item") => {
+    setDeleteConfirm({ col, id, title });
+  };
+
+  const confirmDelete = () => {
+    if (!firestore || !deleteConfirm) return;
+    const { col, id, title } = deleteConfirm;
     deleteDocumentNonBlocking(doc(firestore, col, id));
     logAction("DELETE", col.charAt(0).toUpperCase() + col.slice(1), title);
-    toast({ title: "Deleted" });
+    toast({ title: language === 'hi' ? "हटा दिया गया" : "Deleted successfully" });
+    setDeleteConfirm(null);
   };
 
   const confirmAdminToggle = async () => {
@@ -1008,7 +1018,7 @@ export default function AdminPage() {
                     <img src={e.image} className="w-full h-full object-cover" alt={e.title} />
                     <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setEditingEvent(e)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete('events', e.id, e.title)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeleteTrigger('events', e.id, e.title)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
                   <CardHeader className="p-4"><CardTitle className="text-sm truncate">{e.title}</CardTitle></CardHeader>
@@ -1046,7 +1056,7 @@ export default function AdminPage() {
                     <div className="min-w-0 flex-1"><h4 className="font-bold truncate">{n.title}</h4><p className="text-xs text-muted-foreground line-clamp-1">{n.content}</p></div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" onClick={() => setEditingNotice(n)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete('notices', n.id, n.title)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteTrigger('notices', n.id, n.title)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -1133,7 +1143,7 @@ export default function AdminPage() {
                 const Icon = SEVA_ICONS[s.icon as keyof typeof SEVA_ICONS] || Hand;
                 return (
                   <Card key={s.id} className="relative">
-                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive" onClick={() => handleDelete('seva_programs', s.id, s.title)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive" onClick={() => handleDeleteTrigger('seva_programs', s.id, s.title)}><Trash2 className="h-4 w-4" /></Button>
                     <CardHeader className="text-center pt-8">
                       <Icon className="h-8 w-8 mx-auto text-primary" />
                       <CardTitle className="text-base">{s.title}</CardTitle>
@@ -1162,7 +1172,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {committeeMembers?.sort((a,b) => (a.displayOrder || 0) - (b.displayOrder || 0)).map(m => (
                 <Card key={m.id} className="relative group">
-                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDelete('mandir_samiti_members', m.id, m.name)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDeleteTrigger('mandir_samiti_members', m.id, m.name)}><Trash2 className="h-4 w-4" /></Button>
                   <CardHeader className="text-center">
                     <CardTitle className="text-lg font-bold">{m.name}</CardTitle>
                     <CardDescription className="uppercase tracking-widest text-xs font-medium text-primary">{m.role}</CardDescription>
@@ -1209,7 +1219,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {testimonials?.map(t => (
                 <Card key={t.id} className="relative">
-                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive" onClick={() => handleDelete('testimonials', t.id, t.name)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive" onClick={() => handleDeleteTrigger('testimonials', t.id, t.name)}><Trash2 className="h-4 w-4" /></Button>
                   <CardHeader className="flex flex-row items-center gap-3">
                     <img src={t.imageURL} className="h-10 w-10 rounded-full object-cover" alt={t.name} />
                     <CardTitle className="text-sm">{t.name}</CardTitle>
@@ -1246,7 +1256,7 @@ export default function AdminPage() {
               </form></CardContent></Card>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {gallery?.map(g => (
-                <div key={g.id} className="relative aspect-square rounded-lg overflow-hidden group border"><img src={g.imageURL} className="w-full h-full object-cover" alt={g.caption} /><div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center"><Button variant="destructive" size="icon" onClick={() => handleDelete('gallery', g.id, g.caption)}><Trash2 className="h-4 w-4" /></Button></div></div>
+                <div key={g.id} className="relative aspect-square rounded-lg overflow-hidden group border"><img src={g.imageURL} className="w-full h-full object-cover" alt={g.caption} /><div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center"><Button variant="destructive" size="icon" onClick={() => handleDeleteTrigger('gallery', g.id, g.caption)}><Trash2 className="h-4 w-4" /></Button></div></div>
               ))}
             </div>
           </TabsContent>
@@ -1275,7 +1285,7 @@ export default function AdminPage() {
                       <Button size="sm" variant="outline" className="flex-1 h-8 text-[10px] font-bold uppercase tracking-wider" onClick={() => updateDocumentNonBlocking(doc(firestore, "prayer_requests", r.id), { status: 'completed' })} disabled={r.status === 'completed'}>
                         {r.status === 'completed' ? (language === 'hi' ? 'पूर्ण हो गया' : 'Handled') : (language === 'hi' ? 'पूर्ण मार्क करें' : 'Mark Completed')}
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete('prayer_requests', r.id, `${r.name}'s Request`)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteTrigger('prayer_requests', r.id, `${r.name}'s Request`)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -1331,6 +1341,32 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Confirmation for General Deletions */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {language === 'hi' ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure you want to delete this?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'hi' 
+                ? `यह कार्रवाई स्थायी है। आप "${deleteConfirm?.title}" को हटाने जा रहे हैं।` 
+                : `This action is permanent. You are about to remove "${deleteConfirm?.title}".`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
+            <AlertDialogCancel className="mt-0">{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {language === 'hi' ? 'पुष्टि करें और हटाएं' : 'Confirm Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Event Dialog */}
       <Dialog open={!!editingEvent} onOpenChange={(o) => !o && setEditingEvent(null)}>
