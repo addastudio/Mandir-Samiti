@@ -13,7 +13,48 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, collectionGroup, query } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, ArrowLeft, Upload, Settings, Activity, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv, Search, BarChart3, TrendingUp, UserCheck, User as UserIcon, IndianRupee, HandCoins, Filter, FilterX, Download, Pencil, Plus } from "lucide-react";
+import { 
+  Trash2, 
+  Loader2, 
+  Calendar, 
+  Image as ImageIcon, 
+  ShieldAlert, 
+  Users, 
+  Bell, 
+  Globe, 
+  LayoutDashboard, 
+  MessageSquare, 
+  CheckCircle2, 
+  LogOut, 
+  ShieldCheck, 
+  ArrowLeft, 
+  Upload, 
+  Settings, 
+  Activity, 
+  Wand2, 
+  Sparkles, 
+  HeartHandshake, 
+  Quote, 
+  UtensilsCrossed, 
+  BookOpenCheck, 
+  Hand, 
+  Tv, 
+  Search, 
+  BarChart3, 
+  TrendingUp, 
+  UserCheck, 
+  User as UserIcon, 
+  IndianRupee, 
+  HandCoins, 
+  Filter, 
+  FilterX, 
+  Download, 
+  Pencil, 
+  Plus,
+  Shield,
+  Zap,
+  Ghost
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
