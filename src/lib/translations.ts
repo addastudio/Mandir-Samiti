@@ -159,9 +159,13 @@ export type TranslationKeys = {
   dashboardTierSupporter: string;
   dashboardTierPillar: string;
   dashboardTierPatron: string;
+  dashboardTierGuardian: string;
+  dashboardTierGrandPatron: string;
   dashboardTierSupporterDesc: string;
   dashboardTierPillarDesc: string;
   dashboardTierPatronDesc: string;
+  dashboardTierGuardianDesc: string;
+  dashboardTierGrandPatronDesc: string;
   dashboardTierHonorsTitle: string;
   dashboardSettingsTab: string;
   dashboardLanguagePref: string;
@@ -351,9 +355,13 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardTierSupporter: 'भक्त (Supporter)',
     dashboardTierPillar: 'स्तंभ (Pillar)',
     dashboardTierPatron: 'संरक्षक (Patron)',
+    dashboardTierGuardian: 'रक्षक (Guardian)',
+    dashboardTierGrandPatron: 'महा संरक्षक (Grand Patron)',
     dashboardTierSupporterDesc: 'समर्पित सेवा में आपका प्रारंभिक कदम।',
     dashboardTierPillarDesc: 'एक आधारभूत योगदानकर्ता जो हमारी दैनिक अनुष्ठानों को बनाए रखता है।',
     dashboardTierPatronDesc: 'हमारी विरासत के रक्षक, जो मंदिर के बड़े विकास कार्यों को सक्षम बनाते हैं।',
+    dashboardTierGuardianDesc: 'मंदिर के निर्माण और विस्तार कार्यों के मुख्य संरक्षक।',
+    dashboardTierGrandPatronDesc: 'परम दानदाता, जिनकी उदारता से मंदिर की सदियों पुरानी विरासत सुरक्षित रहती है।',
     dashboardTierHonorsTitle: 'सहयोग सम्मान विवरण',
     dashboardSettingsTab: 'सेटिंग्स',
     dashboardLanguagePref: 'भाषा प्राथमिकता',
@@ -533,9 +541,13 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardTierSupporter: 'Supporter',
     dashboardTierPillar: 'Pillar',
     dashboardTierPatron: 'Patron',
+    dashboardTierGuardian: 'Guardian',
+    dashboardTierGrandPatron: 'Grand Patron',
     dashboardTierSupporterDesc: 'Your initial step into dedicated service.',
     dashboardTierPillarDesc: 'A foundational contributor sustaining our daily rituals.',
     dashboardTierPatronDesc: 'A guardian of our legacy, enabling major temple developments.',
+    dashboardTierGuardianDesc: 'Key protector of temple construction and expansion projects.',
+    dashboardTierGrandPatronDesc: 'Ultimate benefactor whose generosity secures our centuries-old heritage.',
     dashboardTierHonorsTitle: 'Patronage Honors Detail',
     dashboardSettingsTab: 'Settings',
     dashboardLanguagePref: 'Language Preference',

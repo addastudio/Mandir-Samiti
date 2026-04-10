@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updateProfile } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info, Shield, Gem, Crown } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -163,8 +163,6 @@ function DashboardContent() {
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
     
-    // FIX: Only block deletion if the user is an active administrator in roles_admin.
-    // This allows regular devotees and members without admin access to delete their accounts freely.
     if (adminDoc) {
       toast({ 
         variant: "destructive", 
@@ -212,14 +210,34 @@ function DashboardContent() {
   const isVerified = userProfile?.isVerified ?? true;
   
   const getTierInfo = (amount: number) => {
-    if (amount >= 5000) {
+    if (amount >= 100000) {
       return { 
-        label: t.dashboardTierPatron, 
-        color: 'bg-primary text-primary-foreground', 
-        icon: Sparkles,
+        label: t.dashboardTierGrandPatron, 
+        color: 'bg-indigo-600 text-white shadow-indigo-200', 
+        icon: Crown,
         progress: 100,
         nextTier: null,
         needed: 0
+      };
+    }
+    if (amount >= 10000) {
+      return { 
+        label: t.dashboardTierGuardian, 
+        color: 'bg-emerald-600 text-white shadow-emerald-200', 
+        icon: Shield,
+        progress: ((amount - 10000) / (100000 - 10000)) * 100,
+        nextTier: t.dashboardTierGrandPatron,
+        needed: 100000 - amount
+      };
+    }
+    if (amount >= 5000) {
+      return { 
+        label: t.dashboardTierPatron, 
+        color: 'bg-primary text-primary-foreground shadow-primary/20', 
+        icon: Sparkles,
+        progress: ((amount - 5000) / (10000 - 5000)) * 100,
+        nextTier: t.dashboardTierGuardian,
+        needed: 10000 - amount
       };
     }
     if (amount >= 1000) {
@@ -234,7 +252,7 @@ function DashboardContent() {
     }
     return { 
       label: t.dashboardTierSupporter, 
-      color: 'bg-secondary text-secondary-foreground', 
+      color: 'bg-secondary text-secondary-foreground border-border/50', 
       icon: Heart,
       progress: (amount / 1000) * 100,
       nextTier: t.dashboardTierPillar,
@@ -317,7 +335,7 @@ function DashboardContent() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t.dashboardTierLabel}</span>
-                    <Badge className={cn("text-[10px] gap-1 px-2 py-0.5 shadow-sm", tier.color)}>
+                    <Badge className={cn("text-[10px] gap-1 px-2 py-0.5 shadow-sm border", tier.color)}>
                       <TierIcon className="h-3 w-3" /> {tier.label}
                     </Badge>
                   </div>
@@ -327,7 +345,7 @@ function DashboardContent() {
                       <p className="text-[10px] text-muted-foreground font-medium">
                         {tier.nextTier 
                           ? (language === 'hi' ? `${tier.nextTier} बनने की प्रगति` : `Progress to ${tier.nextTier}`)
-                          : (language === 'hi' ? 'उच्चतम स्तर प्राप्त!' : 'Highest Honor Achieved!')}
+                          : (language === 'hi' ? 'सर्वोच्च आध्यात्मिक सम्मान प्राप्त!' : 'Highest Honor Achieved!')}
                       </p>
                       {tier.nextTier && <span className="text-[10px] font-bold text-primary">₹{totalDonated} / ₹{tier.needed + totalDonated}</span>}
                     </div>
@@ -389,6 +407,20 @@ function DashboardContent() {
                     <div>
                       <p className="text-xs font-bold text-foreground">{t.dashboardTierPatron} (₹5,000+)</p>
                       <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierPatronDesc}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="bg-emerald-600 p-2 rounded-lg h-fit"><Shield className="h-4 w-4 text-white" /></div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{t.dashboardTierGuardian} (₹10,000+)</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierGuardianDesc}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="bg-indigo-600 p-2 rounded-lg h-fit"><Crown className="h-4 w-4 text-white" /></div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{t.dashboardTierGrandPatron} (₹1,00,000+)</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierGrandPatronDesc}</p>
                     </div>
                   </div>
                 </div>
