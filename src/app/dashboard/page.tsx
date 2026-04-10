@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updateProfile } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info, Shield, Gem, Crown } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info, Shield, Gem, Crown, Clock } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -534,13 +534,17 @@ function DashboardContent() {
                               </div>
                             </div>
                             <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2">
-                              <Badge className={cn(
-                                "text-[9px] uppercase font-black",
-                                d.status === 'completed' ? "bg-green-100 text-green-700" :
-                                d.status === 'failed' ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-                              )}>
-                                {d.status || 'completed'}
-                              </Badge>
+                              {d.status === 'completed' ? (
+                                <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0 gap-1.5 px-3 py-1 rounded-full shadow-sm">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  <span className="text-[9px] font-black uppercase tracking-wider">{language === 'hi' ? 'सफल' : 'Success'}</span>
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 gap-1.5 px-3 py-1 rounded-full">
+                                  <Clock className="h-3 w-3" />
+                                  <span className="text-[9px] font-black uppercase tracking-wider">{d.status}</span>
+                                </Badge>
+                              )}
                               {d.id && <span className="text-[8px] font-mono text-muted-foreground opacity-40">Ref: {d.id.slice(0, 8)}</span>}
                             </div>
                           </div>
@@ -569,7 +573,17 @@ function DashboardContent() {
                           <div key={r.id} className="p-4 hover:bg-muted/30">
                             <div className="flex justify-between items-start gap-2 mb-2">
                               <h4 className="font-bold text-sm uppercase tracking-wider">{r.requestType}</h4>
-                              <Badge className={cn("text-[9px] h-5", r.status === 'completed' ? 'bg-green-100 text-green-700' : r.status === 'viewed' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700')}>{r.status}</Badge>
+                              {r.status === 'completed' ? (
+                                <Badge className="bg-emerald-500 text-white border-0 gap-1.5 px-3 py-1 rounded-full shadow-sm">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  <span className="text-[9px] font-black uppercase tracking-wider">{language === 'hi' ? 'पूर्ण' : 'Completed'}</span>
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 gap-1.5 px-3 py-1 rounded-full">
+                                  <Clock className="h-3 w-3" />
+                                  <span className="text-[9px] font-black uppercase tracking-wider">{r.status}</span>
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-[11px] text-muted-foreground bg-muted/30 p-2 rounded-md italic">"{r.message}"</p>
                             <p className="text-[9px] text-muted-foreground/60 mt-2">{new Date(r.createdAt).toLocaleString()}</p>

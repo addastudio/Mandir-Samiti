@@ -53,7 +53,9 @@ import {
   Plus,
   Shield,
   Zap,
-  Ghost
+  Ghost,
+  Clock,
+  AlertCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -900,7 +902,7 @@ export default function AdminPage() {
                             <TableHead>{language === 'hi' ? 'राशि' : 'Amount'}</TableHead>
                             <TableHead>{language === 'hi' ? 'तारीख' : 'Date'}</TableHead>
                             <TableHead>{language === 'hi' ? 'माध्यम' : 'Mode'}</TableHead>
-                            <TableHead>{language === 'hi' ? 'स्थिति' : 'Status'}</TableHead>
+                            <TableHead className="text-right">{language === 'hi' ? 'स्थिति' : 'Status'}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -920,10 +922,18 @@ export default function AdminPage() {
                                 <TableCell>
                                   <Badge variant="outline" className="text-[9px] uppercase tracking-tighter h-5">{d.mode}</Badge>
                                 </TableCell>
-                                <TableCell>
-                                  <Badge className={cn("text-[9px] uppercase h-5", d.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
-                                    {d.status}
-                                  </Badge>
+                                <TableCell className="text-right">
+                                  {d.status === 'completed' ? (
+                                    <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0 gap-1 px-2 py-0.5 rounded-md shadow-sm">
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      <span className="text-[10px] font-bold uppercase tracking-wider">{language === 'hi' ? 'पूर्ण' : 'Completed'}</span>
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 gap-1 px-2 py-0.5 rounded-md">
+                                      <Clock className="h-3 w-3" />
+                                      <span className="text-[10px] font-bold uppercase tracking-wider">{d.status}</span>
+                                    </Badge>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             );
@@ -1244,17 +1254,27 @@ export default function AdminPage() {
           <TabsContent value="requests" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {requests?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.timestamp || a.createdAt).getTime()).map(r => (
-                <Card key={r.id} className="border-l-4 border-l-primary">
+                <Card key={r.id} className="border-l-4 border-l-primary overflow-hidden">
                   <CardHeader className="py-3 px-4 flex flex-row justify-between items-center bg-muted/30">
-                    <CardTitle className="text-xs uppercase font-black">{r.requestType}</CardTitle>
-                    <Badge className={r.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>{r.status}</Badge>
+                    <CardTitle className="text-xs uppercase font-black tracking-widest">{r.requestType}</CardTitle>
+                    {r.status === 'completed' ? (
+                      <Badge className="bg-emerald-500 text-white border-0 gap-1 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold">
+                        <CheckCircle2 className="h-2.5 w-2.5" /> {language === 'hi' ? 'पूर्ण' : 'Completed'}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 gap-1 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold">
+                        <Clock className="h-2.5 w-2.5" /> {r.status}
+                      </Badge>
+                    )}
                   </CardHeader>
                   <CardContent className="p-4 space-y-2">
                     <p className="font-bold text-sm">{r.name}</p>
                     <p className="text-xs text-muted-foreground break-all">{r.email} | {r.phone}</p>
                     <p className="text-xs italic bg-secondary/20 p-2 rounded">"{r.message}"</p>
                     <div className="flex gap-2 pt-2">
-                      <Button size="sm" variant="outline" className="flex-1 h-8 text-[10px]" onClick={() => updateDocumentNonBlocking(doc(firestore, "prayer_requests", r.id), { status: 'completed' })} disabled={r.status === 'completed'}>Mark Done</Button>
+                      <Button size="sm" variant="outline" className="flex-1 h-8 text-[10px] font-bold uppercase tracking-wider" onClick={() => updateDocumentNonBlocking(doc(firestore, "prayer_requests", r.id), { status: 'completed' })} disabled={r.status === 'completed'}>
+                        {r.status === 'completed' ? (language === 'hi' ? 'पूर्ण हो गया' : 'Handled') : (language === 'hi' ? 'पूर्ण मार्क करें' : 'Mark Completed')}
+                      </Button>
                       <Button size="sm" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete('prayer_requests', r.id, `${r.name}'s Request`)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </CardContent>
