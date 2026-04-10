@@ -153,7 +153,6 @@ export default function AdminPage() {
   // Edit States
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [editingNotice, setEditingNotice] = useState<any | null>(null);
-  const [editingDonation, setEditingDonation] = useState<any | null>(null);
 
   // AI Content Form States
   const [eventTitle, setEventTitle] = useState("");
@@ -489,22 +488,6 @@ export default function AdminPage() {
     toast({ title: "Donation Recorded" });
     (e.target as HTMLFormElement).reset();
     setIsSubmitting(false);
-  };
-
-  const handleDeleteDonation = (donation: any) => {
-    if (!firestore || !donation.userId) return;
-    const donationRef = doc(firestore, "users", donation.userId, "donations", donation.id);
-    deleteDocumentNonBlocking(donationRef);
-    logAction("DELETE", "Donation", `₹${donation.amount} from ${combinedUserList.find(u => u.id === donation.userId)?.name}`);
-    toast({ title: "Donation Record Removed" });
-  };
-
-  const handleUpdateDonationStatus = (donation: any, newStatus: string) => {
-    if (!firestore || !donation.userId) return;
-    const donationRef = doc(firestore, "users", donation.userId, "donations", donation.id);
-    updateDocumentNonBlocking(donationRef, { status: newStatus });
-    logAction("UPDATE", "Donation Status", `${donation.id}: ${newStatus}`);
-    toast({ title: "Status Updated" });
   };
 
   const handleAddGallery = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -920,7 +903,6 @@ export default function AdminPage() {
                             <TableHead>{language === 'hi' ? 'तारीख' : 'Date'}</TableHead>
                             <TableHead>{language === 'hi' ? 'माध्यम' : 'Mode'}</TableHead>
                             <TableHead>{language === 'hi' ? 'स्थिति' : 'Status'}</TableHead>
-                            <TableHead className="text-right">{language === 'hi' ? 'क्रिया' : 'Actions'}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -944,24 +926,12 @@ export default function AdminPage() {
                                     {d.status}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex justify-end gap-1">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      className="h-7 w-7 text-destructive" 
-                                      onClick={() => handleDeleteDonation(d)}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
                               </TableRow>
                             );
                           })}
                           {filteredDonations.length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">
+                              <TableCell colSpan={5} className="h-32 text-center text-muted-foreground italic">
                                 {language === 'hi' ? 'कोई रिकॉर्ड नहीं मिला।' : 'No records found.'}
                               </TableCell>
                             </TableRow>
