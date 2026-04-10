@@ -137,6 +137,8 @@ export default function LoginPage() {
       let errorMessage = err.message;
       if (err.code === 'auth/invalid-credential') {
         errorMessage = t.authErrorInvalidCredential;
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = t.authErrorUnauthorizedDomain;
       }
       setError(errorMessage);
       toast({ variant: "destructive", title: "Login failed", description: errorMessage });
@@ -462,7 +464,7 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-1">
                 <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
                   <DialogTrigger asChild>
                     <Button 
@@ -505,11 +507,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="bg-muted/30 p-3 rounded-lg border">
-              <div className="flex items-center gap-2 mb-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
-                <ShieldCheck className="h-3 w-3 text-primary" />
-                {language === 'hi' ? 'सुरक्षा सत्यापन' : 'Security Verification'}
-              </div>
+            <div className="pt-2">
               <RecaptchaWidget onChange={(token) => setCaptchaToken(token)} />
             </div>
 

@@ -159,14 +159,10 @@ export function ContactSection() {
                      {state.errors?.message && <p className="text-xs font-medium text-destructive">{state.errors.message[0]}</p>}
                   </div>
 
-                  <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
-                    <div className="flex items-center gap-2 mb-3 text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                      <ShieldCheck className="h-3 w-3 text-primary" />
-                      {language === 'hi' ? 'सुरक्षा जांच' : 'Security Verification'}
-                    </div>
+                  <div className="space-y-2 pt-2">
                     <RecaptchaWidget onChange={(token) => setCaptchaToken(token)} />
                     {!captchaToken && (
-                      <p className="text-[10px] text-center text-primary font-bold italic mt-2 animate-pulse">
+                      <p className="text-[10px] text-center text-primary font-bold italic mt-1 animate-pulse">
                         {t.captchaRequired}
                       </p>
                     )}

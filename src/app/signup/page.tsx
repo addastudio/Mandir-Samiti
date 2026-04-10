@@ -191,6 +191,8 @@ export default function SignupPage() {
         errorMessage = t.authErrorEmailInUse;
       } else if (err.code === 'auth/weak-password') {
         errorMessage = t.authErrorWeakPassword;
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMessage = t.authErrorUnauthorizedDomain;
       }
       setError(errorMessage);
       toast({ variant: "destructive", title: "Signup failed", description: errorMessage });
@@ -462,11 +464,7 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <div className="pt-2 border-t mt-4">
-              <div className="flex items-center gap-2 mb-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                <ShieldCheck className="h-3 w-3 text-primary" />
-                {language === 'hi' ? 'सुरक्षा सत्यापन' : 'Security Verification'}
-              </div>
+            <div className="pt-2">
               <RecaptchaWidget onChange={(token) => setCaptchaToken(token)} />
             </div>
 
