@@ -454,8 +454,14 @@ export default function LoginPage() {
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">{language === "hi" ? "पासवर्ड" : "Password"}</Label>
+              <Label htmlFor="password">{language === "hi" ? "पासवर्ड" : "Password"}</Label>
+              <div className="relative">
+                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-10" />
+                <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 text-muted-foreground" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              <div className="flex justify-end">
                 <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
                   <DialogTrigger asChild>
                     <Button 
@@ -495,12 +501,6 @@ export default function LoginPage() {
                     </form>
                   </DialogContent>
                 </Dialog>
-              </div>
-              <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-10" />
-                <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 text-muted-foreground" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
               </div>
             </div>
             {error && <p className="text-sm text-destructive font-medium p-2 rounded bg-destructive/5">{error}</p>}
