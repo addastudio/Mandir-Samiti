@@ -32,7 +32,6 @@ import {
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 function DashboardContent() {
   const { user, isUserLoading } = useUser();
@@ -48,9 +47,6 @@ function DashboardContent() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
-
-  // Default Standard Neutral Avatar
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
 
   // Profile Form States
   const [profileName, setProfileName] = useState("");
@@ -107,9 +103,9 @@ function DashboardContent() {
   useEffect(() => {
     if (userProfile) {
       setProfileName(userProfile.name || user?.displayName || "");
-      setProfilePhotoPreview(userProfile.photoURL || user?.photoURL || defaultUserPhoto);
+      setProfilePhotoPreview(userProfile.photoURL || user?.photoURL || null);
     }
-  }, [userProfile, user, defaultUserPhoto]);
+  }, [userProfile, user]);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !user) router.push("/login");
@@ -141,13 +137,13 @@ function DashboardContent() {
     try {
       await updateProfile(user, {
         displayName: profileName,
-        photoURL: profilePhotoPreview || defaultUserPhoto
+        photoURL: profilePhotoPreview
       });
 
       const userRef = doc(firestore, "users", user.uid);
       await updateDoc(userRef, {
         name: profileName,
-        photoURL: profilePhotoPreview || defaultUserPhoto
+        photoURL: profilePhotoPreview
       });
 
       toast({ title: "Success", description: t.dashboardProfileSuccess });
@@ -162,7 +158,6 @@ function DashboardContent() {
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
     
-    // Only block deletion if they are an active admin in the administrative registry
     if (adminDoc) {
       toast({ 
         variant: "destructive", 
@@ -326,9 +321,9 @@ function DashboardContent() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary shadow-sm">
-                <AvatarImage src={profilePhotoPreview || user.photoURL || userProfile?.photoURL || defaultUserPhoto} />
+                <AvatarImage src={profilePhotoPreview || user.photoURL || userProfile?.photoURL || undefined} />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
-                  {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                  <UserIcon className="h-8 w-8" />
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-1 -right-1 bg-green-500 h-4 w-4 rounded-full border-2 border-white" />
@@ -375,7 +370,6 @@ function DashboardContent() {
                       {tier.nextTier && <span className="text-[10px] font-black text-primary">₹{totalDonated} / ₹{tier.needed + totalDonated}</span>}
                     </div>
                     
-                    {/* Custom Stylized Progress Bar */}
                     <div className="h-2.5 w-full bg-black/5 rounded-full overflow-hidden border border-black/5">
                       <div 
                         className={cn("h-full transition-all duration-1000 rounded-full", tier.barColor)}
@@ -633,9 +627,9 @@ function DashboardContent() {
                           onClick={() => document.getElementById('profile-img-input')?.click()}
                         >
                           <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-xl ring-1 ring-primary/10">
-                            <AvatarImage src={profilePhotoPreview || user.photoURL || userProfile?.photoURL || defaultUserPhoto} />
+                            <AvatarImage src={profilePhotoPreview || user.photoURL || userProfile?.photoURL || undefined} />
                             <AvatarFallback className="bg-primary/5 text-primary text-3xl font-bold">
-                              {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                              <UserIcon className="h-12 w-12" />
                             </AvatarFallback>
                           </Avatar>
                           <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

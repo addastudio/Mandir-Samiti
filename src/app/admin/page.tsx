@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv, Search, BarChart3, TrendingUp, UserCheck } from "lucide-react";
+import { Trash2, Loader2, Calendar, Image as ImageIcon, ShieldAlert, Users, UserPlus, UserMinus, Bell, Globe, LayoutDashboard, MessageSquare, CheckCircle2, LogOut, ShieldCheck, Mail, Shield, ArrowLeft, Upload, X, FileVideo, Info, Zap, Settings, AlertCircle, Ghost, Eye, EyeOff, History, Activity, UserCog, ChevronDown, ChevronUp, Pencil, Plus, Wand2, Sparkles, HeartHandshake, Quote, UtensilsCrossed, BookOpenCheck, Hand, Tv, Search, BarChart3, TrendingUp, UserCheck, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -42,7 +42,6 @@ import { getEmailServiceStatus } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const ROLE_HIERARCHY: Record<string, number> = {
   'president': 100,
@@ -71,9 +70,6 @@ export default function AdminPage() {
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   
-  // Default Standard Neutral Avatar
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
-
   // Search and Filter States
   const [userSearch, setUserSearch] = useState("");
   
@@ -158,11 +154,6 @@ export default function AdminPage() {
   const testimonialsRef = useMemoFirebase(() => {
     if (!firestore || !adminDoc) return null;
     return collection(firestore, "testimonials");
-  }, [firestore, adminDoc]);
-
-  const membersRef = useMemoFirebase(() => {
-    if (!firestore || !adminDoc) return null;
-    return doc(firestore, "mandir_samiti_members", "list"); // Placeholder for complex member management if needed, but current logic uses collection
   }, [firestore, adminDoc]);
 
   const membersColRef = useMemoFirebase(() => {
@@ -847,9 +838,9 @@ export default function AdminPage() {
                   <Card key={u.id} className={cn("p-4 flex flex-col md:flex-row justify-between items-center gap-4", u.isGhost && "opacity-50")}>
                     <div className="flex items-center gap-4">
                       <Avatar className="h-10 w-10 shrink-0 border border-primary/10">
-                        <AvatarImage src={u.photoURL || defaultUserPhoto} />
+                        <AvatarImage src={u.photoURL || undefined} />
                         <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
-                          {u.name?.charAt(0)}
+                          <UserIcon className="h-5 w-5" />
                         </AvatarFallback>
                       </Avatar>
                       <div>

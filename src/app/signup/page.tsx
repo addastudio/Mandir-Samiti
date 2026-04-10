@@ -33,7 +33,6 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle, MailCheck } from "lucide-react";
 import { sendVerificationOtp, getEmailServiceStatus } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function SignupPage() {
   const { t, language } = useLanguage();
@@ -47,9 +46,6 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isEmailLive, setIsEmailLive] = useState(false);
-
-  // Default Standard Neutral Avatar
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
 
   // OTP Step State
   const [isOtpStep, setIsOtpStep] = useState(false);
@@ -156,7 +152,6 @@ export default function SignupPage() {
       const user = userCredential.user;
       await updateProfile(user, { 
         displayName: name,
-        photoURL: defaultUserPhoto
       });
       
       const userDocRef = doc(firestore, "users", user.uid);
@@ -167,7 +162,7 @@ export default function SignupPage() {
         role: "devotee",
         language: language,
         isVerified: true,
-        photoURL: defaultUserPhoto,
+        photoURL: null,
         twoFactorEnabled: false,
       };
 
@@ -247,7 +242,7 @@ export default function SignupPage() {
       const userDocRef = doc(firestore, "users", tempUserForPassword.uid);
       const userDoc = await getDoc(userDocRef);
       
-      const photoToUse = tempUserForPassword.photoURL || defaultUserPhoto;
+      const photoToUse = tempUserForPassword.photoURL || null;
 
       if (!userDoc.exists()) {
         const userData = {

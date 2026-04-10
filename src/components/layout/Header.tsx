@@ -22,7 +22,6 @@ import TempleIcon from "@/components/icons/TempleIcon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export function Header() {
   const { t, language } = useLanguage();
@@ -32,9 +31,6 @@ export function Header() {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
-
-  // Default Standard Neutral Avatar
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -97,7 +93,7 @@ export function Header() {
       return (
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
           <Avatar className="h-10 w-10 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer">
-            <AvatarImage src={user.photoURL || userProfile?.photoURL || defaultUserPhoto} />
+            <AvatarImage src={user.photoURL || userProfile?.photoURL || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold">
               <UserIcon className="h-6 w-6" />
             </AvatarFallback>

@@ -34,7 +34,6 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, Loader2, RefreshCw, Info, AlertTriangle, MailCheck, KeyRound } from "lucide-react";
 import { sendVerificationOtp, getEmailServiceStatus } from "@/app/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import {
   Dialog,
   DialogContent,
@@ -57,9 +56,6 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [isEmailLive, setIsEmailLive] = useState(false);
   
-  // Default Standard Neutral Avatar
-  const defaultUserPhoto = React.useMemo(() => PlaceHolderImages.find(img => img.id === 'default-user-avatar')?.imageUrl || "https://picsum.photos/seed/profile-neutral/200/200", []);
-
   const [isVerificationStep, setIsVerificationStep] = useState(false);
   const [otp, setOtp] = useState("");
   const [storedOtp, setStoredOtp] = useState("");
@@ -241,7 +237,7 @@ export default function LoginPage() {
       const userDocRef = doc(firestore, "users", tempUserForPassword.uid);
       const userDoc = await getDoc(userDocRef);
       
-      const photoToUse = tempUserForPassword.photoURL || defaultUserPhoto;
+      const photoToUse = tempUserForPassword.photoURL || null;
 
       if (!userDoc.exists()) {
         const userData = {

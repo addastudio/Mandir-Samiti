@@ -101,12 +101,6 @@
       "description": "Portrait of a young volunteer serving food.",
       "imageUrl": "https://picsum.photos/seed/117/100/100",
       "imageHint": "young volunteer"
-    },
-    {
-      "id": "default-user-avatar",
-      "description": "Standard neutral avatar for all users.",
-      "imageUrl": "https://picsum.photos/seed/profile-neutral/200/200",
-      "imageHint": "neutral person"
     }
   ]
 }
