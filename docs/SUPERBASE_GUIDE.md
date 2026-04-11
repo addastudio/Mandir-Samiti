@@ -1,3 +1,4 @@
+
 # Superbase Implementation Guide: Mandir Samiti Bahpura
 
 This guide provides a detailed, step-by-step process for using Superbase as the backend for the temple management system. Superbase provides a relational (PostgreSQL) alternative to Firebase.
@@ -129,21 +130,14 @@ npm install @supabase/supabase-js @supabase/auth-helpers-nextjs
 ```
 
 ### 2. Environment Variables
-Add these to your `.env.local`:
+Add these to your `.env.local` (the system detects these specific names):
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPERBASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPERBASE_ANON_KEY=your-anon-key-here
 ```
 
 ### 3. Create Client (`src/lib/superbase.ts`)
-```typescript
-import { createClient } from '@supabase/supabase-js'
-
-const superbaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const superbaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const superbase = createClient(superbaseUrl, superbaseAnonKey)
-```
+The project already includes a detector in `src/lib/superbase.ts`.
 
 ---
 
