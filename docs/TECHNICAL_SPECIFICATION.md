@@ -12,7 +12,7 @@ The application follows a **Serverless Full-Stack Architecture** using Next.js 1
 - **Dual Backend Support:** Optional Superbase (Supabase) integration for migration flexibility.
 - **Payment Layer:** Stripe (International) & Cashfree (Domestic India).
 - **Email Layer:** Resend (Transactional OTP & Notifications).
-- **AI Layer:** Genkit (Gemini 2.5 Flash) for automated content generation.
+- **AI Layer:** Genkit (Gemini 2.5 Flash) for automated content generation in the Admin Panel.
 
 ---
 
@@ -20,7 +20,7 @@ The application follows a **Serverless Full-Stack Architecture** using Next.js 1
 The design focuses on "Modern Spirituality"—combining traditional temple aesthetics with professional, clean UI patterns.
 
 - **Color Palette:**
-  - **Primary:** Saffron/Gold (`hsl(42 92% 48%)`) representing divinity and energy.
+  - **Primary:** Saffron/Gold (`hsl(42 92% 48%)`) representing divinity.
   - **Accent:** Maroon (`hsl(0 100% 27%)`) for headline highlights.
   - **Background:** Warm Cream (`hsl(46 74% 91%)`) for a serene reading experience.
 - **Typography:**
@@ -42,14 +42,14 @@ The design focuses on "Modern Spirituality"—combining traditional temple aesth
 
 ### Collection: `donations` (Sub-collection of user & Top-level)
 - `amount`: number
-- `date`: timestamp
+- `date`: ISO Timestamp
 - `mode`: string ("Stripe", "Cash", "UPI")
 - `status`: string ("completed", "failed")
 - `devoteeName`: string (for manual entries)
 
 ### Collection: `roles_admin`
 - `id`: string (User UID)
-- `assignedAt`: timestamp
+- `assignedAt`: ISO Timestamp
 - *Note: Presence here grants full system write access.*
 
 ---
@@ -59,25 +59,21 @@ The design focuses on "Modern Spirituality"—combining traditional temple aesth
 ### A. Patronage Tier Logic
 ```javascript
 FUNCTION getTierInfo(totalDonatedAmount):
-    IF amount >= 100,000 THEN RETURN "Grand Patron" (Theme: Indigo + Glow)
-    ELSE IF amount >= 10,000 THEN RETURN "Guardian" (Theme: Emerald)
-    ELSE IF amount >= 5,000 THEN RETURN "Patron" (Theme: Saffron)
-    ELSE IF amount >= 1,000 THEN RETURN "Pillar" (Theme: Amber)
-    ELSE RETURN "Supporter" (Theme: Minimal)
+    IF amount >= 100,000 THEN RETURN "Grand Patron"
+    ELSE IF amount >= 10,000 THEN RETURN "Guardian"
+    ELSE IF amount >= 5,000 THEN RETURN "Patron"
+    ELSE IF amount >= 1,000 THEN RETURN "Pillar"
+    ELSE RETURN "Supporter"
 END FUNCTION
 ```
 
 ### B. Security Model (RBAC)
 Security is enforced via **Firestore Security Rules**:
 1. **Public Read:** `events`, `gallery`, `notices`, `mandir_samiti_members`.
-2. **Private Read:** `donations` and `prayer_requests` (Owner/Admin only).
+2. **Private Access:** `donations` and `prayer_requests` (Owner or Admin only).
 3. **Admin Write:** Any modification to public collections requires entry in `roles_admin`.
 
 ---
 
-## 5. Code Structure Overview
-- `/src/app`: Next.js App Router pages.
-- `/src/components/sections`: Modular home page sections.
-- `/src/firebase`: Core Firebase configuration and real-time hooks.
-- `/src/ai`: Genkit flows for AI-powered content generation.
-- `/src/lib/translations.ts`: Master bilingual dictionary.
+## 5. Deployment Guidelines
+The site is optimized for **Vercel** or **Firebase App Hosting**. Environment variables for Stripe, Cashfree, and Resend must be configured for full functionality.

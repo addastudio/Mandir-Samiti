@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -17,7 +16,7 @@ export function HeroSection() {
       id="home"
       className="relative flex min-h-[100dvh] w-full items-center justify-center text-center text-white overflow-hidden"
     >
-      {/* Background Video (Drone Footage Placeholder) */}
+      {/* Background Video (Drone Footage) */}
       <video
         autoPlay
         muted
@@ -30,7 +29,7 @@ export function HeroSection() {
           src="https://assets.mixkit.co/videos/preview/mixkit-top-view-of-a-temple-complex-in-india-40000-large.mp4" 
           type="video/mp4" 
         />
-        {/* Secondary fallback if video fails to render */}
+        {/* Fallback image if video fails */}
         {heroImage && (
           <Image
             src={heroImage.imageUrl}
@@ -43,7 +42,7 @@ export function HeroSection() {
         )}
       </video>
 
-      {/* Darkened Overlay for Text Legibility - Multi-layered for better contrast */}
+      {/* Enhanced Overlays for Legibility */}
       <div className="absolute inset-0 bg-black/40 z-[1]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20 z-[2]" />
       
@@ -94,8 +93,8 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Scroll Down Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 group cursor-pointer">
+      {/* Scroll Down Indicator - Always Visible Above Video */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10] flex flex-col items-center gap-2 group cursor-pointer">
         <a href="#notices" aria-label="Scroll down" className="flex flex-col items-center gap-1">
           <span className="text-[10px] uppercase font-bold tracking-[0.3em] text-white/60 group-hover:text-white transition-colors">
             {language === 'hi' ? 'नीचे जाएँ' : 'Discover'}

@@ -1,4 +1,3 @@
-
 "use client";
 
 import ReCAPTCHA from "react-google-recaptcha";
@@ -8,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Reusable reCAPTCHA component that handles language and standard keys.
- * Centralized styling for a consistent "pretty and professional" look.
+ * Featuring a professional, theme-integrated "Glassmorphism" design.
  */
 export function RecaptchaWidget({ onChange, className }: { onChange: (token: string | null) => void, className?: string }) {
   const { language } = useLanguage();
@@ -18,11 +17,14 @@ export function RecaptchaWidget({ onChange, className }: { onChange: (token: str
 
   return (
     <div className={cn(
-      "relative bg-secondary/40 border border-primary/10 rounded-2xl p-4 sm:p-6 transition-all hover:border-primary/20 hover:bg-secondary/60 shadow-sm",
+      "relative bg-secondary/40 border border-primary/10 rounded-2xl p-4 sm:p-6 transition-all hover:border-primary/20 hover:bg-secondary/60 shadow-sm overflow-hidden",
       className
     )}>
+      {/* Decorative background element */}
+      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-24 h-24 bg-primary/5 rounded-full blur-2xl -z-10" />
+      
       <div className="flex items-center gap-3 mb-4">
-        <div className="bg-primary/10 p-2 rounded-full shadow-inner">
+        <div className="bg-primary/10 p-2 rounded-full shadow-inner ring-1 ring-primary/20">
           <ShieldCheck className="h-4 w-4 text-primary" />
         </div>
         <div className="flex flex-col">
@@ -35,7 +37,7 @@ export function RecaptchaWidget({ onChange, className }: { onChange: (token: str
         </div>
       </div>
       
-      <div className="flex justify-center overflow-hidden rounded-xl border border-black/5 bg-white/50 p-1 shadow-inner">
+      <div className="flex justify-center overflow-hidden rounded-xl border border-black/5 bg-white/50 p-1 shadow-inner backdrop-blur-sm">
         <ReCAPTCHA
           sitekey={siteKey}
           onChange={onChange}
