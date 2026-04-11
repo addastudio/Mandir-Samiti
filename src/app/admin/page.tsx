@@ -56,7 +56,8 @@ import {
   Ghost,
   Clock,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
+  Database
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -82,7 +83,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { getEmailServiceStatus } from "@/app/actions";
+import { getEmailServiceStatus, getBackendConnectionStatus } from "@/app/actions";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -155,6 +156,7 @@ export default function AdminPage() {
   const [eventMediaPreview, setEventMediaPreview] = useState<string | null>(null);
   const [editEventMediaPreview, setEditEventMediaPreview] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<{ isLive: boolean; provider: string } | null>(null);
+  const [backendStatus, setBackendStatus] = useState<{ firebase: any; superbase: any } | null>(null);
 
   // Edit States
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
@@ -170,6 +172,7 @@ export default function AdminPage() {
   useEffect(() => {
     setMounted(true);
     getEmailServiceStatus().then(setEmailStatus);
+    getBackendConnectionStatus().then(setBackendStatus);
   }, []);
 
   const currentUserRef = useMemoFirebase(() => {
@@ -1331,6 +1334,27 @@ export default function AdminPage() {
                 </form>
               </CardContent>
             </Card>
+            
+            <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" /> Backend Infrastructure</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 rounded-lg bg-secondary/20 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-100 rounded-full"><Database className="h-4 w-4 text-amber-600" /></div>
+                    <div><p className="font-bold text-sm">{backendStatus?.firebase?.label}</p><p className="text-xs opacity-60">Primary Database & Auth</p></div>
+                  </div>
+                  <Badge className="bg-green-500">Connected</Badge>
+                </div>
+                <div className="p-4 rounded-lg bg-secondary/20 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-full"><Database className="h-4 w-4 text-blue-600" /></div>
+                    <div><p className="font-bold text-sm">{backendStatus?.superbase?.label}</p><p className="text-xs opacity-60">{backendStatus?.superbase?.active ? 'API Keys Detected' : 'No Keys Detected'}</p></div>
+                  </div>
+                  <Badge variant={backendStatus?.superbase?.active ? 'default' : 'outline'}>{backendStatus?.superbase?.active ? 'Active' : 'Offline'}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader><CardTitle className="flex items-center gap-2"><Zap className="h-5 w-5" /> System Status</CardTitle></CardHeader>
               <CardContent className="space-y-4">

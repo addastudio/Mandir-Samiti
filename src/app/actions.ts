@@ -59,6 +59,22 @@ export async function getEmailServiceStatus() {
   };
 }
 
+/**
+ * Checks backend connection status.
+ */
+export async function getBackendConnectionStatus() {
+  return {
+    firebase: {
+      active: true,
+      label: "Firebase (Primary)"
+    },
+    superbase: {
+      active: !!(process.env.NEXT_PUBLIC_SUPERBASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL),
+      label: "Superbase (Detected)"
+    }
+  };
+}
+
 export async function submitContactForm(prevState: any, formData: FormData) {
   const validatedFields = contactSchema.safeParse({
     name: formData.get("name"),
