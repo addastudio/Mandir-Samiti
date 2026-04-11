@@ -11,13 +11,9 @@ This is a professional, bilingual (Hindi/English) website for the Mandir Samiti 
 - **Real-time Updates:** Powered by Firestore for instant notices and events.
 
 ## Documentation
-- [Technical Specification](./docs/TECHNICAL_SPECIFICATION.md): **Full Flowcharts, Pseudocode, and Architecture.**
-- [Website Details](./docs/WEBSITE_DETAILS.md): Architecture and Design overview.
-- [Zero-Cost Plan](./docs/ZERO_COST_PLAN.md): Recommended plan for non-profits to host for free.
-- [Superbase Alternative](./docs/SUPERBASE_PLAN.md): Alternative backend roadmap overview.
-- [Superbase Guide](./docs/SUPERBASE_GUIDE.md): **Step-by-step implementation guide for Superbase.**
-- [Security Migration](./docs/FIREBASE_TO_SUPERBASE_RULES.md): **Converting Firebase Rules to Superbase RLS.**
-- [Migration Guide](./docs/MIGRATION_GUIDE.md): Full instructions for GitHub and Production deployment.
+- [Technical Specification](./docs/TECHNICAL_SPECIFICATION.md): **Architecture, Design, and Logic.**
+- [Superbase Guide](./docs/SUPERBASE_GUIDE.md): **Full roadmap and implementation for alternative backend.**
+- [Migration & Deployment](./docs/MIGRATION_GUIDE.md): **GitHub, Vercel, and Zero-Cost hosting plan.**
 
 ## Tech Stack
 - **Framework:** Next.js 15 (App Router)

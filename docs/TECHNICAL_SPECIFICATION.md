@@ -1,6 +1,6 @@
 # Mandir Samiti Bahpura - Technical Specification
 
-This document provides a complete overview of the application architecture, data flows, and logical structures.
+This document provides a complete overview of the application architecture, design philosophy, data flows, and logical structures.
 
 ---
 
@@ -9,43 +9,24 @@ The application follows a **Serverless Full-Stack Architecture** using Next.js 1
 
 - **Frontend:** Next.js (App Router), React, Tailwind CSS, ShadCN UI.
 - **Backend-as-a-Service (BaaS):** Firebase (Auth, Firestore).
+- **Dual Backend Support:** Optional Superbase (Supabase) integration for migration flexibility.
 - **Payment Layer:** Stripe (International) & Cashfree (Domestic India).
 - **Email Layer:** Resend (Transactional OTP & Notifications).
 - **AI Layer:** Genkit (Gemini 2.5 Flash) for automated content generation.
 
 ---
 
-## 2. Core Flowcharts (Logical Logic)
+## 2. Design Philosophy
+The design focuses on "Modern Spirituality"—combining traditional temple aesthetics with professional, clean UI patterns.
 
-### A. Authentication & Verification Flow
-```text
-[User Input Email/Pass] -> [Trigger Server Action] -> [Generate 6-digit OTP]
-      |                                                     |
-      V                                                     V
-[Show OTP Screen] <------------------------------- [Send Email via Resend]
-      |
-      +--> [Valid OTP?] --NO--> [Show Error]
-      |
-      +--YES--> [Firebase: createUserWithEmailAndPassword]
-                  |
-                  V
-            [Create Firestore User Doc (isVerified: true)] -> [Redirect Dashboard]
-```
-
-### B. Donation Processing Flow
-```text
-[User selects Amount] -> [Choose Gateway: Stripe/Cashfree]
-      |
-      +--> [IF STRIPE] -> [Server Action: createCheckoutSession] -> [Redirect Stripe URL]
-      |                                                                    |
-      |                                                                    V
-      |                                                           [On Success: Webhook/Callback]
-      |                                                                    |
-      +--> [IF CASHFREE] -> [Server Action: createOrder] -> [SDK: Open Overlay] -> [Pay]
-                                                                           |
-                                                                           V
-                                                               [Update Firestore: donations]
-```
+- **Color Palette:**
+  - **Primary:** Saffron/Gold (`hsl(42 92% 48%)`) representing divinity and energy.
+  - **Accent:** Maroon (`hsl(0 100% 27%)`) for headline highlights.
+  - **Background:** Warm Cream (`hsl(46 74% 91%)`) for a serene reading experience.
+- **Typography:**
+  - **English:** Poppins (Modern, geometric sans-serif).
+  - **Hindi:** Mukta (Optimized for Devanagari readability).
+- **Responsiveness:** Mobile-first approach using dynamic viewport heights (`dvh`) and flexible grid systems.
 
 ---
 
@@ -57,13 +38,14 @@ The application follows a **Serverless Full-Stack Architecture** using Next.js 1
 - `email`: string
 - `role`: enum ("devotee", "member", "official", "president")
 - `isVerified`: boolean
-- `photoURL`: string (default: standard-avatar)
+- `photoURL`: string
 
-### Collection: `donations` (Sub-collection of user)
+### Collection: `donations` (Sub-collection of user & Top-level)
 - `amount`: number
 - `date`: timestamp
-- `mode`: string ("Stripe", "UPI", "Direct")
+- `mode`: string ("Stripe", "Cash", "UPI")
 - `status`: string ("completed", "failed")
+- `devoteeName`: string (for manual entries)
 
 ### Collection: `roles_admin`
 - `id`: string (User UID)
@@ -72,9 +54,9 @@ The application follows a **Serverless Full-Stack Architecture** using Next.js 1
 
 ---
 
-## 4. Pseudocode
+## 4. Core Logic & Pseudocode
 
-### A. Patronage Tier Logic (Frontend)
+### A. Patronage Tier Logic
 ```javascript
 FUNCTION getTierInfo(totalDonatedAmount):
     IF amount >= 100,000 THEN RETURN "Grand Patron" (Theme: Indigo + Glow)
@@ -85,30 +67,17 @@ FUNCTION getTierInfo(totalDonatedAmount):
 END FUNCTION
 ```
 
-### B. Admin AI Content Generator (Server-side)
-```typescript
-FUNCTION generateTempleContent(topic, type, lang):
-    PROMPT = "You are a professional Mandir Admin. Write a respectful [type] about [topic] in [lang]."
-    RESULT = CALL Genkit.generate(PROMPT)
-    RETURN {
-        title: RESULT.extractedTitle,
-        content: RESULT.extractedBody
-    }
-END FUNCTION
-```
-
----
-
-## 5. Security Model (RBAC)
+### B. Security Model (RBAC)
 Security is enforced via **Firestore Security Rules**:
-
-1. **Read Public:** `events`, `gallery`, `notices`, `mandir_samiti_members` are readable by anyone.
-2. **Read Private:** `donations` and `prayer_requests` are restricted where `auth.uid == resource.data.userId`.
-3. **Write Admin:** Any `write`, `create`, `delete` operation on public collections requires `exists(/databases/$(db)/documents/roles_admin/$(request.auth.uid))`.
+1. **Public Read:** `events`, `gallery`, `notices`, `mandir_samiti_members`.
+2. **Private Read:** `donations` and `prayer_requests` (Owner/Admin only).
+3. **Admin Write:** Any modification to public collections requires entry in `roles_admin`.
 
 ---
 
-## 6. How to Convert to PDF
-1. Open this file in **VS Code** or a **Markdown Editor**.
-2. Press `Ctrl + Shift + P` and type **"Markdown: Open Preview to the Side"**.
-3. Right-click the preview and select **"Export to PDF"** (if extension installed) OR open the URL in Chrome and use **Print (Ctrl+P) > Save as PDF**.
+## 5. Code Structure Overview
+- `/src/app`: Next.js App Router pages.
+- `/src/components/sections`: Modular home page sections.
+- `/src/firebase`: Core Firebase configuration and real-time hooks.
+- `/src/ai`: Genkit flows for AI-powered content generation.
+- `/src/lib/translations.ts`: Master bilingual dictionary.

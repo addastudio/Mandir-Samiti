@@ -1,67 +1,46 @@
 # Mandir Bahpura - Migration & Deployment Guide
 
-This guide outlines the process for migrating this project from the development environment to a production-ready setup using GitHub and Vercel/Firebase.
+This guide outlines the process for migrating to production and maintaining the site at **Zero Cost**.
 
 ---
 
-## 1. Source Control (GitHub Setup)
-
-1. **Initialize Git:**
-   If not already initialized, run:
-   ```bash
-   git init
-   ```
-2. **Create Repository:** Create a new private or public repository on [GitHub](https://github.com).
-3. **Push Code:**
-   ```bash
-   git add .
-   ```
+## 1. Zero-Cost Strategy
+For community non-profits, we recommend this free-tier stack:
+- **Hosting:** Vercel (Hobby Tier) - $0/mo.
+- **Database:** Firebase (Spark Plan) - $0/mo (up to 50k reads/day).
+- **Email:** Resend (Free Tier) - $0/mo (3,000 emails/mo).
+- **Payments:** Stripe (Pay-as-you-go) - Only takes a small % of successful donations.
 
 ---
 
-## 2. Firebase Project Setup
-
-1. **Go to Firebase Console:** Visit [console.firebase.google.com](https://console.firebase.google.com).
-2. **Create Project:** Click "Add project" and follow the setup wizard.
-3. **Provision Services:**
-   - **Firestore:** Enable "Cloud Firestore" in production mode.
-   - **Authentication:** Enable "Email/Password" and "Google" sign-in providers.
+## 2. GitHub Setup
+1. **Initialize Git:** `git init`
+2. **Create Repository:** Create a new private repo on GitHub.
+3. **Push Code:** `git add . && git commit -m "Initial commit" && git push`
 
 ---
 
-## 3. Production Hosting (Vercel Recommendation)
-
-For zero-cost hosting of Next.js apps, **Vercel** is highly recommended.
-
-1. **Connect to GitHub:**
-   - In the Vercel Dashboard, click **Add New** > **Project**.
-   - Import your GitHub repository.
-2. **Configure Environment Variables:**
-   Add the following secrets in the Vercel Dashboard:
-   
-   **Mandatory:**
-   - `STRIPE_SECRET_KEY`: Your live secret key from Stripe.
-   - `CASHFREE_APP_ID`: Your Cashfree App ID.
-   - `CASHFREE_SECRET_KEY`: Your Cashfree Secret Key.
-   - `NEXT_PUBLIC_CASHFREE_MODE`: `sandbox` (testing) or `production`.
-   
-   **Optional:**
-   - `RESEND_API_KEY`: Your API key from Resend for emails.
+## 3. Vercel Deployment (Production)
+1. **Connect:** Go to Vercel.com and import your GitHub repo.
+2. **Environment Variables:** Add the following keys in Vercel:
+   - `STRIPE_SECRET_KEY`
+   - `CASHFREE_APP_ID` & `CASHFREE_SECRET_KEY`
+   - `RESEND_API_KEY`
+   - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
+   - `RECAPTCHA_SECRET_KEY`
+3. **Deploy:** Vercel will automatically build and assign a `.vercel.app` URL.
 
 ---
 
-## 4. Payment Gateway Selection
-
-The app supports multiple payment gateways. It will automatically detect which one to use based on your API keys:
-
-- **Stripe:** Best for international card payments.
-- **Cashfree:** Best for Indian local payments (UPI, QR, Netbanking).
-
-If you provide keys for both, the user will be given a choice on the donation page.
+## 4. Firebase Project Setup
+1. **Console:** Visit console.firebase.google.com.
+2. **Provision:**
+   - **Firestore:** Enable in Production mode.
+   - **Auth:** Enable Email/Password and Google providers.
+3. **Rules:** Deploy the provided `firestore.rules` from this repository.
 
 ---
 
-## 5. Ongoing Maintenance
-
-- **Updates:** Every time you `git push` to the `main` branch, Vercel will automatically trigger a new build and deploy your changes.
-- **Backups:** Regularly export your Firestore data using the Google Cloud Console.
+## 5. Domain Name
+- **Recommendation:** Use a `.org` or `.in` domain (approx. ₹800/year).
+- **Mapping:** Add your custom domain in the Vercel project settings and update the DNS records.
