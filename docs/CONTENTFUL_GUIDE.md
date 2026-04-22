@@ -1,4 +1,3 @@
-
 # Contentful CMS Integration Guide
 
 This guide explains how to connect your Mandir Samiti Bahpura website to Contentful to manage core information without touching code.
@@ -13,7 +12,7 @@ This guide explains how to connect your Mandir Samiti Bahpura website to Content
 ---
 
 ## 2. Environment Variables
-Add these to your `.env` file or hosting provider (Vercel/Firebase):
+Add these to your `.env` file or hosting provider (Netlify/Firebase):
 
 ```bash
 CONTENTFUL_SPACE_ID=your_space_id
@@ -51,4 +50,5 @@ In Contentful, go to **Content model** and create a new type:
 ---
 
 ## 5. Deployment
-When deploying to Vercel or Netlify, ensure the environment variables are set in their dashboard. The website will detect them and switch to "CMS Mode" automatically.
+When deploying to Netlify, ensure the environment variables are set in the Netlify Dashboard (**Site configuration > Environment variables**). The website will detect them and switch to "CMS Mode" automatically.
+
