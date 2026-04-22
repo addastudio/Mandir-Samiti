@@ -1,9 +1,11 @@
+
 "use server";
 
 import { z } from "zod";
 import { Resend } from 'resend';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
+import { getContentfulStatus } from '@/lib/contentful';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -11,6 +13,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
  * Checks backend connection status for reporting in the Admin Panel.
  */
 export async function getBackendConnectionStatus() {
+  const contentful = getContentfulStatus();
   return {
     firebase: {
       active: true,
@@ -19,6 +22,10 @@ export async function getBackendConnectionStatus() {
     superbase: {
       active: !!(process.env.NEXT_PUBLIC_SUPERBASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL),
       label: "Superbase (Detected)"
+    },
+    contentful: {
+      active: contentful.active,
+      label: contentful.label
     }
   };
 }

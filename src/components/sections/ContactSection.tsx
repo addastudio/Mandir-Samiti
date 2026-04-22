@@ -27,6 +27,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { RecaptchaWidget } from "@/components/RecaptchaWidget";
+import { getContentfulSiteContent } from "@/lib/contentful";
 
 function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
@@ -50,6 +51,11 @@ export function ContactSection() {
   const [state, formAction] = useActionState(submitContactForm, initialState);
   const [formKey, setFormKey] = useState(0);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [cmsContent, setCmsContent] = useState<any>(null);
+
+  useEffect(() => {
+    getContentfulSiteContent().then(setCmsContent);
+  }, []);
 
   useEffect(() => {
     if(state.message) {
@@ -76,6 +82,14 @@ export function ContactSection() {
     { icon: Youtube, href: "#", name: "Youtube" },
   ];
 
+  const address = language === 'hi' 
+    ? (cmsContent?.hiAddress || t.contactAddress)
+    : (cmsContent?.enAddress || t.contactAddress);
+
+  const phone = cmsContent?.phone || t.contactPhone;
+  const email = cmsContent?.email || t.contactEmail;
+  const mapUrl = cmsContent?.mapUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3549.442755910103!2d78.008074!3d27.175144!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39747121d702ff6d%3A0xdd2ae4803f767dde!2sTaj%20Mahal!5e0!3m2!1sen!2sin!4v1628610423093!5m2!1sen!2sin";
+
   return (
     <section id="contact" className="py-16 sm:py-20 md:py-28">
       <div className="container mx-auto px-4 sm:px-6">
@@ -98,8 +112,8 @@ export function ContactSection() {
                 <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-bold text-base sm:text-lg">{t.contactAddress.split(':')[0]}</h3>
-                <p className={cn("text-muted-foreground text-sm sm:text-base mt-1", language === 'hi' ? 'font-hindi' : '')}>{t.contactAddress.split(':')[1]}</p>
+                <h3 className="font-bold text-base sm:text-lg">{address.includes(':') ? address.split(':')[0] : (language === 'hi' ? 'पता' : 'Address')}</h3>
+                <p className={cn("text-muted-foreground text-sm sm:text-base mt-1", language === 'hi' ? 'font-hindi' : '')}>{address.includes(':') ? address.split(':')[1] : address}</p>
               </div>
             </div>
             <div className="flex items-start gap-4 sm:gap-5">
@@ -107,8 +121,8 @@ export function ContactSection() {
                 <Phone className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-bold text-base sm:text-lg">{t.contactPhone.split(':')[0]}</h3>
-                <p className="text-muted-foreground text-sm sm:text-base mt-1">{t.contactPhone.split(':')[1]}</p>
+                <h3 className="font-bold text-base sm:text-lg">{phone.includes(':') ? phone.split(':')[0] : (language === 'hi' ? 'फ़ोन' : 'Phone')}</h3>
+                <p className="text-muted-foreground text-sm sm:text-base mt-1">{phone.includes(':') ? phone.split(':')[1] : phone}</p>
               </div>
             </div>
             <div className="flex items-start gap-4 sm:gap-5">
@@ -116,8 +130,8 @@ export function ContactSection() {
                 <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-bold text-base sm:text-lg">{t.contactEmail.split(':')[0]}</h3>
-                <p className="text-muted-foreground text-sm sm:text-base mt-1">{t.contactEmail.split(':')[1]}</p>
+                <h3 className="font-bold text-base sm:text-lg">{email.includes(':') ? email.split(':')[0] : (language === 'hi' ? 'ईमेल' : 'Email')}</h3>
+                <p className="text-muted-foreground text-sm sm:text-base mt-1">{email.includes(':') ? email.split(':')[1] : email}</p>
               </div>
             </div>
             <div className="pt-4 border-t border-border/40">
@@ -147,25 +161,17 @@ export function ContactSection() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <Input name="name" placeholder={t.contactFormName} className={cn("h-11 sm:h-12 bg-secondary/30", language === 'hi' ? 'font-hindi' : '')} required />
-                      {state.errors?.name && <p className="text-xs font-medium text-destructive">{state.errors.name[0]}</p>}
                     </div>
                     <div className="space-y-2">
                       <Input name="email" type="email" placeholder={t.contactFormEmail} className={cn("h-11 sm:h-12 bg-secondary/30", language === 'hi' ? 'font-hindi' : '')} required />
-                       {state.errors?.email && <p className="text-xs font-medium text-destructive">{state.errors.email[0]}</p>}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Textarea name="message" placeholder={t.contactFormMessage} className={cn("min-h-[140px] sm:min-h-[160px] bg-secondary/30 resize-none", language === 'hi' ? 'font-hindi' : '')} required />
-                     {state.errors?.message && <p className="text-xs font-medium text-destructive">{state.errors.message[0]}</p>}
                   </div>
 
                   <div className="space-y-2 pt-2">
                     <RecaptchaWidget onChange={(token) => setCaptchaToken(token)} />
-                    {!captchaToken && (
-                      <p className="text-[10px] text-center text-primary font-bold italic mt-1 animate-pulse">
-                        {t.captchaRequired}
-                      </p>
-                    )}
                   </div>
 
                   <div className="pt-2">
@@ -180,7 +186,7 @@ export function ContactSection() {
         <div className="mt-16 sm:mt-24">
             <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
               <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3549.442755910103!2d78.008074!3d27.175144!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39747121d702ff6d%3A0xdd2ae4803f767dde!2sTaj%20Mahal!5e0!3m2!1sen!2sin!4v1628610423093!5m2!1sen!2sin"
+                  src={mapUrl}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
