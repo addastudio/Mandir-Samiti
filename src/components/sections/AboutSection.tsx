@@ -9,11 +9,18 @@ import { Users, History, Target, Loader2 } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { getContentfulSiteContent } from "@/lib/contentful";
 
 export function AboutSection() {
   const { t, language } = useLanguage();
   const firestore = useFirestore();
+  const [cmsContent, setCmsContent] = useState<any>(null);
   const galleryImage = PlaceHolderImages.find((img) => img.id === "gallery-1");
+
+  useEffect(() => {
+    getContentfulSiteContent().then(setCmsContent);
+  }, []);
 
   const membersRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -31,6 +38,14 @@ export function AboutSection() {
   const members = firebaseMembers && firebaseMembers.length > 0 
     ? [...firebaseMembers].sort((a,b) => (a.displayOrder || 0) - (b.displayOrder || 0))
     : fallbackMembers;
+
+  const historyText = language === 'hi' 
+    ? (cmsContent?.hiHistory || t.aboutHistoryP1)
+    : (cmsContent?.enHistory || t.aboutHistoryP1);
+
+  const missionText = language === 'hi' 
+    ? (cmsContent?.hiMission || t.aboutMissionP1)
+    : (cmsContent?.enMission || t.aboutMissionP1);
 
   return (
     <section id="about" className="py-16 sm:py-20 md:py-28 overflow-hidden">
@@ -65,7 +80,7 @@ export function AboutSection() {
                     language === "hi" ? "font-hindi" : ""
                 )}
                 >
-                {t.aboutHistoryP1}
+                {historyText}
                 </p>
             </div>
             <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-primary/5 hover:border-primary/20 transition-colors">
@@ -84,7 +99,7 @@ export function AboutSection() {
                     language === "hi" ? "font-hindi" : ""
                 )}
                 >
-                {t.aboutMissionP1}
+                {missionText}
                 </p>
             </div>
           </div>
