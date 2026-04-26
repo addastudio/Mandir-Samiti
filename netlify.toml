@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 # Netlify Configuration for Next.js and Decap CMS
-=======
->>>>>>> 80d9f5bbcf47e2e000c7f1bcb195d07045672027
 [build]
   command = "npm run build"
   publish = ".next"
@@ -9,20 +6,16 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-<<<<<<< HEAD
-# Security Headers and Identity Redirects
-=======
->>>>>>> 80d9f5bbcf47e2e000c7f1bcb195d07045672027
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
-<<<<<<< HEAD
-    X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "upgrade-insecure-requests"
 
-# Allow the CMS to handle authentication redirects
+# Allow Decap CMS to handle authentication redirects and static routing
 [[redirects]]
   from = "/admin/*"
   to = "/admin/index.html"
@@ -32,9 +25,3 @@
   from = "/.netlify/identity/*"
   to = "/.netlify/identity/*"
   status = 200
-=======
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "upgrade-insecure-requests"
->>>>>>> 80d9f5bbcf47e2e000c7f1bcb195d07045672027
