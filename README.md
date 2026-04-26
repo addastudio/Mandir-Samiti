@@ -13,7 +13,7 @@ This is a professional, bilingual (Hindi/English) website for the Mandir Samiti 
 ## Documentation
 - [Technical Specification](./docs/TECHNICAL_SPECIFICATION.md): **Architecture, Design, and Logic.**
 - [Superbase Guide](./docs/SUPERBASE_GUIDE.md): **Full roadmap and implementation for alternative backend.**
-- [Migration & Deployment](./docs/MIGRATION_GUIDE.md): **GitHub, Vercel, and Zero-Cost hosting plan.**
+- [Migration & Deployment](./docs/MIGRATION_GUIDE.md): **GitHub, Netlify, and Zero-Cost hosting plan.**
 
 ## Tech Stack
 - **Framework:** Next.js 15 (App Router)
@@ -23,3 +23,5 @@ This is a professional, bilingual (Hindi/English) website for the Mandir Samiti 
 - **Styling:** Tailwind CSS + ShadCN UI
 - **Payments:** Stripe & Cashfree
 - **Email:** Resend
+- **Hosting:** Netlify
+

@@ -13,6 +13,7 @@ The application follows a **Serverless Full-Stack Architecture** using Next.js 1
 - **Payment Layer:** Stripe (International) & Cashfree (Domestic India).
 - **Email Layer:** Resend (Transactional OTP & Notifications).
 - **AI Layer:** Genkit (Gemini 2.5 Flash) for automated content generation in the Admin Panel.
+- **CMS Layer:** Contentful (Headless CMS) for core static content management.
 
 ---
 
@@ -76,4 +77,8 @@ Security is enforced via **Firestore Security Rules**:
 ---
 
 ## 5. Deployment Guidelines
-The site is optimized for **Vercel** or **Firebase App Hosting**. Environment variables for Stripe, Cashfree, and Resend must be configured for full functionality.
+The site is optimized for **Netlify** or **Firebase App Hosting**. 
+1. **Netlify:** Use the official Next.js Runtime (automatic).
+2. **Security:** Netlify provides managed SSL and secure environment variable handling.
+3. **Connectivity:** Firestore is configured to use Long Polling to avoid issues with restrictive corporate/ISP proxies on the edge.
+
