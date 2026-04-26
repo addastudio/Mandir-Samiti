@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -198,12 +197,12 @@ export function Header() {
             <LanguageSwitcher />
             <div className="flex items-center gap-2">
               {adminDoc && (
-                <Link href="/admin">
+                <Link href="/management">
                   <Button 
                     variant="default" 
                     size="icon" 
                     className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white" 
-                    title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
+                    title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                   >
                     <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
                   </Button>
@@ -228,12 +227,12 @@ export function Header() {
           </div>
           <div className="flex items-center gap-1">
             {adminDoc && (
-              <Link href="/admin">
+              <Link href="/management">
                 <Button 
                   variant="default" 
                   size="icon" 
                   className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
-                  title={language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
+                  title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                 >
                   <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
                 </Button>
@@ -281,7 +280,7 @@ export function Header() {
                 />
                 {adminDoc && (
                    <Link 
-                    href="/admin" 
+                    href="/management" 
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
                       "flex items-center gap-3 w-full py-4 text-lg border-b border-border/50 text-primary font-bold",
@@ -289,7 +288,7 @@ export function Header() {
                     )}
                    >
                      <ShieldCheck className="h-6 w-6" />
-                     {language === 'hi' ? 'प्रबंधन पैनल' : 'Admin Panel'}
+                     {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                    </Link>
                 )}
               </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -204,7 +203,7 @@ export default function GalleryPage() {
                 </Button>
               </div>
               {adminDoc && (
-                <Link href="/admin">
+                <Link href="/management">
                   <Button variant="outline" size="sm" className="h-8 text-xs border-primary/30 text-primary hover:bg-primary/5 gap-2">
                     <ShieldCheck className="h-3 w-3" />
                     {t.galleryAddMedia}

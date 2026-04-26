@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -337,7 +336,7 @@ function DashboardContent() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href="/"><Button variant="outline" size="sm" className="gap-2 h-9 text-xs sm:text-sm"><Globe className="h-4 w-4" />{t.browseWebsite}</Button></Link>
-            {adminDoc && <Link href="/admin"><Button variant="default" size="sm" className="gap-2 bg-primary text-primary-foreground h-9 text-xs sm:text-sm"><ShieldCheck className="h-4 w-4" />{t.dashboardAdminPanel}</Button></Link>}
+            {adminDoc && <Link href="/management"><Button variant="default" size="sm" className="gap-2 bg-primary text-primary-foreground h-9 text-xs sm:text-sm"><ShieldCheck className="h-4 w-4" />{t.dashboardAdminPanel}</Button></Link>}
             <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 text-destructive hover:bg-destructive/10 h-9 text-xs sm:text-sm"><LogOut className="h-4 w-4" />{t.dashboardLogout}</Button>
           </div>
         </div>
