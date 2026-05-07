@@ -1,12 +1,16 @@
+
 "use client";
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, ShieldCheck, ArrowRight, LayoutDashboard, Database } from "lucide-react";
+import { Settings, ShieldCheck, ArrowRight, LayoutDashboard, Database, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 
 /**
  * Gateway page for Administrators.
@@ -14,38 +18,70 @@ import { cn } from "@/lib/utils";
  */
 export default function AdminGatewayPage() {
   const { language, t } = useLanguage();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const router = useRouter();
+
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading || isProfileLoading) {
+    return (
+      <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const isLeadership = userProfile?.role === 'president' || userProfile?.role === 'official';
 
   return (
     <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="shadow-xl border-primary/10 overflow-hidden hover:shadow-2xl transition-all group">
-          <CardHeader className="bg-primary/5 pb-8">
-            <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Settings className="h-6 w-6 text-primary" />
-            </div>
-            <CardTitle className={cn("text-2xl", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-              {language === 'hi' ? 'कंटेंट एडिटर' : 'Content Editor'}
-            </CardTitle>
-            <CardDescription>
-              {language === 'hi' 
-                ? 'वेबसाइट के मुख्य कंटेंट, हीरो सेक्शन और अबाउट अस को बदलें।' 
-                : 'Manage structural content like Hero, About Us, and Seva programs.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <Link href="/admin/index.html">
-              <Button className="w-full h-12 gap-2 font-bold shadow-md">
-                {language === 'hi' ? 'CMS खोलें' : 'Open CMS'}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <p className="mt-4 text-[10px] text-muted-foreground text-center uppercase tracking-widest font-bold opacity-60">
-              Powered by Decap CMS
-            </p>
-          </CardContent>
-        </Card>
+        {isLeadership && (
+          <Card className="shadow-xl border-primary/10 overflow-hidden hover:shadow-2xl transition-all group">
+            <CardHeader className="bg-primary/5 pb-8">
+              <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Settings className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle className={cn("text-2xl", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                {language === 'hi' ? 'कंटेंट एडिटर' : 'Content Editor'}
+              </CardTitle>
+              <CardDescription>
+                {language === 'hi' 
+                  ? 'वेबसाइट के मुख्य कंटेंट, हीरो सेक्शन और अबाउट अस को बदलें।' 
+                  : 'Manage structural content like Hero, About Us, and Seva programs.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <Link href="/admin/index.html">
+                <Button className="w-full h-12 gap-2 font-bold shadow-md">
+                  {language === 'hi' ? 'CMS खोलें' : 'Open CMS'}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <p className="mt-4 text-[10px] text-muted-foreground text-center uppercase tracking-widest font-bold opacity-60">
+                Powered by Decap CMS
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="shadow-xl border-primary/10 overflow-hidden hover:shadow-2xl transition-all group">
+        <Card className={cn(
+          "shadow-xl border-primary/10 overflow-hidden hover:shadow-2xl transition-all group",
+          !isLeadership && "md:col-span-2 max-w-xl mx-auto"
+        )}>
           <CardHeader className="bg-accent/5 pb-8">
             <div className="h-12 w-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Database className="h-6 w-6 text-accent" />

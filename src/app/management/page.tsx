@@ -114,6 +114,12 @@ export default function ManagementPage() {
   }, [firestore, user]);
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
 
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+
   // Collections
   const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "events"), [firestore, adminDoc]);
   const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "gallery"), [firestore, adminDoc]);
@@ -136,11 +142,11 @@ export default function ManagementPage() {
   const { data: allAdmins } = useCollection(allAdminsRef);
 
   useEffect(() => {
-    if (mounted && !isUserLoading && !isAdminLoading) {
+    if (mounted && !isUserLoading && !isAdminLoading && !isProfileLoading) {
       if (!user) router.push("/login");
       else if (!adminDoc) router.push("/dashboard");
     }
-  }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
+  }, [user, isUserLoading, adminDoc, isAdminLoading, isProfileLoading, router, mounted]);
 
   const logActivity = (action: string, entityType: string, title: string) => {
     if (!logsRef || !user) return;
@@ -242,11 +248,12 @@ export default function ManagementPage() {
     }
   };
 
-  if (!mounted || isUserLoading || isAdminLoading) {
+  if (!mounted || isUserLoading || isAdminLoading || isProfileLoading) {
     return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   const totalDonations = allDonations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
+  const isLeadership = userProfile?.role === 'president' || userProfile?.role === 'official';
 
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-16 sm:pt-20">
@@ -274,12 +281,14 @@ export default function ManagementPage() {
                 <span className="hidden xs:inline">{language === 'hi' ? 'वेबसाइट' : 'Website'}</span>
               </Button>
             </Link>
-            <Link href="/admin" className="flex-1 sm:flex-initial">
-              <Button variant="secondary" size="sm" className="w-full gap-2 text-xs sm:text-sm">
-                <Settings className="h-4 w-4" />
-                <span className="hidden xs:inline">{language === 'hi' ? 'CMS एडिटर' : 'CMS Editor'}</span>
-              </Button>
-            </Link>
+            {isLeadership && (
+              <Link href="/admin" className="flex-1 sm:flex-initial">
+                <Button variant="secondary" size="sm" className="w-full gap-2 text-xs sm:text-sm">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden xs:inline">{language === 'hi' ? 'CMS एडिटर' : 'CMS Editor'}</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
