@@ -43,7 +43,9 @@ import {
   Crown,
   Mail,
   User as UserIcon,
-  Fingerprint
+  Fingerprint,
+  ListOrdered,
+  ArrowDownAZ
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -90,6 +92,7 @@ export default function ManagementPage() {
   
   // States
   const [userSearch, setUserSearch] = useState("");
+  const [userSort, setUserSort] = useState<string>("role");
   const [donationSearch, setDonationSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string } | null>(null);
@@ -201,6 +204,31 @@ export default function ManagementPage() {
     }
   };
 
+  const sortedUsers = React.useMemo(() => {
+    if (!allUsers) return [];
+    const filtered = allUsers.filter(u => 
+      (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
+    );
+
+    return filtered.sort((a, b) => {
+      if (userSort === 'name-asc') return (a.name || '').localeCompare(b.name || '');
+      if (userSort === 'name-desc') return (b.name || '').localeCompare(a.name || '');
+      if (userSort === 'role') {
+        const roleWeights: Record<string, number> = { president: 4, official: 3, member: 2, devotee: 1 };
+        const weightA = roleWeights[a.role as string] || 0;
+        const weightB = roleWeights[b.role as string] || 0;
+        if (weightA !== weightB) return weightB - weightA;
+        return (a.name || '').localeCompare(b.name || '');
+      }
+      if (userSort === 'recent') {
+        // Fallback to ID comparison if createdAt isn't available
+        return (b.id || '').localeCompare(a.id || '');
+      }
+      return 0;
+    });
+  }, [allUsers, userSearch, userSort]);
+
   if (!mounted || isUserLoading || isAdminLoading) {
     return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -243,8 +271,8 @@ export default function ManagementPage() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full space-y-6">
-          <div className="w-full overflow-x-auto bg-muted/40 p-1 rounded-xl">
-            <TabsList className="flex h-auto w-max justify-start gap-1 bg-transparent border-0">
+          <div className="w-full overflow-x-auto bg-muted/40 p-1 rounded-xl touch-scroll">
+            <TabsList className="flex h-auto w-max justify-start gap-1 bg-transparent border-0 flex-nowrap">
               {[
                 { value: 'overview', icon: BarChart3, label: language === 'hi' ? 'सारांश' : 'Overview' },
                 { value: 'donations', icon: HandCoins, label: language === 'hi' ? 'दान' : 'Donations' },
@@ -674,14 +702,30 @@ export default function ManagementPage() {
                   </CardTitle>
                   <CardDescription className="text-xs uppercase tracking-widest font-semibold opacity-60">Control system permissions and community tiers</CardDescription>
                 </div>
-                <div className="relative w-full sm:w-80">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search by name or email..." 
-                    className="pl-10 h-11 text-sm bg-secondary/20 border-primary/5 focus:bg-white transition-all shadow-inner" 
-                    value={userSearch} 
-                    onChange={(e) => setUserSearch(e.target.value)} 
-                  />
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <Select value={userSort} onValueChange={setUserSort}>
+                    <SelectTrigger className="w-full sm:w-44 h-11 text-[10px] font-black uppercase tracking-wider bg-secondary/20 border-primary/5 shadow-inner">
+                      <div className="flex items-center gap-2">
+                        <ListOrdered className="h-3.5 w-3.5" />
+                        <SelectValue placeholder="Sort By" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-primary/10 shadow-xl">
+                      <SelectItem value="role" className="text-[10px] font-bold uppercase">Role Priority</SelectItem>
+                      <SelectItem value="name-asc" className="text-[10px] font-bold uppercase">Name (A-Z)</SelectItem>
+                      <SelectItem value="name-desc" className="text-[10px] font-bold uppercase">Name (Z-A)</SelectItem>
+                      <SelectItem value="recent" className="text-[10px] font-bold uppercase">Recent Joins</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Search by name or email..." 
+                      className="pl-10 h-11 text-sm bg-secondary/20 border-primary/5 focus:bg-white transition-all shadow-inner" 
+                      value={userSearch} 
+                      onChange={(e) => setUserSearch(e.target.value)} 
+                    />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
@@ -695,10 +739,7 @@ export default function ManagementPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allUsers?.filter(u => 
-                      (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
-                      (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
-                    ).map(u => {
+                    {sortedUsers.map(u => {
                       const isTechAdmin = allAdmins?.some(a => a.id === u.id);
                       return (
                         <TableRow key={u.id} className="group hover:bg-primary/5 transition-colors border-b-primary/5">
@@ -742,12 +783,12 @@ export default function ManagementPage() {
                           <TableCell className="align-middle">
                             <div className="flex items-center">
                               {isTechAdmin ? (
-                                <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 gap-1.5 px-3 py-1 shadow-md shadow-primary/20 flex items-center w-fit h-fit">
+                                <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 gap-1.5 px-3 py-0.5 shadow-md shadow-primary/20 flex items-center w-fit h-6">
                                   <ShieldCheck className="h-3 w-3 shrink-0" />
                                   <span className="text-[9px] font-black uppercase tracking-wider leading-none">Management Admin</span>
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="text-muted-foreground gap-1.5 px-3 py-1 border-dashed border-muted-foreground/30 bg-muted/5 flex items-center w-fit h-fit">
+                                <Badge variant="outline" className="text-muted-foreground gap-1.5 px-3 py-0.5 border-dashed border-muted-foreground/30 bg-muted/5 flex items-center w-fit h-6">
                                   <ShieldQuestion className="h-3 w-3 opacity-50 shrink-0" />
                                   <span className="text-[9px] font-black uppercase tracking-wider leading-none">Devotee</span>
                                 </Badge>
@@ -793,7 +834,7 @@ export default function ManagementPage() {
                     })}
                   </TableBody>
                 </Table>
-                {(!allUsers || allUsers.length === 0) && (
+                {sortedUsers.length === 0 && (
                   <div className="py-20 text-center space-y-4">
                     <UserIcon className="h-12 w-12 mx-auto opacity-10" />
                     <p className="text-muted-foreground text-sm font-medium">No devotees found matching your criteria</p>
