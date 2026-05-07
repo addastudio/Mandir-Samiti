@@ -1,13 +1,29 @@
 backend:
   name: git-gateway
-  branch: main # Ensure this matches your repository branch
+  branch: main
+
+local_backend: true
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
 collections:
+  - name: "settings"
+    label: "Site Settings"
+    delete: false
+    editor:
+      preview: false
+    files:
+      - name: "general"
+        label: "General Settings"
+        file: "content/settings.json"
+        fields:
+          - { label: "Site Title (English)", name: "site_title_en", widget: "string" }
+          - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
+          - { label: "Favicon", name: "favicon", widget: "image", choose_url: true }
+
   - name: "pages"
-    label: "Core Sections"
+    label: "Pages"
     files:
       - file: "content/hero.json"
         label: "Hero Section"
@@ -15,40 +31,36 @@ collections:
         fields:
           - { label: "Headline (English)", name: "headline_en", widget: "string" }
           - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
-          - { label: "Subtitle (English)", name: "subtitle_en", widget: "text" }
-          - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "text" }
-          - { label: "Video URL (MP4)", name: "video_url", widget: "string", required: false }
+          - { label: "Subtitle (English)", name: "subtitle_en", widget: "string" }
+          - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "string" }
+          - { label: "Background Video URL", name: "video_url", widget: "string" }
           - { label: "Fallback Image", name: "fallback_image", widget: "image" }
-      
+
       - file: "content/about.json"
-        label: "About Us"
+        label: "About Us Content"
         name: "about"
         fields:
-          - { label: "History Title (English)", name: "history_title_en", widget: "string" }
-          - { label: "History Title (Hindi)", name: "history_title_hi", widget: "string" }
-          - { label: "History Content (English)", name: "history_en", widget: "markdown" }
-          - { label: "History Content (Hindi)", name: "history_hi", widget: "markdown" }
-          - { label: "Mission Title (English)", name: "mission_title_en", widget: "string" }
-          - { label: "Mission Title (Hindi)", name: "mission_title_hi", widget: "string" }
-          - { label: "Mission Content (English)", name: "mission_en", widget: "markdown" }
-          - { label: "Mission Content (Hindi)", name: "mission_hi", widget: "markdown" }
-          - { label: "Featured Image", name: "featured_image", widget: "image" }
+          - { label: "History (English)", name: "history_en", widget: "markdown" }
+          - { label: "History (Hindi)", name: "history_hi", widget: "markdown" }
+          - { label: "Mission (English)", name: "mission_en", widget: "markdown" }
+          - { label: "Mission (Hindi)", name: "mission_hi", widget: "markdown" }
+          - { label: "Featured Image", name: "featuredImage", widget: "image" }
 
       - file: "content/contact.json"
-        label: "Contact & Footer"
+        label: "Contact & Map"
         name: "contact"
         fields:
-          - { label: "Hindi Address", name: "hiAddress", widget: "string" }
           - { label: "English Address", name: "enAddress", widget: "string" }
+          - { label: "Hindi Address", name: "hiAddress", widget: "string" }
           - { label: "Phone", name: "phone", widget: "string" }
           - { label: "Email", name: "email", widget: "string" }
-          - { label: "Map Embed URL", name: "mapUrl", widget: "string" }
+          - { label: "Google Maps Embed URL", name: "mapUrl", widget: "string" }
 
   - name: "seva"
     label: "Seva Programs"
     folder: "content/seva"
     create: true
-    slug: "{{slug}}"
+    slug: "{{title_en}}"
     fields:
       - { label: "Title (English)", name: "title_en", widget: "string" }
       - { label: "Title (Hindi)", name: "title_hi", widget: "string" }

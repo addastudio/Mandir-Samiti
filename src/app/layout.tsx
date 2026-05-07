@@ -8,6 +8,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import * as React from 'react';
 import { BackToTop } from '@/components/layout/BackToTop';
 import Script from 'next/script';
+import { getLocalCmsContent } from '@/lib/cms';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -21,16 +22,27 @@ const mukta = Mukta({
   variable: '--font-mukta',
 });
 
-export const metadata: Metadata = {
-  title: 'Bahpura Mandir',
-  description:
-    'मंदिर समिति बहपुरा में आपका स्वागत है। Welcome to Mandir Samiti Bahpura.',
-  icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/logo.png',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getLocalCmsContent('settings.json');
+  
+  const siteTitle = settings?.site_title_en || 'Mandir Samiti Bahpura';
+  const hindiTitle = settings?.site_title_hi || 'मंदिर समिति बहपुरा';
+  const faviconPath = settings?.favicon || '/favicon.ico';
+
+  return {
+    title: {
+      default: `${siteTitle} | ${hindiTitle}`,
+      template: `%s | ${siteTitle}`
+    },
+    description:
+      'मंदिर समिति बहपुरा में आपका स्वागत है। Welcome to Mandir Samiti Bahpura.',
+    icons: {
+      icon: faviconPath,
+      shortcut: faviconPath,
+      apple: '/logo.png',
+    },
+  };
+}
 
 export default function RootLayout(props: {
   children: React.ReactNode;
