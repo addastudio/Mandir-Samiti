@@ -702,7 +702,7 @@ export default function ManagementPage() {
                       const isTechAdmin = allAdmins?.some(a => a.id === u.id);
                       return (
                         <TableRow key={u.id} className="group hover:bg-primary/5 transition-colors border-b-primary/5">
-                          <TableCell className="py-4 pl-6">
+                          <TableCell className="py-4 pl-6 align-middle">
                             <div className="flex items-center gap-4">
                               <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-1 ring-primary/10 group-hover:scale-110 transition-transform">
                                 <AvatarImage src={u.photoURL} />
@@ -718,13 +718,13 @@ export default function ManagementPage() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="align-middle">
                             <Select 
                               defaultValue={u.role || 'devotee'} 
                               onValueChange={(val) => setRoleConfirm({ userId: u.id, name: u.name || u.email, newRole: val, type: 'role' })}
                             >
                               <SelectTrigger className={cn(
-                                "h-8 w-32 text-[10px] font-black uppercase tracking-tighter transition-all shadow-sm border-primary/10",
+                                "h-8 w-32 text-[10px] font-black uppercase tracking-wide transition-all shadow-sm border-primary/10",
                                 u.role === 'president' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
                                 u.role === 'official' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                 u.role === 'member' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white'
@@ -739,20 +739,22 @@ export default function ManagementPage() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell>
-                            {isTechAdmin ? (
-                              <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 gap-1.5 px-3 h-6 shadow-md shadow-primary/20">
-                                <ShieldCheck className="h-3 w-3" />
-                                <span className="text-[9px] font-black uppercase tracking-widest">Management Admin</span>
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-muted-foreground gap-1.5 px-3 h-6 border-dashed border-muted-foreground/30 bg-muted/5">
-                                <ShieldQuestion className="h-3 w-3 opacity-50" />
-                                <span className="text-[9px] font-black uppercase tracking-widest">Devotee</span>
-                              </Badge>
-                            )}
+                          <TableCell className="align-middle">
+                            <div className="flex items-center">
+                              {isTechAdmin ? (
+                                <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 gap-1.5 px-3 py-1 shadow-md shadow-primary/20 flex items-center w-fit h-fit">
+                                  <ShieldCheck className="h-3 w-3 shrink-0" />
+                                  <span className="text-[9px] font-black uppercase tracking-wider leading-none">Management Admin</span>
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground gap-1.5 px-3 py-1 border-dashed border-muted-foreground/30 bg-muted/5 flex items-center w-fit h-fit">
+                                  <ShieldQuestion className="h-3 w-3 opacity-50 shrink-0" />
+                                  <span className="text-[9px] font-black uppercase tracking-wider leading-none">Devotee</span>
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
-                          <TableCell className="text-right pr-6">
+                          <TableCell className="text-right pr-6 align-middle">
                             <div className="flex justify-end gap-2">
                               {isTechAdmin ? (
                                 <Button 
