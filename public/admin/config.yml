@@ -1,64 +1,66 @@
 backend:
   name: git-gateway
-  branch: main # Branch to update (optional; defaults to master)
+  branch: main
 
-publish_mode: editorial_workflow # Enables a "Drafts" system
-
-media_folder: "public/uploads" # Folder where user uploaded files will go
-public_folder: "/uploads" # The src attribute for uploaded media
+media_folder: "public/uploads"
+public_folder: "/uploads"
 
 collections:
   - name: "pages"
-    label: "Static Pages"
+    label: "Pages"
     files:
-      - file: "content/pages/about.md"
-        label: "About Us Page"
+      - file: "content/home.json"
+        label: "Home Page (Hero)"
+        name: "home"
+        fields:
+          - { label: "Hindi Headline", name: "heroHeadline_hi", widget: "string" }
+          - { label: "English Headline", name: "heroHeadline_en", widget: "string" }
+          - { label: "Hindi Subtitle", name: "heroSubtitle_hi", widget: "text" }
+          - { label: "English Subtitle", name: "heroSubtitle_en", widget: "text" }
+          - { label: "Hero Video URL", name: "heroVideoUrl", widget: "string", hint: "Direct link to mp4 file" }
+          - { label: "Hero Poster Image", name: "heroImage", widget: "image" }
+      
+      - file: "content/about.json"
+        label: "About Us"
         name: "about"
         fields:
-          - { label: "Template", name: "template", widget: "hidden", default: "about" }
-          - { label: "History Title (Hindi)", name: "history_title_hi", widget: "string" }
-          - { label: "History Title (English)", name: "history_title_en", widget: "string" }
-          - { label: "History Content (Hindi)", name: "history_hi", widget: "markdown" }
-          - { label: "History Content (English)", name: "history_en", widget: "markdown" }
-          - { label: "Mission Title (Hindi)", name: "mission_title_hi", widget: "string" }
-          - { label: "Mission Title (English)", name: "mission_title_en", widget: "string" }
-          - { label: "Mission Content (Hindi)", name: "mission_hi", widget: "markdown" }
-          - { label: "Mission Content (English)", name: "mission_en", widget: "markdown" }
-          - { label: "Featured Image", name: "featured_image", widget: "image" }
+          - { label: "Hindi History", name: "history_hi", widget: "markdown" }
+          - { label: "English History", name: "history_en", widget: "markdown" }
+          - { label: "Hindi Mission", name: "mission_hi", widget: "markdown" }
+          - { label: "English Mission", name: "mission_en", widget: "markdown" }
+          - { label: "Featured Image", name: "featuredImage", widget: "image" }
 
-      - file: "content/pages/contact.md"
-        label: "Contact Information"
+      - file: "content/contact.json"
+        label: "Contact & Map"
         name: "contact"
         fields:
-          - { label: "Template", name: "template", widget: "hidden", default: "contact" }
-          - { label: "Address (Hindi)", name: "address_hi", widget: "string" }
-          - { label: "Address (English)", name: "address_en", widget: "string" }
-          - { label: "Phone", name: "phone", widget: "string" }
-          - { label: "Email", name: "email", widget: "string" }
-          - { label: "Google Maps Embed URL", name: "map_url", widget: "string" }
+          - { label: "Hindi Address", name: "address_hi", widget: "string" }
+          - { label: "English Address", name: "address_en", widget: "string" }
+          - { label: "Phone Number", name: "phone", widget: "string" }
+          - { label: "Email Address", name: "email", widget: "string" }
+          - { label: "Google Maps Embed URL", name: "mapUrl", widget: "text", hint: "The 'src' attribute from Google Maps iframe" }
 
-  - name: "notices"
-    label: "Notices & Announcements"
-    folder: "content/notices"
+  - name: "seva"
+    label: "Seva Programs"
+    folder: "content/seva"
     create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    slug: "{{title_en}}"
     fields:
-      - { label: "Title (Hindi)", name: "title_hi", widget: "string" }
-      - { label: "Title (English)", name: "title_en", widget: "string" }
-      - { label: "Publish Date", name: "date", widget: "datetime" }
-      - { label: "Importance", name: "importance", widget: "select", options: ["normal", "urgent"], default: "normal" }
-      - { label: "Content (Hindi)", name: "body_hi", widget: "markdown" }
-      - { label: "Content (English)", name: "body_en", widget: "markdown" }
+      - { label: "Hindi Title", name: "title_hi", widget: "string" }
+      - { label: "English Title", name: "title_en", widget: "string" }
+      - { label: "Hindi Description", name: "description_hi", widget: "text" }
+      - { label: "English Description", name: "description_en", widget: "text" }
+      - { label: "Icon", name: "icon", widget: "select", options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] }
 
-  - name: "events"
-    label: "Temple Events"
-    folder: "content/events"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    fields:
-      - { label: "Event Title (Hindi)", name: "title_hi", widget: "string" }
-      - { label: "Event Title (English)", name: "title_en", widget: "string" }
-      - { label: "Event Date", name: "date", widget: "datetime" }
-      - { label: "Event Image", name: "image", widget: "image" }
-      - { label: "Description (Hindi)", name: "body_hi", widget: "markdown" }
-      - { label: "Description (English)", name: "body_en", widget: "markdown" }
+  - name: "settings"
+    label: "Site Settings"
+    files:
+      - file: "content/settings.json"
+        label: "General Settings"
+        name: "general"
+        fields:
+          - { label: "Site Title (Hindi)", name: "siteTitle_hi", widget: "string" }
+          - { label: "Site Title (English)", name: "siteTitle_en", widget: "string" }
+          - { label: "Footer Copyright (Hindi)", name: "footerCopyright_hi", widget: "string" }
+          - { label: "Footer Copyright (English)", name: "footerCopyright_en", widget: "string" }
+          - { label: "Live Aarti YouTube URL", name: "liveAartiUrl", widget: "string" }
