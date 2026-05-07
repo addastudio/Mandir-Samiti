@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -92,7 +93,7 @@ export function HeroSection() {
                 {t.heroBtnDonate}
               </Button>
             </a>
-            <a href="#about" className="w-full sm:w-auto">
+            <Link href="/about" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
@@ -103,7 +104,7 @@ export function HeroSection() {
               >
                 {t.heroBtnLearnMore}
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
       </div>
