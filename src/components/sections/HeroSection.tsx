@@ -6,43 +6,58 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { ArrowDown } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function HeroSection() {
   const { t, language } = useLanguage();
+  const [cmsHero, setCmsHero] = useState<any>(null);
   const heroImage = PlaceHolderImages.find((img) => img.id === "hero-background");
+
+  useEffect(() => {
+    fetch('/content/hero.json')
+      .then(res => res.json())
+      .then(data => setCmsHero(data))
+      .catch(() => setCmsHero(null));
+  }, []);
+
+  const headline = language === 'hi' 
+    ? (cmsHero?.headline_hi || t.heroHeadline)
+    : (cmsHero?.headline_en || t.heroHeadline);
+
+  const subtitle = language === 'hi'
+    ? (cmsHero?.subtitle_hi || t.heroSubtitle)
+    : (cmsHero?.subtitle_en || t.heroSubtitle);
+
+  const videoUrl = cmsHero?.video_url || "https://assets.mixkit.co/videos/preview/mixkit-top-view-of-a-temple-complex-in-india-40000-large.mp4";
+  const bgImage = cmsHero?.fallback_image || heroImage?.imageUrl;
 
   return (
     <section
       id="home"
       className="relative flex min-h-[100dvh] w-full items-center justify-center text-center text-white overflow-hidden"
     >
-      {/* Background Video (Drone Footage) */}
+      {/* Background Video */}
       <video
         autoPlay
         muted
         loop
         playsInline
-        poster={heroImage?.imageUrl}
+        poster={bgImage}
         className="absolute inset-0 z-0 h-full w-full object-cover"
       >
-        <source 
-          src="https://assets.mixkit.co/videos/preview/mixkit-top-view-of-a-temple-complex-in-india-40000-large.mp4" 
-          type="video/mp4" 
-        />
-        {/* Fallback image if video fails */}
-        {heroImage && (
+        <source src={videoUrl} type="video/mp4" />
+        {bgImage && (
           <Image
-            src={heroImage.imageUrl}
-            alt={language === 'hi' ? 'भोर में मंदिर की शांत पृष्ठभूमि छवि।' : heroImage.description}
+            src={bgImage}
+            alt="Hero Background"
             fill
             className="object-cover"
             priority
-            data-ai-hint={heroImage.imageHint}
           />
         )}
       </video>
 
-      {/* Enhanced Overlays for Legibility */}
+      {/* Enhanced Overlays */}
       <div className="absolute inset-0 bg-black/40 z-[1]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20 z-[2]" />
       
@@ -54,7 +69,7 @@ export function HeroSection() {
               language === "hi" ? "font-hindi" : "font-headline"
             )}
           >
-            {t.heroHeadline}
+            {headline}
           </h1>
           <p
             className={cn(
@@ -62,7 +77,7 @@ export function HeroSection() {
               language === "hi" ? "font-hindi" : ""
             )}
           >
-            {t.heroSubtitle}
+            {subtitle}
           </p>
           
           <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full sm:w-auto max-w-[280px] sm:max-w-none mx-auto">
@@ -93,7 +108,6 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Scroll Down Indicator - Always Visible Above Video */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10] flex flex-col items-center gap-2 group cursor-pointer">
         <a href="#notices" aria-label="Scroll down" className="flex flex-col items-center gap-1">
           <span className="text-[10px] uppercase font-bold tracking-[0.3em] text-white/60 group-hover:text-white transition-colors">

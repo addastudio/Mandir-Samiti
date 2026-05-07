@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, collectionGroup, query, where } from "firebase/firestore";
+import { collection, doc, collectionGroup, query, where, serverTimestamp, setDoc } from "firebase/firestore";
 import { 
   Trash2, 
   Loader2, 
@@ -33,7 +33,10 @@ import {
   Database,
   Wand2,
   CheckCircle,
-  Settings
+  Settings,
+  History,
+  UserPlus,
+  ArrowRightLeft
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -96,6 +99,8 @@ export default function ManagementPage() {
   const noticesRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "notices"), [firestore, adminDoc]);
   const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "prayer_requests"), [firestore, adminDoc]);
   const usersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "users"), [firestore, adminDoc]);
+  const membersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "mandir_samiti_members"), [firestore, adminDoc]);
+  const logsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "admin_activity_logs"), [firestore, adminDoc]);
   const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collectionGroup(firestore, "donations")), [firestore, adminDoc]);
 
   const { data: events } = useCollection(eventsRef);
@@ -103,6 +108,8 @@ export default function ManagementPage() {
   const { data: notices } = useCollection(noticesRef);
   const { data: requests } = useCollection(requestsRef);
   const { data: allUsers } = useCollection(usersRef);
+  const { data: members } = useCollection(membersRef);
+  const { data: logs } = useCollection(logsRef);
   const { data: allDonations } = useCollection(donationsGroupRef);
 
   useEffect(() => {
@@ -112,6 +119,18 @@ export default function ManagementPage() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
 
+  const logActivity = (action: string, entityType: string, title: string) => {
+    if (!logsRef || !user) return;
+    addDocumentNonBlocking(logsRef, {
+      adminId: user.uid,
+      adminName: user.displayName || user.email,
+      actionType: action,
+      entityType,
+      entityTitle: title,
+      timestamp: new Date().toISOString()
+    });
+  };
+
   const handleAiGenerate = async (type: 'event' | 'notice') => {
     if (!aiTopic) {
       toast({ variant: "destructive", title: "Topic Required" });
@@ -120,7 +139,6 @@ export default function ManagementPage() {
     setIsAiGenerating(true);
     try {
       const result = await generateTempleContent({ topic: aiTopic, type, language: language as 'hi' | 'en' });
-      // Logic would typically populate a form here
       toast({ title: "AI Generated Content", description: result.title });
     } catch (err) {
       toast({ variant: "destructive", title: "AI Generation Failed" });
@@ -129,21 +147,10 @@ export default function ManagementPage() {
     }
   };
 
-  const handleAction = async (action: () => void, successMsg: string) => {
-    setIsSubmitting(true);
-    try {
-      await action();
-      toast({ title: successMsg });
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const confirmDelete = () => {
     if (!firestore || !deleteConfirm) return;
     deleteDocumentNonBlocking(doc(firestore, deleteConfirm.col, deleteConfirm.id));
+    logActivity('DELETE', deleteConfirm.col, deleteConfirm.title);
     toast({ title: "Deleted Successfully" });
     setDeleteConfirm(null);
   };
@@ -184,7 +191,9 @@ export default function ManagementPage() {
               <TabsTrigger value="notices" className="gap-2 py-2 px-4"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notices'}</TabsTrigger>
               <TabsTrigger value="gallery" className="gap-2 py-2 px-4"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
               <TabsTrigger value="requests" className="gap-2 py-2 px-4"><MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}</TabsTrigger>
-              <TabsTrigger value="users" className="gap-2 py-2 px-4"><Users className="h-4 w-4" /> {language === 'hi' ? 'भक्त' : 'Users'}</TabsTrigger>
+              <TabsTrigger value="members" className="gap-2 py-2 px-4"><Users className="h-4 w-4" /> {language === 'hi' ? 'समिति' : 'Committee'}</TabsTrigger>
+              <TabsTrigger value="users" className="gap-2 py-2 px-4"><UserPlus className="h-4 w-4" /> {language === 'hi' ? 'भक्त' : 'Users'}</TabsTrigger>
+              <TabsTrigger value="logs" className="gap-2 py-2 px-4"><History className="h-4 w-4" /> {language === 'hi' ? 'लॉग्स' : 'Logs'}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -198,37 +207,109 @@ export default function ManagementPage() {
                 <CardHeader className="pb-2"><CardTitle className="text-sm font-medium opacity-60">Pending Requests</CardTitle></CardHeader>
                 <CardContent><div className="text-2xl font-bold">{requests?.filter(r => r.status === 'pending').length || 0}</div></CardContent>
               </Card>
+              <Card className="bg-amber-50 border-amber-100">
+                <CardHeader className="pb-2"><CardTitle className="text-sm font-medium opacity-60">Active Events</CardTitle></CardHeader>
+                <CardContent><div className="text-2xl font-bold">{events?.length || 0}</div></CardContent>
+              </Card>
+              <Card className="bg-blue-50 border-blue-100">
+                <CardHeader className="pb-2"><CardTitle className="text-sm font-medium opacity-60">Total Devotees</CardTitle></CardHeader>
+                <CardContent><div className="text-2xl font-bold">{allUsers?.length || 0}</div></CardContent>
+              </Card>
             </div>
           </TabsContent>
 
           <TabsContent value="donations" className="space-y-6">
-            <Card>
-              <CardHeader className="border-b bg-muted/20">
-                <CardTitle>{language === 'hi' ? 'दान संग्रह' : 'Donation Ledger'}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Devotee</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allDonations?.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((d: any) => (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-medium">{d.devoteeName || d.userEmail || 'Guest'}</TableCell>
-                        <TableCell className="font-bold text-primary">₹{d.amount}</TableCell>
-                        <TableCell className="text-xs">{new Date(d.date).toLocaleDateString()}</TableCell>
-                        <TableCell><Badge variant={d.status === 'completed' ? 'default' : 'outline'}>{d.status}</Badge></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-4">
+                <Card>
+                  <CardHeader className="bg-primary/5">
+                    <CardTitle className="text-lg">Record Manual Donation</CardTitle>
+                    <CardDescription>Add cash or offline contributions.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const fd = new FormData(e.currentTarget);
+                      const amount = Number(fd.get('amount'));
+                      const name = fd.get('name') as string;
+                      // Manual donations are recorded under a generic "manual" user or directly
+                      const donationData = {
+                        amount,
+                        devoteeName: name,
+                        date: new Date().toISOString(),
+                        mode: fd.get('mode'),
+                        status: 'completed',
+                        notes: fd.get('notes')
+                      };
+                      // Using a top-level collection for generic manual entries if no UID
+                      addDocumentNonBlocking(collection(firestore!, "donations"), donationData);
+                      logActivity('CREATE', 'donations', `Manual: ${name} - ₹${amount}`);
+                      (e.target as HTMLFormElement).reset();
+                      toast({ title: "Donation Recorded" });
+                    }} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Devotee Name</Label>
+                        <Input name="name" placeholder="Full Name" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Amount (₹)</Label>
+                        <Input name="amount" type="number" placeholder="501" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Payment Mode</Label>
+                        <select name="mode" className="w-full h-10 rounded border bg-background px-3 text-sm">
+                          <option value="Cash">Cash</option>
+                          <option value="Offline UPI">Offline UPI</option>
+                          <option value="Cheque">Cheque</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Notes</Label>
+                        <Input name="notes" placeholder="Optional details..." />
+                      </div>
+                      <Button className="w-full gap-2"><Plus className="h-4 w-4" /> Save Record</Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="lg:col-span-8">
+                <Card>
+                  <CardHeader className="border-b bg-muted/20 flex flex-row items-center justify-between py-4">
+                    <CardTitle>{language === 'hi' ? 'दान संग्रह' : 'Donation Ledger'}</CardTitle>
+                    <div className="relative w-48 sm:w-64">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-40" />
+                      <Input placeholder="Search records..." className="pl-8 h-8 text-xs" value={donationSearch} onChange={(e) => setDonationSearch(e.target.value)} />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Devotee</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Mode</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allDonations?.filter(d => 
+                          (d.devoteeName || d.userEmail || '').toLowerCase().includes(donationSearch.toLowerCase())
+                        ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((d: any) => (
+                          <TableRow key={d.id}>
+                            <TableCell className="font-medium">{d.devoteeName || d.userEmail || 'Guest'}</TableCell>
+                            <TableCell className="font-bold text-primary">₹{d.amount}</TableCell>
+                            <TableCell className="text-xs">{new Date(d.date).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-xs opacity-60 uppercase">{d.mode || 'Direct'}</TableCell>
+                            <TableCell><Badge variant={d.status === 'completed' ? 'default' : 'outline'}>{d.status}</Badge></TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="events" className="space-y-6">
@@ -237,6 +318,7 @@ export default function ManagementPage() {
                 <Card>
                   <CardHeader className="bg-primary/5">
                     <CardTitle className="text-lg">Add New Event</CardTitle>
+                    <CardDescription>Post temple functions & festivals.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex gap-2">
@@ -248,13 +330,16 @@ export default function ManagementPage() {
                     <form onSubmit={(e) => {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
+                      const title = fd.get('title') as string;
                       addDocumentNonBlocking(eventsRef!, {
-                        title: fd.get('title'),
+                        title,
                         date: fd.get('date'),
                         description: fd.get('desc'),
                         image: "https://picsum.photos/seed/event/600/400"
                       });
+                      logActivity('CREATE', 'events', title);
                       (e.target as HTMLFormElement).reset();
+                      toast({ title: "Event Posted" });
                     }} className="space-y-4">
                       <Input name="title" placeholder="Event Title" required />
                       <Input name="date" type="datetime-local" required />
@@ -288,18 +373,22 @@ export default function ManagementPage() {
                 <Card>
                   <CardHeader className="bg-primary/5">
                     <CardTitle className="text-lg">New Notice</CardTitle>
+                    <CardDescription>Important temple announcements.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6 space-y-4">
                      <form onSubmit={(e) => {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
+                      const title = fd.get('title') as string;
                       addDocumentNonBlocking(noticesRef!, {
-                        title: fd.get('title'),
+                        title,
                         content: fd.get('content'),
                         importance: fd.get('importance'),
                         createdAt: new Date().toISOString()
                       });
+                      logActivity('CREATE', 'notices', title);
                       (e.target as HTMLFormElement).reset();
+                      toast({ title: "Notice Published" });
                     }} className="space-y-4">
                       <Input name="title" placeholder="Notice Headline" required />
                       <select name="importance" className="w-full h-10 rounded border bg-background px-3 text-sm">
@@ -332,29 +421,32 @@ export default function ManagementPage() {
 
           <TabsContent value="gallery" className="space-y-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10">
                 <CardTitle>Media Gallery</CardTitle>
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   const fd = new FormData(e.currentTarget);
+                  const caption = fd.get('caption') as string;
                   addDocumentNonBlocking(galleryRef!, {
-                    caption: fd.get('caption'),
+                    caption,
                     imageURL: fd.get('url'),
                     createdAt: new Date().toISOString()
                   });
+                  logActivity('CREATE', 'gallery', caption);
                   (e.target as HTMLFormElement).reset();
+                  toast({ title: "Media Added" });
                 }} className="flex gap-2 max-w-lg">
-                  <Input name="url" placeholder="Image/Video URL" required />
-                  <Input name="caption" placeholder="Caption" />
-                  <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Add</Button>
+                  <Input name="url" placeholder="Image/Video URL" required className="h-9 text-xs" />
+                  <Input name="caption" placeholder="Caption" className="h-9 text-xs" />
+                  <Button size="sm" className="h-9"><Plus className="h-4 w-4 mr-2" /> Add</Button>
                 </form>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+              <CardContent className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 pt-6">
                 {gallery?.map(item => (
-                  <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border">
+                  <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
                     <img src={item.imageURL} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button variant="destructive" size="icon" onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption || 'Image' })}>
+                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption || 'Image' })}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -381,12 +473,16 @@ export default function ManagementPage() {
                   <TableBody>
                     {requests?.map((r: any) => (
                       <TableRow key={r.id}>
-                        <TableCell>{r.name}</TableCell>
-                        <TableCell className="capitalize">{r.requestType}</TableCell>
-                        <TableCell className="max-w-xs truncate">{r.message}</TableCell>
+                        <TableCell className="text-sm font-medium">{r.name}</TableCell>
+                        <TableCell className="capitalize text-xs"><Badge variant="outline">{r.requestType}</Badge></TableCell>
+                        <TableCell className="max-w-xs truncate text-xs opacity-70">{r.message}</TableCell>
                         <TableCell><Badge variant={r.status === 'completed' ? 'default' : 'secondary'}>{r.status}</Badge></TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm" onClick={() => updateDocumentNonBlocking(doc(firestore!, "prayer_requests", r.id), { status: 'completed' })}>
+                          <Button variant="outline" size="sm" className="h-8" onClick={() => {
+                            updateDocumentNonBlocking(doc(firestore!, "prayer_requests", r.id), { status: 'completed' });
+                            logActivity('UPDATE', 'prayer_requests', `Request Completed for ${r.name}`);
+                            toast({ title: "Status Updated" });
+                          }}>
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         </TableCell>
@@ -398,22 +494,115 @@ export default function ManagementPage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="members" className="space-y-6">
+             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-4">
+                <Card>
+                  <CardHeader className="bg-primary/5">
+                    <CardTitle className="text-lg">Add Committee Member</CardTitle>
+                    <CardDescription>Manage temple officials.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const fd = new FormData(e.currentTarget);
+                      const name = fd.get('name') as string;
+                      addDocumentNonBlocking(membersRef!, {
+                        name,
+                        role: fd.get('role'),
+                        displayOrder: Number(fd.get('order')) || 0
+                      });
+                      logActivity('CREATE', 'members', name);
+                      (e.target as HTMLFormElement).reset();
+                      toast({ title: "Member Added" });
+                    }} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Name</Label>
+                        <Input name="name" placeholder="Official Name" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Role</Label>
+                        <Input name="role" placeholder="President / Secretary" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Display Order</Label>
+                        <Input name="order" type="number" placeholder="1" />
+                      </div>
+                      <Button className="w-full">Add Member</Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="lg:col-span-8">
+                <Card>
+                  <CardHeader><CardTitle>Official Directory</CardTitle></CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader><TableRow><TableHead>Order</TableHead><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
+                      <TableBody>
+                        {members?.sort((a,b) => (a.displayOrder || 0) - (b.displayOrder || 0)).map(m => (
+                          <TableRow key={m.id}>
+                            <TableCell className="font-mono text-xs">{m.displayOrder}</TableCell>
+                            <TableCell className="font-bold">{m.name}</TableCell>
+                            <TableCell className="text-xs uppercase opacity-70">{m.role}</TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm({ col: 'mandir_samiti_members', id: m.id, title: m.name })}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
           <TabsContent value="users" className="space-y-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between py-4 bg-muted/10 border-b">
                 <CardTitle>Registered Devotees</CardTitle>
-                <div className="relative w-64"><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 opacity-40" /><Input placeholder="Search users..." className="pl-9" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} /></div>
+                <div className="relative w-64">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 opacity-40" />
+                  <Input placeholder="Search users..." className="pl-9 h-9" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+                </div>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Verified</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {allUsers?.filter(u => u.name?.toLowerCase().includes(userSearch.toLowerCase())).map(u => (
+                    {allUsers?.filter(u => 
+                      (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+                      (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
+                    ).map(u => (
                       <TableRow key={u.id}>
-                        <TableCell className="font-bold">{u.name}</TableCell>
-                        <TableCell>{u.email}</TableCell>
-                        <TableCell className="capitalize">{u.role}</TableCell>
+                        <TableCell className="font-bold">{u.name || 'Anonymous'}</TableCell>
+                        <TableCell className="text-xs">{u.email}</TableCell>
+                        <TableCell className="capitalize text-xs"><Badge variant="secondary">{u.role}</Badge></TableCell>
                         <TableCell>{u.isVerified ? <Badge className="bg-green-500">Yes</Badge> : <Badge variant="outline">No</Badge>}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="logs" className="space-y-6">
+            <Card>
+              <CardHeader className="bg-muted/10 border-b"><CardTitle>Admin Audit Logs</CardTitle></CardHeader>
+              <CardContent className="p-0">
+                 <Table>
+                  <TableHeader><TableRow><TableHead>Timestamp</TableHead><TableHead>Admin</TableHead><TableHead>Action</TableHead><TableHead>Target</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map((l: any) => (
+                      <TableRow key={l.id} className="text-xs">
+                        <TableCell className="opacity-60">{new Date(l.timestamp).toLocaleString()}</TableCell>
+                        <TableCell className="font-medium">{l.adminName}</TableCell>
+                        <TableCell><Badge className={cn(l.actionType === 'DELETE' ? 'bg-red-500' : 'bg-green-500')}>{l.actionType}</Badge></TableCell>
+                        <TableCell className="opacity-70">{l.entityType}: {l.entityTitle}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -428,7 +617,7 @@ export default function ManagementPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive h-5 w-5" /> Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription>Are you sure you want to remove "{deleteConfirm?.title}"? This action is permanent.</AlertDialogDescription>
+            <AlertDialogDescription>Are you sure you want to remove "{deleteConfirm?.title}" from {deleteConfirm?.col}? This action is permanent.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

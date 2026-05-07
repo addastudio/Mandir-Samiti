@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -26,9 +25,8 @@ import {
   Shield,
   Loader2
 } from "lucide-react";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 
@@ -44,18 +42,22 @@ const SEVA_ICONS = {
 export function SevaSection() {
   const { t, language } = useLanguage();
   const firestore = useFirestore();
+  const [cmsSeva, setCmsSeva] = useState<any[]>([]);
 
-  const sevaRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, "seva_programs");
-  }, [firestore]);
+  useEffect(() => {
+    // Attempt to fetch custom Seva programs from CMS files
+    // This assumes a directory of JSON files or a consolidated list
+    fetch('/content/seva.json')
+      .then(res => res.json())
+      .then(data => setCmsSeva(Array.isArray(data) ? data : [data]))
+      .catch(() => setCmsSeva([]));
+  }, []);
 
   const testimonialsRef = useMemoFirebase(() => {
     if (!firestore) return null;
     return collection(firestore, "testimonials");
   }, [firestore]);
 
-  const { data: firebaseSeva, isLoading: isSevaLoading } = useCollection(sevaRef);
   const { data: firebaseTestimonials, isLoading: isTestimonialsLoading } = useCollection(testimonialsRef);
 
   const fallbackSeva = [
@@ -94,7 +96,12 @@ export function SevaSection() {
     },
   ];
 
-  const sevaPrograms = firebaseSeva && firebaseSeva.length > 0 ? firebaseSeva : fallbackSeva;
+  const sevaPrograms = cmsSeva.length > 0 ? cmsSeva.map(s => ({
+    title: language === 'hi' ? s.title_hi : s.title_en,
+    description: language === 'hi' ? s.desc_hi : s.desc_en,
+    icon: s.icon
+  })) : fallbackSeva;
+
   const testimonials = firebaseTestimonials && firebaseTestimonials.length > 0 ? firebaseTestimonials : fallbackTestimonials;
 
   return (
@@ -113,9 +120,7 @@ export function SevaSection() {
         </div>
 
         <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
-          {isSevaLoading ? (
-            <div className="col-span-full flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-          ) : sevaPrograms.map((program, index) => {
+          {sevaPrograms.map((program, index) => {
             const Icon = SEVA_ICONS[program.icon as keyof typeof SEVA_ICONS] || Hand;
             return (
               <Card key={index} className="text-center shadow-lg border-primary/5 hover:border-primary/20 transition-colors group">
