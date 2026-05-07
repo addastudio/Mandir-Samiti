@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, collectionGroup, query, where, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, doc, collectionGroup, query, where, serverTimestamp, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { 
   Trash2, 
   Loader2, 
@@ -36,7 +36,11 @@ import {
   Settings,
   History,
   UserPlus,
-  ArrowRightLeft
+  ArrowRightLeft,
+  UserCog,
+  ShieldQuestion,
+  UserMinus,
+  Crown
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -62,6 +66,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
@@ -78,6 +89,7 @@ export default function ManagementPage() {
   const [donationSearch, setDonationSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string } | null>(null);
+  const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' } | null>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
 
   // AI Form States
@@ -102,6 +114,7 @@ export default function ManagementPage() {
   const membersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "mandir_samiti_members"), [firestore, adminDoc]);
   const logsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "admin_activity_logs"), [firestore, adminDoc]);
   const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collectionGroup(firestore, "donations")), [firestore, adminDoc]);
+  const allAdminsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "roles_admin"), [firestore, adminDoc]);
 
   const { data: events } = useCollection(eventsRef);
   const { data: gallery } = useCollection(galleryRef);
@@ -111,6 +124,7 @@ export default function ManagementPage() {
   const { data: members } = useCollection(membersRef);
   const { data: logs } = useCollection(logsRef);
   const { data: allDonations } = useCollection(donationsGroupRef);
+  const { data: allAdmins } = useCollection(allAdminsRef);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !isAdminLoading) {
@@ -139,7 +153,6 @@ export default function ManagementPage() {
     setIsAiGenerating(true);
     try {
       const result = await generateTempleContent({ topic: aiTopic, type, language: language as 'hi' | 'en' });
-      // Note: We don't automatically fill the form yet to let user review, but we show success
       toast({ title: "AI Generated Content", description: result.title });
     } catch (err) {
       toast({ variant: "destructive", title: "AI Generation Failed" });
@@ -154,6 +167,34 @@ export default function ManagementPage() {
     logActivity('DELETE', deleteConfirm.col, deleteConfirm.title);
     toast({ title: "Deleted Successfully" });
     setDeleteConfirm(null);
+  };
+
+  const handleRoleAction = async () => {
+    if (!firestore || !roleConfirm) return;
+    const { userId, name, newRole, type } = roleConfirm;
+
+    try {
+      if (type === 'admin') {
+        const isAdmin = allAdmins?.some(a => a.id === userId);
+        if (isAdmin) {
+          await deleteDoc(doc(firestore, "roles_admin", userId));
+          logActivity('REMOVE_ADMIN', 'roles_admin', name);
+          toast({ title: "Admin Access Removed" });
+        } else {
+          await setDoc(doc(firestore, "roles_admin", userId), { assignedAt: new Date().toISOString() });
+          logActivity('GRANT_ADMIN', 'roles_admin', name);
+          toast({ title: "Admin Access Granted" });
+        }
+      } else {
+        await updateDoc(doc(firestore, "users", userId), { role: newRole });
+        logActivity('UPDATE_ROLE', 'users', `${name} -> ${newRole}`);
+        toast({ title: "Role Updated Successfully" });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Action Failed", description: err.message });
+    } finally {
+      setRoleConfirm(null);
+    }
   };
 
   if (!mounted || isUserLoading || isAdminLoading) {
@@ -198,8 +239,8 @@ export default function ManagementPage() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full space-y-6">
-          <div className="w-full overflow-x-auto touch-pan-x bg-muted/40 p-1 rounded-xl">
-            <TabsList className="inline-flex h-auto w-max min-w-full justify-start gap-1 bg-transparent border-0">
+          <div className="w-full overflow-x-auto bg-muted/40 p-1 rounded-xl">
+            <TabsList className="flex h-auto w-max justify-start gap-1 bg-transparent border-0">
               {[
                 { value: 'overview', icon: BarChart3, label: language === 'hi' ? 'सारांश' : 'Overview' },
                 { value: 'donations', icon: HandCoins, label: language === 'hi' ? 'दान' : 'Donations' },
@@ -208,7 +249,7 @@ export default function ManagementPage() {
                 { value: 'gallery', icon: ImageIcon, label: language === 'hi' ? 'गैलरी' : 'Gallery' },
                 { value: 'requests', icon: MessageSquare, label: language === 'hi' ? 'निवेदन' : 'Requests' },
                 { value: 'members', icon: Users, label: language === 'hi' ? 'समिति' : 'Committee' },
-                { value: 'users', icon: UserPlus, label: language === 'hi' ? 'भक्त' : 'Users' },
+                { value: 'users', icon: UserCog, label: language === 'hi' ? 'भक्त प्रबंधन' : 'Roles' },
                 { value: 'logs', icon: History, label: language === 'hi' ? 'लॉग्स' : 'Logs' }
               ].map((tab) => (
                 <TabsTrigger 
@@ -226,12 +267,12 @@ export default function ManagementPage() {
           <TabsContent value="overview" className="space-y-6 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: 'Total Collection', value: `₹${totalDonations.toLocaleString()}`, color: 'bg-primary/10 border-primary/20 text-primary-foreground' },
-                { label: 'Pending Requests', value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200 text-green-700' },
-                { label: 'Active Events', value: events?.length || 0, color: 'bg-amber-50 border-amber-200 text-amber-700' },
-                { label: 'Total Devotees', value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200 text-blue-700' }
+                { label: 'Total Collection', value: `₹${totalDonations.toLocaleString()}`, color: 'bg-primary/10 border-primary/20' },
+                { label: 'Pending Requests', value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200' },
+                { label: 'Active Events', value: events?.length || 0, color: 'bg-amber-50 border-amber-200' },
+                { label: 'Total Devotees', value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200' }
               ].map((stat, i) => (
-                <Card key={i} className={cn("border shadow-sm", stat.color)}>
+                <Card key={i} className={stat.color}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs font-black uppercase tracking-widest opacity-70">{stat.label}</CardTitle>
                   </CardHeader>
@@ -298,7 +339,7 @@ export default function ManagementPage() {
               <div className="lg:col-span-8">
                 <Card className="shadow-md border-primary/10 overflow-hidden">
                   <CardHeader className="border-b bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 px-5">
-                    <CardTitle className="text-lg">{language === 'hi' ? 'दान संग्रह' : 'Donation Ledger'}</CardTitle>
+                    <CardTitle className="text-lg">Donation Ledger</CardTitle>
                     <div className="relative w-full sm:w-64">
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-40" />
                       <Input 
@@ -309,37 +350,33 @@ export default function ManagementPage() {
                       />
                     </div>
                   </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto w-full">
-                      <Table>
-                        <TableHeader className="bg-muted/10">
-                          <TableRow>
-                            <TableHead className="text-[10px] uppercase font-black tracking-tighter">Devotee</TableHead>
-                            <TableHead className="text-[10px] uppercase font-black tracking-tighter">Amount</TableHead>
-                            <TableHead className="text-[10px] uppercase font-black tracking-tighter hidden sm:table-cell">Date</TableHead>
-                            <TableHead className="text-[10px] uppercase font-black tracking-tighter">Mode</TableHead>
-                            <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Status</TableHead>
+                  <CardContent className="p-0 overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-muted/10">
+                        <TableRow>
+                          <TableHead className="text-[10px] uppercase font-black tracking-tighter">Devotee</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black tracking-tighter">Amount</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black tracking-tighter hidden sm:table-cell">Date</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black tracking-tighter">Mode</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {allDonations?.filter(d => 
+                          (d.devoteeName || d.userEmail || '').toLowerCase().includes(donationSearch.toLowerCase())
+                        ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((d: any) => (
+                          <TableRow key={d.id}>
+                            <TableCell className="font-bold text-xs truncate max-w-[120px]">{d.devoteeName || d.userEmail || 'Guest'}</TableCell>
+                            <TableCell className="font-black text-sm text-primary">₹{d.amount}</TableCell>
+                            <TableCell className="text-[10px] opacity-60 hidden sm:table-cell">{new Date(d.date).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-[9px] opacity-70 uppercase font-bold">{d.mode || 'Direct'}</TableCell>
+                            <TableCell className="text-right">
+                              <Badge variant={d.status === 'completed' ? 'default' : 'outline'} className="text-[9px] px-2 py-0 h-5">{d.status}</Badge>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {allDonations?.filter(d => 
-                            (d.devoteeName || d.userEmail || '').toLowerCase().includes(donationSearch.toLowerCase())
-                          ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((d: any) => (
-                            <TableRow key={d.id} className="hover:bg-muted/30 transition-colors">
-                              <TableCell className="font-bold text-xs truncate max-w-[120px]">{d.devoteeName || d.userEmail || 'Guest'}</TableCell>
-                              <TableCell className="font-black text-sm text-primary">₹{d.amount}</TableCell>
-                              <TableCell className="text-[10px] opacity-60 hidden sm:table-cell">{new Date(d.date).toLocaleDateString()}</TableCell>
-                              <TableCell className="text-[9px] opacity-70 uppercase font-bold">{d.mode || 'Direct'}</TableCell>
-                              <TableCell className="text-right">
-                                <Badge variant={d.status === 'completed' ? 'default' : 'outline'} className="text-[9px] px-2 py-0 h-5">
-                                  {d.status}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </div>
@@ -357,7 +394,7 @@ export default function ManagementPage() {
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex gap-2">
                       <Input placeholder="Event Topic..." value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} className="bg-secondary/30" />
-                      <Button variant="outline" size="icon" onClick={() => handleAiGenerate('event')} disabled={isAiGenerating} className="shrink-0">
+                      <Button variant="outline" size="icon" onClick={() => handleAiGenerate('event')} disabled={isAiGenerating}>
                         {isAiGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                       </Button>
                     </div>
@@ -378,7 +415,7 @@ export default function ManagementPage() {
                       <Input name="title" placeholder="Event Title" required className="bg-secondary/30" />
                       <Input name="date" type="datetime-local" required className="bg-secondary/30" />
                       <Textarea name="desc" placeholder="Details..." className="bg-secondary/30 min-h-[100px]" />
-                      <Button className="w-full shadow-lg" disabled={isSubmitting}>Post Event</Button>
+                      <Button className="w-full shadow-lg">Post Event</Button>
                     </form>
                   </CardContent>
                 </Card>
@@ -386,31 +423,17 @@ export default function ManagementPage() {
               <div className="lg:col-span-8">
                 <div className="grid gap-3">
                   {events?.map(ev => (
-                    <Card key={ev.id} className="flex flex-row items-center p-4 gap-4 hover:shadow-md transition-shadow border-primary/5">
-                      <div className="bg-primary/5 p-3 rounded-lg hidden xs:block">
-                        <Calendar className="h-5 w-5 text-primary" />
-                      </div>
+                    <Card key={ev.id} className="flex flex-row items-center p-4 gap-4 hover:shadow-md border-primary/5">
+                      <div className="bg-primary/5 p-3 rounded-lg hidden xs:block"><Calendar className="h-5 w-5 text-primary" /></div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm sm:text-base truncate">{ev.title}</h4>
-                        <p className="text-[10px] sm:text-xs opacity-60 flex items-center gap-1">
-                          <Clock className="h-3 w-3" /> {new Date(ev.date).toLocaleString()}
-                        </p>
+                        <p className="text-[10px] sm:text-xs opacity-60 flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(ev.date).toLocaleString()}</p>
                       </div>
-                      <Button 
-                        variant="destructive" 
-                        size="icon" 
-                        className="h-8 w-8 shrink-0 shadow-sm"
-                        onClick={() => setDeleteConfirm({ col: 'events', id: ev.id, title: ev.title })}
-                      >
+                      <Button variant="destructive" size="icon" className="h-8 w-8 shrink-0" onClick={() => setDeleteConfirm({ col: 'events', id: ev.id, title: ev.title })}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </Card>
                   ))}
-                  {(!events || events.length === 0) && (
-                    <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
-                      No events scheduled.
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -453,7 +476,7 @@ export default function ManagementPage() {
               <div className="lg:col-span-8">
                 <div className="grid gap-3">
                   {notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(n => (
-                    <Card key={n.id} className={cn("border-l-4 p-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all", n.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
+                    <Card key={n.id} className={cn("border-l-4 p-4 flex justify-between items-center shadow-sm", n.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
                       <div className="min-w-0 pr-4">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-bold text-sm sm:text-base truncate">{n.title}</h4>
@@ -461,12 +484,7 @@ export default function ManagementPage() {
                         </div>
                         <p className="text-[11px] sm:text-xs opacity-60 line-clamp-1 italic">"{n.content}"</p>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                        onClick={() => setDeleteConfirm({ col: 'notices', id: n.id, title: n.title })}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteConfirm({ col: 'notices', id: n.id, title: n.title })}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </Card>
@@ -520,11 +538,6 @@ export default function ManagementPage() {
                       )}
                     </div>
                   ))}
-                  {(!gallery || gallery.length === 0) && (
-                    <div className="col-span-full py-20 text-center text-muted-foreground italic border-2 border-dashed rounded-xl">
-                      Gallery is empty.
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -533,45 +546,43 @@ export default function ManagementPage() {
           <TabsContent value="requests" className="space-y-6">
              <Card className="shadow-md border-primary/10 overflow-hidden">
               <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Prayer & Ritual Requests</CardTitle></CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto w-full">
-                  <Table>
-                    <TableHeader className="bg-muted/10">
-                      <TableRow>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Devotee</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Type</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter hidden sm:table-cell">Message</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Status</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Action</TableHead>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/10">
+                    <TableRow>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Devotee</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Type</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter hidden sm:table-cell">Message</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Status</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {requests?.map((r: any) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-xs font-bold">{r.name}</TableCell>
+                        <TableCell className="capitalize text-[10px]"><Badge variant="outline" className="h-4 px-1">{r.requestType}</Badge></TableCell>
+                        <TableCell className="max-w-[200px] truncate text-[10px] opacity-70 hidden sm:table-cell italic">"{r.message}"</TableCell>
+                        <TableCell><Badge variant={r.status === 'completed' ? 'default' : 'secondary'} className="text-[9px] px-2 h-5">{r.status}</Badge></TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-7 w-7" 
+                            onClick={() => {
+                              updateDocumentNonBlocking(doc(firestore!, "prayer_requests", r.id), { status: 'completed' });
+                              logActivity('UPDATE', 'prayer_requests', `Request Completed for ${r.name}`);
+                              toast({ title: "Status Updated" });
+                            }}
+                            disabled={r.status === 'completed'}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {requests?.map((r: any) => (
-                        <TableRow key={r.id} className="hover:bg-muted/20">
-                          <TableCell className="text-xs font-bold">{r.name}</TableCell>
-                          <TableCell className="capitalize text-[10px]"><Badge variant="outline" className="h-4 px-1">{r.requestType}</Badge></TableCell>
-                          <TableCell className="max-w-[200px] truncate text-[10px] opacity-70 hidden sm:table-cell italic">"{r.message}"</TableCell>
-                          <TableCell><Badge variant={r.status === 'completed' ? 'default' : 'secondary'} className="text-[9px] px-2 h-5">{r.status}</Badge></TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="h-7 w-7 border-primary/30 text-primary hover:bg-primary/5" 
-                              onClick={() => {
-                                updateDocumentNonBlocking(doc(firestore!, "prayer_requests", r.id), { status: 'completed' });
-                                logActivity('UPDATE', 'prayer_requests', `Request Completed for ${r.name}`);
-                                toast({ title: "Status Updated" });
-                              }}
-                              disabled={r.status === 'completed'}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
@@ -618,38 +629,31 @@ export default function ManagementPage() {
               <div className="lg:col-span-8">
                 <Card className="shadow-md border-primary/10 overflow-hidden">
                   <CardHeader className="bg-muted/10 border-b"><CardTitle className="text-lg">Official Directory</CardTitle></CardHeader>
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto w-full">
-                      <Table>
-                        <TableHeader className="bg-muted/10">
-                          <TableRow>
-                            <TableHead className="w-16 text-[10px] uppercase font-black">Order</TableHead>
-                            <TableHead className="text-[10px] uppercase font-black">Name</TableHead>
-                            <TableHead className="text-[10px] uppercase font-black">Role</TableHead>
-                            <TableHead className="text-[10px] uppercase font-black text-right">Action</TableHead>
+                  <CardContent className="p-0 overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-muted/10">
+                        <TableRow>
+                          <TableHead className="w-16 text-[10px] uppercase font-black">Order</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black">Name</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black">Role</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black text-right">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {members?.sort((a,b) => (a.displayOrder || 0) - (b.displayOrder || 0)).map(m => (
+                          <TableRow key={m.id}>
+                            <TableCell className="font-mono text-xs text-muted-foreground">{m.displayOrder}</TableCell>
+                            <TableCell className="font-bold text-xs">{m.name}</TableCell>
+                            <TableCell className="text-[10px] uppercase font-black opacity-60">{m.role}</TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteConfirm({ col: 'mandir_samiti_members', id: m.id, title: m.name })}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {members?.sort((a,b) => (a.displayOrder || 0) - (b.displayOrder || 0)).map(m => (
-                            <TableRow key={m.id} className="hover:bg-muted/20">
-                              <TableCell className="font-mono text-xs text-muted-foreground">{m.displayOrder}</TableCell>
-                              <TableCell className="font-bold text-xs">{m.name}</TableCell>
-                              <TableCell className="text-[10px] uppercase font-black opacity-60">{m.role}</TableCell>
-                              <TableCell className="text-right">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                  onClick={() => setDeleteConfirm({ col: 'mandir_samiti_members', id: m.id, title: m.name })}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </div>
@@ -659,49 +663,95 @@ export default function ManagementPage() {
           <TabsContent value="users" className="space-y-6">
             <Card className="shadow-md border-primary/10 overflow-hidden">
               <CardHeader className="flex flex-col sm:flex-row items-center justify-between py-4 px-5 bg-muted/10 border-b gap-4">
-                <CardTitle className="text-lg">Registered Devotees</CardTitle>
+                <CardTitle className="text-lg">Role & Permission Management</CardTitle>
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 opacity-40" />
                   <Input 
-                    placeholder="Search users..." 
+                    placeholder="Search devotees..." 
                     className="pl-9 h-9 text-xs bg-white" 
                     value={userSearch} 
                     onChange={(e) => setUserSearch(e.target.value)} 
                   />
                 </div>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto w-full">
-                  <Table>
-                    <TableHeader className="bg-muted/10">
-                      <TableRow>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Name</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Email</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Role</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Verified</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {allUsers?.filter(u => 
-                        (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
-                        (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
-                      ).map(u => (
-                        <TableRow key={u.id} className="hover:bg-muted/20">
-                          <TableCell className="font-bold text-xs truncate max-w-[150px]">{u.name || 'Anonymous'}</TableCell>
-                          <TableCell className="text-[10px] text-muted-foreground truncate max-w-[150px]">{u.email}</TableCell>
-                          <TableCell className="capitalize text-[10px]"><Badge variant="secondary" className="h-4 px-1.5 font-bold uppercase tracking-widest">{u.role}</Badge></TableCell>
-                          <TableCell className="text-right">
-                            {u.isVerified ? (
-                              <Badge className="bg-emerald-500 h-4 px-1.5 text-[8px] uppercase">Yes</Badge>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/10">
+                    <TableRow>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Devotee</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Current Role</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Technical Admin</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allUsers?.filter(u => 
+                      (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+                      (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
+                    ).map(u => {
+                      const isTechAdmin = allAdmins?.some(a => a.id === u.id);
+                      return (
+                        <TableRow key={u.id}>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-xs">{u.name || 'Anonymous'}</span>
+                              <span className="text-[10px] text-muted-foreground">{u.email}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Select 
+                              defaultValue={u.role || 'devotee'} 
+                              onValueChange={(val) => setRoleConfirm({ userId: u.id, name: u.name || u.email, newRole: val, type: 'role' })}
+                            >
+                              <SelectTrigger className="h-7 w-28 text-[10px] font-bold uppercase">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="devotee">Devotee</SelectItem>
+                                <SelectItem value="member">Member</SelectItem>
+                                <SelectItem value="official">Official</SelectItem>
+                                <SelectItem value="president">President</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            {isTechAdmin ? (
+                              <Badge className="bg-primary text-white border-0 gap-1 px-2 h-5">
+                                <ShieldCheck className="h-3 w-3" /> Admin
+                              </Badge>
                             ) : (
-                              <Badge variant="outline" className="h-4 px-1.5 text-[8px] uppercase">No</Badge>
+                              <Badge variant="outline" className="text-muted-foreground gap-1 px-2 h-5">
+                                <ShieldQuestion className="h-3 w-3" /> Devotee
+                              </Badge>
                             )}
                           </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button 
+                                variant={isTechAdmin ? "destructive" : "default"} 
+                                size="sm" 
+                                className="h-7 px-2 text-[9px] font-black uppercase"
+                                onClick={() => setRoleConfirm({ 
+                                  userId: u.id, 
+                                  name: u.name || u.email, 
+                                  newRole: isTechAdmin ? 'devotee' : 'admin', 
+                                  type: 'admin' 
+                                })}
+                                disabled={u.id === user?.uid} // Don't let user demote themselves
+                              >
+                                {isTechAdmin ? (
+                                  <><UserMinus className="h-3 w-3 mr-1" /> Demote</>
+                                ) : (
+                                  <><Crown className="h-3 w-3 mr-1" /> Promote</>
+                                )}
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
@@ -709,41 +759,60 @@ export default function ManagementPage() {
           <TabsContent value="logs" className="space-y-6">
             <Card className="shadow-md border-primary/10 overflow-hidden">
               <CardHeader className="bg-muted/10 border-b"><CardTitle className="text-lg">Admin Audit Logs</CardTitle></CardHeader>
-              <CardContent className="p-0">
-                 <div className="overflow-x-auto w-full">
-                  <Table>
-                    <TableHeader className="bg-muted/10">
-                      <TableRow>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Timestamp</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Admin</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter">Action</TableHead>
-                        <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Target</TableHead>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/10">
+                    <TableRow>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Timestamp</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Admin</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Action</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Target</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map((l: any) => (
+                      <TableRow key={l.id} className="text-xs">
+                        <TableCell className="text-[9px] opacity-60 font-mono">{new Date(l.timestamp).toLocaleString()}</TableCell>
+                        <TableCell className="font-bold text-[10px]">{l.adminName}</TableCell>
+                        <TableCell>
+                          <Badge className={cn("text-[8px] h-4 uppercase", l.actionType === 'DELETE' || l.actionType === 'REMOVE_ADMIN' ? 'bg-red-500' : 'bg-emerald-500')}>
+                            {l.actionType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-[9px] font-medium opacity-70 truncate max-w-[150px]">
+                          {l.entityType}: {l.entityTitle}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map((l: any) => (
-                        <TableRow key={l.id} className="text-xs hover:bg-muted/20">
-                          <TableCell className="text-[9px] opacity-60 font-mono">{new Date(l.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</TableCell>
-                          <TableCell className="font-bold text-[10px]">{l.adminName}</TableCell>
-                          <TableCell>
-                            <Badge className={cn("text-[8px] h-4 uppercase", l.actionType === 'DELETE' ? 'bg-red-500' : 'bg-emerald-500')}>
-                              {l.actionType}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right text-[9px] font-medium opacity-70 truncate max-w-[150px]">
-                            {l.entityType}: {l.entityTitle}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </main>
 
+      {/* Role Action Confirmation */}
+      <AlertDialog open={!!roleConfirm} onOpenChange={(o) => !o && setRoleConfirm(null)}>
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <UserCog className="text-primary h-5 w-5" /> Confirm Role Update
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              {roleConfirm?.type === 'admin' 
+                ? `Are you sure you want to ${allAdmins?.some(a => a.id === roleConfirm.userId) ? 'REMOVE technical admin access from' : 'GRANT technical admin access to'} ${roleConfirm.name}?`
+                : `Are you sure you want to change ${roleConfirm?.name}'s community role to "${roleConfirm?.newRole?.toUpperCase()}"?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
+            <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRoleAction} className="bg-primary hover:bg-primary/90 shadow-lg">Confirm Action</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto rounded-2xl">
           <AlertDialogHeader>
