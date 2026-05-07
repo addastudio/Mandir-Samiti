@@ -183,17 +183,17 @@ export default function ManagementPage() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <div className="overflow-x-auto no-scrollbar mb-6">
-            <TabsList className="bg-muted/40 p-1 rounded-xl inline-flex w-max min-w-full justify-start h-auto">
-              <TabsTrigger value="overview" className="gap-2 py-2 px-4"><BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}</TabsTrigger>
-              <TabsTrigger value="donations" className="gap-2 py-2 px-4"><HandCoins className="h-4 w-4" /> {language === 'hi' ? 'दान' : 'Donations'}</TabsTrigger>
-              <TabsTrigger value="events" className="gap-2 py-2 px-4"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
-              <TabsTrigger value="notices" className="gap-2 py-2 px-4"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notices'}</TabsTrigger>
-              <TabsTrigger value="gallery" className="gap-2 py-2 px-4"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
-              <TabsTrigger value="requests" className="gap-2 py-2 px-4"><MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}</TabsTrigger>
-              <TabsTrigger value="members" className="gap-2 py-2 px-4"><Users className="h-4 w-4" /> {language === 'hi' ? 'समिति' : 'Committee'}</TabsTrigger>
-              <TabsTrigger value="users" className="gap-2 py-2 px-4"><UserPlus className="h-4 w-4" /> {language === 'hi' ? 'भक्त' : 'Users'}</TabsTrigger>
-              <TabsTrigger value="logs" className="gap-2 py-2 px-4"><History className="h-4 w-4" /> {language === 'hi' ? 'लॉग्स' : 'Logs'}</TabsTrigger>
+          <div className="overflow-x-auto touch-scroll no-scrollbar mb-6">
+            <TabsList className="bg-muted/40 p-1 rounded-xl inline-flex w-max min-w-full justify-start h-auto flex-nowrap">
+              <TabsTrigger value="overview" className="gap-2 py-2 px-4 shrink-0"><BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}</TabsTrigger>
+              <TabsTrigger value="donations" className="gap-2 py-2 px-4 shrink-0"><HandCoins className="h-4 w-4" /> {language === 'hi' ? 'दान' : 'Donations'}</TabsTrigger>
+              <TabsTrigger value="events" className="gap-2 py-2 px-4 shrink-0"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
+              <TabsTrigger value="notices" className="gap-2 py-2 px-4 shrink-0"><Bell className="h-4 w-4" /> {language === 'hi' ? 'सूचना' : 'Notices'}</TabsTrigger>
+              <TabsTrigger value="gallery" className="gap-2 py-2 px-4 shrink-0"><ImageIcon className="h-4 w-4" /> {language === 'hi' ? 'गैलरी' : 'Gallery'}</TabsTrigger>
+              <TabsTrigger value="requests" className="gap-2 py-2 px-4 shrink-0"><MessageSquare className="h-4 w-4" /> {language === 'hi' ? 'निवेदन' : 'Requests'}</TabsTrigger>
+              <TabsTrigger value="members" className="gap-2 py-2 px-4 shrink-0"><Users className="h-4 w-4" /> {language === 'hi' ? 'समिति' : 'Committee'}</TabsTrigger>
+              <TabsTrigger value="users" className="gap-2 py-2 px-4 shrink-0"><UserPlus className="h-4 w-4" /> {language === 'hi' ? 'भक्त' : 'Users'}</TabsTrigger>
+              <TabsTrigger value="logs" className="gap-2 py-2 px-4 shrink-0"><History className="h-4 w-4" /> {language === 'hi' ? 'लॉग्स' : 'Logs'}</TabsTrigger>
             </TabsList>
           </div>
 
