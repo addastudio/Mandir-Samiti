@@ -40,7 +40,10 @@ import {
   UserCog,
   ShieldQuestion,
   UserMinus,
-  Crown
+  Crown,
+  Mail,
+  User as UserIcon,
+  Fingerprint
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -75,6 +78,7 @@ import {
 } from "@/components/ui/select";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function ManagementPage() {
   const { user, isUserLoading } = useUser();
@@ -660,15 +664,21 @@ export default function ManagementPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
-            <Card className="shadow-md border-primary/10 overflow-hidden">
-              <CardHeader className="flex flex-col sm:flex-row items-center justify-between py-4 px-5 bg-muted/10 border-b gap-4">
-                <CardTitle className="text-lg">Role & Permission Management</CardTitle>
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 opacity-40" />
+          <TabsContent value="users" className="space-y-6 animate-in fade-in duration-500">
+            <Card className="shadow-xl border-primary/10 overflow-hidden bg-white/50 backdrop-blur-sm">
+              <CardHeader className="flex flex-col sm:flex-row items-center justify-between py-6 px-6 bg-white border-b gap-4">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    <UserCog className="h-5 w-5 text-primary" />
+                    Devotee Access Management
+                  </CardTitle>
+                  <CardDescription className="text-xs uppercase tracking-widest font-semibold opacity-60">Control system permissions and community tiers</CardDescription>
+                </div>
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Search devotees..." 
-                    className="pl-9 h-9 text-xs bg-white" 
+                    placeholder="Search by name or email..." 
+                    className="pl-10 h-11 text-sm bg-secondary/20 border-primary/5 focus:bg-white transition-all shadow-inner" 
                     value={userSearch} 
                     onChange={(e) => setUserSearch(e.target.value)} 
                   />
@@ -676,12 +686,12 @@ export default function ManagementPage() {
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-muted/10">
-                    <TableRow>
-                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Devotee</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Current Role</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Technical Admin</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Actions</TableHead>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-[300px] py-4 text-[10px] uppercase font-black tracking-wider text-muted-foreground pl-6">Devotee Identity</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-wider text-muted-foreground">Community Role</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-wider text-muted-foreground">System Access</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-wider text-muted-foreground text-right pr-6">Quick Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -691,11 +701,21 @@ export default function ManagementPage() {
                     ).map(u => {
                       const isTechAdmin = allAdmins?.some(a => a.id === u.id);
                       return (
-                        <TableRow key={u.id}>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-xs">{u.name || 'Anonymous'}</span>
-                              <span className="text-[10px] text-muted-foreground">{u.email}</span>
+                        <TableRow key={u.id} className="group hover:bg-primary/5 transition-colors border-b-primary/5">
+                          <TableCell className="py-4 pl-6">
+                            <div className="flex items-center gap-4">
+                              <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-1 ring-primary/10 group-hover:scale-110 transition-transform">
+                                <AvatarImage src={u.photoURL} />
+                                <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                                  {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase() || <UserIcon className="h-4 w-4" />}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-bold text-sm text-foreground truncate">{u.name || 'Devotee'}</span>
+                                <span className="text-[10px] text-muted-foreground flex items-center gap-1 truncate">
+                                  <Mail className="h-2.5 w-2.5 opacity-50" /> {u.email}
+                                </span>
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -703,48 +723,67 @@ export default function ManagementPage() {
                               defaultValue={u.role || 'devotee'} 
                               onValueChange={(val) => setRoleConfirm({ userId: u.id, name: u.name || u.email, newRole: val, type: 'role' })}
                             >
-                              <SelectTrigger className="h-7 w-28 text-[10px] font-bold uppercase">
+                              <SelectTrigger className={cn(
+                                "h-8 w-32 text-[10px] font-black uppercase tracking-tighter transition-all shadow-sm border-primary/10",
+                                u.role === 'president' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                u.role === 'official' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                u.role === 'member' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-white'
+                              )}>
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="devotee">Devotee</SelectItem>
-                                <SelectItem value="member">Member</SelectItem>
-                                <SelectItem value="official">Official</SelectItem>
-                                <SelectItem value="president">President</SelectItem>
+                              <SelectContent className="rounded-xl border-primary/10 shadow-xl">
+                                <SelectItem value="devotee" className="text-[10px] font-bold uppercase">Devotee</SelectItem>
+                                <SelectItem value="member" className="text-[10px] font-bold uppercase text-amber-600">Member</SelectItem>
+                                <SelectItem value="official" className="text-[10px] font-bold uppercase text-emerald-600">Official</SelectItem>
+                                <SelectItem value="president" className="text-[10px] font-bold uppercase text-indigo-600">President</SelectItem>
                               </SelectContent>
                             </Select>
                           </TableCell>
                           <TableCell>
                             {isTechAdmin ? (
-                              <Badge className="bg-primary text-white border-0 gap-1 px-2 h-5">
-                                <ShieldCheck className="h-3 w-3" /> Admin
+                              <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 gap-1.5 px-3 h-6 shadow-md shadow-primary/20">
+                                <ShieldCheck className="h-3 w-3" />
+                                <span className="text-[9px] font-black uppercase tracking-widest">Management Admin</span>
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-muted-foreground gap-1 px-2 h-5">
-                                <ShieldQuestion className="h-3 w-3" /> Devotee
+                              <Badge variant="outline" className="text-muted-foreground gap-1.5 px-3 h-6 border-dashed border-muted-foreground/30 bg-muted/5">
+                                <ShieldQuestion className="h-3 w-3 opacity-50" />
+                                <span className="text-[9px] font-black uppercase tracking-widest">Devotee</span>
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              <Button 
-                                variant={isTechAdmin ? "destructive" : "default"} 
-                                size="sm" 
-                                className="h-7 px-2 text-[9px] font-black uppercase"
-                                onClick={() => setRoleConfirm({ 
-                                  userId: u.id, 
-                                  name: u.name || u.email, 
-                                  newRole: isTechAdmin ? 'devotee' : 'admin', 
-                                  type: 'admin' 
-                                })}
-                                disabled={u.id === user?.uid} // Don't let user demote themselves
-                              >
-                                {isTechAdmin ? (
-                                  <><UserMinus className="h-3 w-3 mr-1" /> Demote</>
-                                ) : (
-                                  <><Crown className="h-3 w-3 mr-1" /> Promote</>
-                                )}
-                              </Button>
+                          <TableCell className="text-right pr-6">
+                            <div className="flex justify-end gap-2">
+                              {isTechAdmin ? (
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm" 
+                                  className="h-8 px-3 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-destructive/10 gap-1.5 hover:scale-105 active:scale-95 transition-all"
+                                  onClick={() => setRoleConfirm({ 
+                                    userId: u.id, 
+                                    name: u.name || u.email, 
+                                    newRole: 'devotee', 
+                                    type: 'admin' 
+                                  })}
+                                  disabled={u.id === user?.uid}
+                                >
+                                  <UserMinus className="h-3 w-3" /> Revoke Access
+                                </Button>
+                              ) : (
+                                <Button 
+                                  variant="default" 
+                                  size="sm" 
+                                  className="h-8 px-3 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary/10 gap-1.5 bg-primary hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all"
+                                  onClick={() => setRoleConfirm({ 
+                                    userId: u.id, 
+                                    name: u.name || u.email, 
+                                    newRole: 'admin', 
+                                    type: 'admin' 
+                                  })}
+                                >
+                                  <Crown className="h-3 w-3" /> Promote to Admin
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -752,6 +791,12 @@ export default function ManagementPage() {
                     })}
                   </TableBody>
                 </Table>
+                {(!allUsers || allUsers.length === 0) && (
+                  <div className="py-20 text-center space-y-4">
+                    <UserIcon className="h-12 w-12 mx-auto opacity-10" />
+                    <p className="text-muted-foreground text-sm font-medium">No devotees found matching your criteria</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -794,20 +839,50 @@ export default function ManagementPage() {
 
       {/* Role Action Confirmation */}
       <AlertDialog open={!!roleConfirm} onOpenChange={(o) => !o && setRoleConfirm(null)}>
-        <AlertDialogContent className="w-[95%] max-w-md mx-auto rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <UserCog className="text-primary h-5 w-5" /> Confirm Role Update
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto rounded-3xl border-primary/10 shadow-2xl overflow-hidden p-0">
+          <div className="bg-primary/5 p-6 border-b border-primary/5 text-center">
+            <div className="mx-auto h-16 w-16 bg-white rounded-full shadow-xl flex items-center justify-center mb-4 ring-4 ring-primary/5">
+              {roleConfirm?.type === 'admin' ? <Fingerprint className="h-8 w-8 text-primary" /> : <UserCog className="h-8 w-8 text-primary" />}
+            </div>
+            <AlertDialogTitle className="text-xl font-black tracking-tight text-foreground">
+              Confirm Security Update
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
+          </div>
+          <div className="p-8">
+            <AlertDialogDescription className="text-sm text-center font-medium text-muted-foreground leading-relaxed">
               {roleConfirm?.type === 'admin' 
-                ? `Are you sure you want to ${allAdmins?.some(a => a.id === roleConfirm.userId) ? 'REMOVE technical admin access from' : 'GRANT technical admin access to'} ${roleConfirm.name}?`
-                : `Are you sure you want to change ${roleConfirm?.name}'s community role to "${roleConfirm?.newRole?.toUpperCase()}"?`}
+                ? (
+                  <span>
+                    You are about to <strong className="text-foreground">{allAdmins?.some(a => a.id === roleConfirm.userId) ? 'REMOVE Technical Admin' : 'GRANT Technical Admin'}</strong> 
+                    permissions for <strong className="text-primary">{roleConfirm.name}</strong>. 
+                    {allAdmins?.some(a => a.id === roleConfirm.userId) 
+                      ? " This user will lose all access to the Management Panel." 
+                      : " This user will gain full access to modify temple data."}
+                  </span>
+                )
+                : (
+                  <span>
+                    Confirm changing <strong className="text-primary">{roleConfirm?.name}</strong>'s community tier to 
+                    <Badge variant="outline" className="mx-1 h-5 text-[9px] font-black border-primary/20 text-primary uppercase">
+                      {roleConfirm?.newRole}
+                    </Badge>?
+                  </span>
+                )}
             </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
-            <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRoleAction} className="bg-primary hover:bg-primary/90 shadow-lg">Confirm Action</AlertDialogAction>
+          </div>
+          <AlertDialogFooter className="p-6 bg-muted/20 flex flex-col sm:flex-row gap-3">
+            <AlertDialogCancel className="mt-0 h-12 rounded-2xl font-bold uppercase text-[10px] tracking-widest border-primary/10 hover:bg-white transition-all">Cancel Request</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRoleAction} 
+              className={cn(
+                "h-12 rounded-2xl font-bold uppercase text-[10px] tracking-widest shadow-lg transition-all",
+                roleConfirm?.type === 'admin' && allAdmins?.some(a => a.id === roleConfirm.userId) 
+                  ? "bg-red-600 hover:bg-red-700 shadow-red-200" 
+                  : "bg-primary hover:bg-primary/90 shadow-primary/20"
+              )}
+            >
+              Confirm Changes
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
