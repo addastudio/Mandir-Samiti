@@ -32,7 +32,8 @@ import {
   AlertTriangle,
   Database,
   Wand2,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
