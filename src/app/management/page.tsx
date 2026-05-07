@@ -198,33 +198,29 @@ export default function ManagementPage() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full space-y-6">
-          <div className="relative w-full">
-            <div className="flex w-full overflow-x-auto no-scrollbar scroll-smooth touch-pan-x py-1 px-1 -mx-1">
-              <TabsList className="flex h-auto w-max min-w-full justify-start gap-1 bg-muted/40 p-1 rounded-xl border-0">
-                {[
-                  { value: 'overview', icon: BarChart3, label: language === 'hi' ? 'सारांश' : 'Overview' },
-                  { value: 'donations', icon: HandCoins, label: language === 'hi' ? 'दान' : 'Donations' },
-                  { value: 'events', icon: Calendar, label: language === 'hi' ? 'कार्यक्रम' : 'Events' },
-                  { value: 'notices', icon: Bell, label: language === 'hi' ? 'सूचना' : 'Notices' },
-                  { value: 'gallery', icon: ImageIcon, label: language === 'hi' ? 'गैलरी' : 'Gallery' },
-                  { value: 'requests', icon: MessageSquare, label: language === 'hi' ? 'निवेदन' : 'Requests' },
-                  { value: 'members', icon: Users, label: language === 'hi' ? 'समिति' : 'Committee' },
-                  { value: 'users', icon: UserPlus, label: language === 'hi' ? 'भक्त' : 'Users' },
-                  { value: 'logs', icon: History, label: language === 'hi' ? 'लॉग्स' : 'Logs' }
-                ].map((tab) => (
-                  <TabsTrigger 
-                    key={tab.value} 
-                    value={tab.value} 
-                    className="flex items-center gap-2 py-2 px-3 sm:px-4 shrink-0 rounded-lg transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary"
-                  >
-                    <tab.icon className="h-4 w-4" />
-                    <span className="text-xs font-bold whitespace-nowrap">{tab.label}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-            {/* Optional visual indicator for scroll on mobile */}
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-secondary/30 to-transparent pointer-events-none sm:hidden" />
+          <div className="w-full overflow-x-auto touch-pan-x bg-muted/40 p-1 rounded-xl">
+            <TabsList className="inline-flex h-auto w-max min-w-full justify-start gap-1 bg-transparent border-0">
+              {[
+                { value: 'overview', icon: BarChart3, label: language === 'hi' ? 'सारांश' : 'Overview' },
+                { value: 'donations', icon: HandCoins, label: language === 'hi' ? 'दान' : 'Donations' },
+                { value: 'events', icon: Calendar, label: language === 'hi' ? 'कार्यक्रम' : 'Events' },
+                { value: 'notices', icon: Bell, label: language === 'hi' ? 'सूचना' : 'Notices' },
+                { value: 'gallery', icon: ImageIcon, label: language === 'hi' ? 'गैलरी' : 'Gallery' },
+                { value: 'requests', icon: MessageSquare, label: language === 'hi' ? 'निवेदन' : 'Requests' },
+                { value: 'members', icon: Users, label: language === 'hi' ? 'समिति' : 'Committee' },
+                { value: 'users', icon: UserPlus, label: language === 'hi' ? 'भक्त' : 'Users' },
+                { value: 'logs', icon: History, label: language === 'hi' ? 'लॉग्स' : 'Logs' }
+              ].map((tab) => (
+                <TabsTrigger 
+                  key={tab.value} 
+                  value={tab.value} 
+                  className="flex items-center gap-2 py-2 px-3 sm:px-4 shrink-0 rounded-lg transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary"
+                >
+                  <tab.icon className="h-4 w-4" />
+                  <span className="text-xs font-bold whitespace-nowrap">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
 
           <TabsContent value="overview" className="space-y-6 animate-in fade-in duration-300">
@@ -754,7 +750,7 @@ export default function ManagementPage() {
             <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive h-5 w-5" /> Confirm Deletion</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">Are you sure you want to remove "{deleteConfirm?.title}" from {deleteConfirm?.col}? This action is permanent and cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
             <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90 shadow-lg">Delete Permanently</AlertDialogAction>
           </AlertDialogFooter>
