@@ -40,6 +40,12 @@ export default function RootLayout(props: {
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script 
+          src="https://identity.netlify.com/v1/netlify-identity-widget.js" 
+          strategy="beforeInteractive" 
+        />
+      </head>
       <body
         className={cn(
           'font-body antialiased',
@@ -65,6 +71,21 @@ export default function RootLayout(props: {
             {children}
             <BackToTop />
             <Toaster />
+
+            {/* Script to handle Netlify Identity redirect after login */}
+            <Script id="netlify-identity-redirect" strategy="afterInteractive">
+              {`
+                if (window.netlifyIdentity) {
+                  window.netlifyIdentity.on("init", user => {
+                    if (!user) {
+                      window.netlifyIdentity.on("login", () => {
+                        document.location.href = "/admin/";
+                      });
+                    }
+                  });
+                }
+              `}
+            </Script>
           </LanguageProvider>
         </FirebaseClientProvider>
       </body>

@@ -1,86 +1,57 @@
 backend:
-  name: github
-  repo: your-github-repo/path # Decap will auto-detect this in Netlify
-  branch: main
+  name: git-gateway
+  branch: main # Ensure this matches your repository branch
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
 collections:
-  - name: "site_identity"
-    label: "Site Identity"
-    files:
-      - file: "content/site_identity.json"
-        label: "Headers & Footers"
-        name: "identity"
-        fields:
-          - { label: "Title Hindi", name: "title_hi", widget: "string" }
-          - { label: "Title English", name: "title_en", widget: "string" }
-          - { label: "Subtitle Hindi", name: "subtitle_hi", widget: "string" }
-          - { label: "Subtitle English", name: "subtitle_en", widget: "string" }
-          - { label: "Favicon", name: "favicon", widget: "image", required: false }
-
-  - name: "hero"
-    label: "Hero Section"
+  - name: "pages"
+    label: "Core Sections"
     files:
       - file: "content/hero.json"
-        label: "Hero Content"
-        name: "hero_content"
+        label: "Hero Section"
+        name: "hero"
         fields:
-          - { label: "Headline Hindi", name: "headline_hi", widget: "string" }
-          - { label: "Headline English", name: "headline_en", widget: "string" }
-          - { label: "Subtitle Hindi", name: "subtitle_hi", widget: "text" }
-          - { label: "Subtitle English", name: "subtitle_en", widget: "text" }
-          - { label: "Background Video URL", name: "video_url", widget: "string", required: false }
-          - { label: "Fallback Hero Image", name: "fallback_image", widget: "image" }
-
-  - name: "about"
-    label: "About Us"
-    files:
+          - { label: "Headline (English)", name: "headline_en", widget: "string" }
+          - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
+          - { label: "Subtitle (English)", name: "subtitle_en", widget: "text" }
+          - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "text" }
+          - { label: "Video URL (MP4)", name: "video_url", widget: "string", required: false }
+          - { label: "Fallback Image", name: "fallback_image", widget: "image" }
+      
       - file: "content/about.json"
-        label: "Temple History & Mission"
-        name: "about_content"
+        label: "About Us"
+        name: "about"
         fields:
-          - { label: "History Title Hindi", name: "history_title_hi", widget: "string" }
-          - { label: "History Title English", name: "history_title_en", widget: "string" }
-          - { label: "History Body Hindi", name: "history_hi", widget: "markdown" }
-          - { label: "History Body English", name: "history_en", widget: "markdown" }
-          - { label: "Mission Title Hindi", name: "mission_title_hi", widget: "string" }
-          - { label: "Mission Title English", name: "mission_title_en", widget: "string" }
-          - { label: "Mission Body Hindi", name: "mission_hi", widget: "markdown" }
-          - { label: "Mission Body English", name: "mission_en", widget: "markdown" }
-          - { label: "Featured Image", name: "featuredImage", widget: "image" }
+          - { label: "History Title (English)", name: "history_title_en", widget: "string" }
+          - { label: "History Title (Hindi)", name: "history_title_hi", widget: "string" }
+          - { label: "History Content (English)", name: "history_en", widget: "markdown" }
+          - { label: "History Content (Hindi)", name: "history_hi", widget: "markdown" }
+          - { label: "Mission Title (English)", name: "mission_title_en", widget: "string" }
+          - { label: "Mission Title (Hindi)", name: "mission_title_hi", widget: "string" }
+          - { label: "Mission Content (English)", name: "mission_en", widget: "markdown" }
+          - { label: "Mission Content (Hindi)", name: "mission_hi", widget: "markdown" }
+          - { label: "Featured Image", name: "featured_image", widget: "image" }
+
+      - file: "content/contact.json"
+        label: "Contact & Footer"
+        name: "contact"
+        fields:
+          - { label: "Hindi Address", name: "hiAddress", widget: "string" }
+          - { label: "English Address", name: "enAddress", widget: "string" }
+          - { label: "Phone", name: "phone", widget: "string" }
+          - { label: "Email", name: "email", widget: "string" }
+          - { label: "Map Embed URL", name: "mapUrl", widget: "string" }
 
   - name: "seva"
     label: "Seva Programs"
     folder: "content/seva"
     create: true
-    slug: "{{title}}"
+    slug: "{{slug}}"
     fields:
-      - { label: "Program ID", name: "id", widget: "hidden", default: "seva-{{slug}}" }
-      - { label: "Title Hindi", name: "title_hi", widget: "string" }
-      - { label: "Title English", name: "title_en", widget: "string" }
-      - { label: "Description Hindi", name: "desc_hi", widget: "text" }
-      - { label: "Description English", name: "desc_en", widget: "text" }
-      - { 
-          label: "Icon", 
-          name: "icon", 
-          widget: "select", 
-          options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] 
-        }
-
-  - name: "contact"
-    label: "Contact & Location"
-    files:
-      - file: "content/contact.json"
-        label: "Contact Information"
-        name: "contact_content"
-        fields:
-          - { label: "Address Hindi", name: "address_hi", widget: "string" }
-          - { label: "Address English", name: "address_en", widget: "string" }
-          - { label: "Phone", name: "phone", widget: "string" }
-          - { label: "Email", name: "email", widget: "string" }
-          - { label: "Google Maps Embed URL", name: "mapUrl", widget: "string" }
-          - { label: "Facebook URL", name: "facebook", widget: "string", required: false }
-          - { label: "Instagram URL", name: "instagram", widget: "string", required: false }
-          - { label: "Youtube URL", name: "youtube", widget: "string", required: false }
+      - { label: "Title (English)", name: "title_en", widget: "string" }
+      - { label: "Title (Hindi)", name: "title_hi", widget: "string" }
+      - { label: "Description (English)", name: "desc_en", widget: "text" }
+      - { label: "Description (Hindi)", name: "desc_hi", widget: "text" }
+      - { label: "Icon", name: "icon", widget: "select", options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] }
