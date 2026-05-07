@@ -321,10 +321,10 @@ export default function ManagementPage() {
           <TabsContent value="overview" className="space-y-6 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: 'Total Collection', value: `₹${totalDonations.toLocaleString()}`, color: 'bg-primary/10 border-primary/20' },
-                { label: 'Pending Requests', value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200' },
-                { label: 'Active Events', value: events?.length || 0, color: 'bg-amber-50 border-amber-200' },
-                { label: 'Total Devotees', value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200' }
+                { label: t.mgmtStatTotalCollection, value: `₹${totalDonations.toLocaleString()}`, color: 'bg-primary/10 border-primary/20' },
+                { label: t.mgmtStatPendingRequests, value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200' },
+                { label: t.mgmtStatActiveEvents, value: events?.length || 0, color: 'bg-amber-50 border-amber-200' },
+                { label: t.mgmtStatTotalDevotees, value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200' }
               ].map((stat, i) => (
                 <Card key={i} className={stat.color}>
                   <CardHeader className="pb-2">

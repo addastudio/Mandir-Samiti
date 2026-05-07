@@ -229,6 +229,12 @@ export type TranslationKeys = {
   // Security
   captchaRequired: string;
   captchaError: string;
+
+  // Management Overview
+  mgmtStatTotalCollection: string;
+  mgmtStatPendingRequests: string;
+  mgmtStatActiveEvents: string;
+  mgmtStatTotalDevotees: string;
 };
 
 export const translations: { [key: string]: TranslationKeys } = {
@@ -425,6 +431,10 @@ export const translations: { [key: string]: TranslationKeys } = {
     adminConfirmAdminRemoveDesc: 'क्या आप वाकई {{name}} से प्रशासनिक पहुँच हटाना चाहते हैं?',
     captchaRequired: 'कृपया कैप्चा पूरा करें।',
     captchaError: 'कैप्चा सत्यापन विफल रहा। कृपया पुनः प्रयास करें।',
+    mgmtStatTotalCollection: 'कुल संग्रह',
+    mgmtStatPendingRequests: 'लंबित निवेदन',
+    mgmtStatActiveEvents: 'सक्रिय कार्यक्रम',
+    mgmtStatTotalDevotees: 'कुल भक्त',
   },
   en: {
     languagePopupTitle: 'Please choose your language',
@@ -619,5 +629,9 @@ export const translations: { [key: string]: TranslationKeys } = {
     adminConfirmAdminRemoveDesc: 'Are you sure you want to remove administrative access from {{name}}?',
     captchaRequired: 'Please complete the captcha.',
     captchaError: 'Captcha verification failed. Please try again.',
+    mgmtStatTotalCollection: 'Total Collection',
+    mgmtStatPendingRequests: 'Pending Requests',
+    mgmtStatActiveEvents: 'Active Events',
+    mgmtStatTotalDevotees: 'Total Devotees',
   },
 };
