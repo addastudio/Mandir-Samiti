@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -45,7 +46,8 @@ import {
   User as UserIcon,
   Fingerprint,
   ListOrdered,
-  ArrowDownAZ
+  ArrowDownAZ,
+  Activity
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -222,12 +224,23 @@ export default function ManagementPage() {
         return (a.name || '').localeCompare(b.name || '');
       }
       if (userSort === 'recent') {
-        // Fallback to ID comparison if createdAt isn't available
         return (b.id || '').localeCompare(a.id || '');
       }
       return 0;
     });
   }, [allUsers, userSearch, userSort]);
+
+  const getActionDetails = (type: string) => {
+    switch (type) {
+      case 'CREATE': return { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: Plus };
+      case 'DELETE': return { color: 'bg-rose-50 text-rose-700 border-rose-200', icon: Trash2 };
+      case 'UPDATE': return { color: 'bg-blue-50 text-blue-700 border-blue-200', icon: CheckCircle2 };
+      case 'GRANT_ADMIN': return { color: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: Crown };
+      case 'REMOVE_ADMIN': return { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: UserMinus };
+      case 'UPDATE_ROLE': return { color: 'bg-violet-50 text-indigo-700 border-violet-200', icon: UserCog };
+      default: return { color: 'bg-slate-50 text-slate-700 border-slate-200', icon: History };
+    }
+  };
 
   if (!mounted || isUserLoading || isAdminLoading) {
     return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -282,7 +295,7 @@ export default function ManagementPage() {
                 { value: 'requests', icon: MessageSquare, label: language === 'hi' ? 'निवेदन' : 'Requests' },
                 { value: 'members', icon: Users, label: language === 'hi' ? 'समिति' : 'Committee' },
                 { value: 'users', icon: UserCog, label: language === 'hi' ? 'भक्त प्रबंधन' : 'Roles' },
-                { value: 'logs', icon: History, label: language === 'hi' ? 'लॉग्स' : 'Logs' }
+                { value: 'logs', icon: Activity, label: language === 'hi' ? 'लॉग्स' : 'Logs' }
               ].map((tab) => (
                 <TabsTrigger 
                   key={tab.value} 
@@ -844,34 +857,75 @@ export default function ManagementPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="logs" className="space-y-6">
-            <Card className="shadow-md border-primary/10 overflow-hidden">
-              <CardHeader className="bg-muted/10 border-b"><CardTitle className="text-lg">Admin Audit Logs</CardTitle></CardHeader>
+          <TabsContent value="logs" className="space-y-6 animate-in fade-in duration-500">
+            <Card className="shadow-xl border-primary/10 overflow-hidden bg-white/50 backdrop-blur-sm">
+              <CardHeader className="bg-white border-b flex flex-row items-center justify-between py-6 px-6">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    System Audit Stream
+                  </CardTitle>
+                  <CardDescription className="text-[10px] uppercase tracking-widest font-semibold opacity-60">Verified history of administrative interactions</CardDescription>
+                </div>
+              </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
                 <Table>
-                  <TableHeader className="bg-muted/10">
-                    <TableRow>
-                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Timestamp</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Admin</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black tracking-tighter">Action</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Target</TableHead>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="w-[150px] py-4 text-[10px] uppercase font-black tracking-wider text-muted-foreground pl-6">Occurrence</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-wider text-muted-foreground">Administrator</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-wider text-muted-foreground">Action Type</TableHead>
+                      <TableHead className="text-[10px] uppercase font-black tracking-wider text-muted-foreground text-right pr-6">Affected Target</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map((l: any) => (
-                      <TableRow key={l.id} className="text-xs">
-                        <TableCell className="text-[9px] opacity-60 font-mono">{new Date(l.timestamp).toLocaleString()}</TableCell>
-                        <TableCell className="font-bold text-[10px]">{l.adminName}</TableCell>
-                        <TableCell>
-                          <Badge className={cn("text-[8px] h-4 uppercase", l.actionType === 'DELETE' || l.actionType === 'REMOVE_ADMIN' ? 'bg-red-500' : 'bg-emerald-500')}>
-                            {l.actionType}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right text-[9px] font-medium opacity-70 truncate max-w-[150px]">
-                          {l.entityType}: {l.entityTitle}
+                    {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50).map((l: any) => {
+                      const details = getActionDetails(l.actionType);
+                      const ActionIcon = details.icon;
+                      return (
+                        <TableRow key={l.id} className="group hover:bg-primary/5 transition-colors border-b-primary/5">
+                          <TableCell className="py-4 pl-6 align-middle">
+                            <div className="flex flex-col">
+                              <span className="text-[11px] font-bold text-foreground">{new Date(l.timestamp).toLocaleDateString()}</span>
+                              <span className="text-[9px] text-muted-foreground font-mono opacity-70">
+                                {new Date(l.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-middle">
+                            <div className="flex items-center gap-3">
+                              <div className="h-7 w-7 rounded-full bg-secondary border border-primary/10 flex items-center justify-center text-[10px] font-black text-primary shadow-sm group-hover:scale-110 transition-transform">
+                                {l.adminName?.charAt(0).toUpperCase() || 'A'}
+                              </div>
+                              <span className="text-xs font-bold text-foreground">{l.adminName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="align-middle">
+                            <Badge variant="outline" className={cn("gap-1.5 h-6 text-[9px] font-black uppercase tracking-wider px-2.5 shadow-sm", details.color)}>
+                              <ActionIcon className="h-3 w-3 shrink-0" />
+                              {l.actionType.replace('_', ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right pr-6 align-middle">
+                            <div className="flex flex-col items-end">
+                              <span className="text-[11px] font-black text-foreground truncate max-w-[220px]">{l.entityTitle}</span>
+                              <span className="text-[8px] uppercase tracking-widest font-bold text-primary opacity-60 flex items-center gap-1">
+                                <Fingerprint className="h-2 w-2" />
+                                {l.entityType}
+                              </span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {(!logs || logs.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-32 text-center">
+                          <History className="h-12 w-12 mx-auto opacity-10 mb-4" />
+                          <p className="text-muted-foreground text-sm font-medium">The audit trail is currently empty</p>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
