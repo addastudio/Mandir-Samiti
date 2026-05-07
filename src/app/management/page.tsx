@@ -183,8 +183,8 @@ export default function ManagementPage() {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <div className="overflow-x-auto touch-scroll no-scrollbar mb-6">
-            <TabsList className="bg-muted/40 p-1 rounded-xl inline-flex w-max min-w-full justify-start h-auto flex-nowrap">
+          <div className="w-full overflow-x-auto no-scrollbar touch-pan-x mb-6">
+            <TabsList className="inline-flex w-max min-w-full items-center justify-start h-auto p-1 bg-muted/40 rounded-xl flex-nowrap border-0">
               <TabsTrigger value="overview" className="gap-2 py-2 px-4 shrink-0"><BarChart3 className="h-4 w-4" /> {language === 'hi' ? 'सारांश' : 'Overview'}</TabsTrigger>
               <TabsTrigger value="donations" className="gap-2 py-2 px-4 shrink-0"><HandCoins className="h-4 w-4" /> {language === 'hi' ? 'दान' : 'Donations'}</TabsTrigger>
               <TabsTrigger value="events" className="gap-2 py-2 px-4 shrink-0"><Calendar className="h-4 w-4" /> {language === 'hi' ? 'कार्यक्रम' : 'Events'}</TabsTrigger>
@@ -232,7 +232,6 @@ export default function ManagementPage() {
                       const fd = new FormData(e.currentTarget);
                       const amount = Number(fd.get('amount'));
                       const name = fd.get('name') as string;
-                      // Manual donations are recorded under a generic "manual" user or directly
                       const donationData = {
                         amount,
                         devoteeName: name,
@@ -241,7 +240,6 @@ export default function ManagementPage() {
                         status: 'completed',
                         notes: fd.get('notes')
                       };
-                      // Using a top-level collection for generic manual entries if no UID
                       addDocumentNonBlocking(collection(firestore!, "donations"), donationData);
                       logActivity('CREATE', 'donations', `Manual: ${name} - ₹${amount}`);
                       (e.target as HTMLFormElement).reset();
@@ -444,7 +442,7 @@ export default function ManagementPage() {
               <CardContent className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 pt-6">
                 {gallery?.map(item => (
                   <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
-                    <img src={item.imageURL} className="w-full h-full object-cover" />
+                    <img src={item.imageURL} className="w-full h-full object-cover" alt={item.caption} />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption || 'Image' })}>
                         <Trash2 className="h-4 w-4" />
