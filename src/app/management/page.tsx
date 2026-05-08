@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -92,7 +91,6 @@ export default function ManagementPage() {
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   
-  // States
   const [userSearch, setUserSearch] = useState("");
   const [userSort, setUserSort] = useState<string>("role");
   const [donationSearch, setDonationSearch] = useState("");
@@ -100,8 +98,6 @@ export default function ManagementPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string } | null>(null);
   const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' } | null>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
-
-  // AI Form States
   const [aiTopic, setAiTopic] = useState("");
 
   useEffect(() => {
@@ -120,7 +116,6 @@ export default function ManagementPage() {
   }, [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
-  // Collections
   const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "events"), [firestore, adminDoc]);
   const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "gallery"), [firestore, adminDoc]);
   const noticesRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "notices"), [firestore, adminDoc]);
@@ -856,12 +851,6 @@ export default function ManagementPage() {
                     })}
                   </TableBody>
                 </Table>
-                {sortedUsers.length === 0 && (
-                  <div className="py-20 text-center space-y-4">
-                    <UserIcon className="h-12 w-12 mx-auto opacity-10" />
-                    <p className="text-muted-foreground text-sm font-medium">No devotees found matching your criteria</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -927,14 +916,6 @@ export default function ManagementPage() {
                         </TableRow>
                       );
                     })}
-                    {(!logs || logs.length === 0) && (
-                      <TableRow>
-                        <TableCell colSpan={4} className="py-32 text-center">
-                          <History className="h-12 w-12 mx-auto opacity-10 mb-4" />
-                          <p className="text-muted-foreground text-sm font-medium">The audit trail is currently empty</p>
-                        </TableCell>
-                      </TableRow>
-                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -993,7 +974,6 @@ export default function ManagementPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto rounded-2xl">
           <AlertDialogHeader>

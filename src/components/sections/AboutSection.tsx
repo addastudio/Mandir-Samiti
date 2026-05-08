@@ -50,7 +50,6 @@ export function AboutSection() {
 
   return (
     <section id="about" className="py-20 sm:py-32 relative overflow-hidden bg-gradient-to-b from-transparent to-secondary/30">
-      {/* Decorative background element */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-5">
         <div className="absolute top-10 left-10 w-64 h-64 border-8 border-primary rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-10 w-96 h-96 border-8 border-accent rounded-full blur-3xl" />
@@ -80,7 +79,6 @@ export function AboutSection() {
                   data-ai-hint="indian temple architecture"
               />
             </div>
-            {/* Floating Detail */}
             <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-xl border border-primary/5 hidden sm:flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-1000">
               <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <History className="h-6 w-6 text-primary" />
@@ -99,9 +97,9 @@ export function AboutSection() {
                   <h3 className={cn("text-2xl sm:text-3xl font-bold flex items-center gap-3 text-text-accent", language === "hi" ? "font-hindi" : "font-headline")}>
                     {t.aboutHistory}
                   </h3>
-                  <p className={cn("mt-6 text-muted-foreground text-sm sm:text-lg leading-relaxed italic", language === "hi" ? "font-hindi" : "")}>
+                  <div className={cn("mt-6 text-muted-foreground text-sm sm:text-lg leading-relaxed italic prose prose-sm sm:prose-base", language === "hi" ? "font-hindi" : "")}>
                     {historyText}
-                  </p>
+                  </div>
               </div>
             </div>
 
@@ -109,9 +107,9 @@ export function AboutSection() {
                 <h3 className={cn("text-2xl sm:text-3xl font-bold flex items-center gap-3", language === "hi" ? "font-hindi" : "font-headline")}>
                   <Target className="h-7 w-7" /> {t.aboutMission}
                 </h3>
-                <p className={cn("mt-6 text-white/90 text-sm sm:text-lg leading-relaxed font-medium", language === "hi" ? "font-hindi" : "")}>
+                <div className={cn("mt-6 text-white/90 text-sm sm:text-lg leading-relaxed font-medium prose prose-invert prose-sm sm:prose-base", language === "hi" ? "font-hindi" : "")}>
                   {missionText}
-                </p>
+                </div>
             </div>
           </div>
         </div>
@@ -135,8 +133,6 @@ export function AboutSection() {
                   </div>
                   <h4 className={cn("font-bold text-xl text-foreground", language === "hi" ? "font-hindi" : "")}>{member.name}</h4>
                   <p className={cn("text-[10px] font-black text-primary mt-2 uppercase tracking-[0.2em]", language === "hi" ? "font-hindi" : "")}>{member.role}</p>
-                  
-                  {/* Decorative dot */}
                   <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
                 </div>
               ))}

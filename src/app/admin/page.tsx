@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -14,7 +13,7 @@ import { useRouter } from "next/navigation";
 
 /**
  * Gateway page for Administrators.
- * Provides clear navigation between the Content CMS (Netlify) and the Operations Panel (Firebase).
+ * Restricted visibility: Content Editor is only for President and Official.
  */
 export default function AdminGatewayPage() {
   const { language, t } = useLanguage();

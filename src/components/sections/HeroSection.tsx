@@ -37,7 +37,6 @@ export function HeroSection() {
       id="home"
       className="relative flex min-h-[100dvh] w-full items-center justify-center text-center text-white overflow-hidden"
     >
-      {/* Background Video */}
       <video
         autoPlay
         muted
@@ -58,7 +57,6 @@ export function HeroSection() {
         )}
       </video>
 
-      {/* Enhanced Overlays */}
       <div className="absolute inset-0 bg-black/40 z-[1]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20 z-[2]" />
       
@@ -82,7 +80,7 @@ export function HeroSection() {
           </p>
           
           <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full sm:w-auto max-w-[280px] sm:max-w-none mx-auto">
-            <a href="#donate" className="w-full sm:w-auto">
+            <Link href="/donate" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 className={cn(
@@ -92,7 +90,7 @@ export function HeroSection() {
               >
                 {t.heroBtnDonate}
               </Button>
-            </a>
+            </Link>
             <Link href="/about" className="w-full sm:w-auto">
               <Button
                 size="lg"

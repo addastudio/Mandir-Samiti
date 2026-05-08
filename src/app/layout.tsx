@@ -10,7 +10,7 @@ import { BackToTop } from '@/components/layout/BackToTop';
 import Script from 'next/script';
 import { getLocalCmsContent } from '@/lib/cms';
 
-// Ensure the layout and metadata revalidate to pick up CMS changes
+// Force revalidation to ensure CMS changes like title/favicon are updated
 export const revalidate = 0;
 
 const poppins = Poppins({
@@ -71,7 +71,6 @@ export default function RootLayout(props: {
       >
         <FirebaseClientProvider>
           <LanguageProvider>
-            {/* Cashfree SDK */}
             <Script 
               src="https://sdk.cashfree.com/js/v3/cashfree.js" 
               strategy="afterInteractive" 
@@ -87,7 +86,6 @@ export default function RootLayout(props: {
             <BackToTop />
             <Toaster />
 
-            {/* Script to handle Netlify Identity redirect after login */}
             <Script id="netlify-identity-redirect" strategy="afterInteractive">
               {`
                 if (window.netlifyIdentity) {
