@@ -10,6 +10,9 @@ import { BackToTop } from '@/components/layout/BackToTop';
 import Script from 'next/script';
 import { getLocalCmsContent } from '@/lib/cms';
 
+// Ensure the layout and metadata revalidate to pick up CMS changes
+export const revalidate = 0;
+
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],

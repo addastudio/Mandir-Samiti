@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -31,6 +30,15 @@ export function Header() {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
+  const [settings, setSettings] = React.useState<any>(null);
+
+  // Fetch global settings from CMS content file
+  React.useEffect(() => {
+    fetch('/content/settings.json')
+      .then(res => res.json())
+      .then(data => setSettings(data))
+      .catch(() => setSettings(null));
+  }, []);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -151,6 +159,12 @@ export function Header() {
     </nav>
   );
 
+  const siteName = language === 'hi' 
+    ? (settings?.site_title_hi || "मंदिर समिति")
+    : (settings?.site_title_en || "Mandir Samiti");
+
+  const siteSubtitle = language === 'hi' ? "बहपुरा" : "Bahpura";
+
   return (
     <header
       className={cn(
@@ -165,7 +179,7 @@ export function Header() {
           <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
             <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner">
               <Image 
-                src="/logo.png" 
+                src={settings?.favicon || "/logo.png"} 
                 alt="Logo" 
                 fill 
                 className="object-contain p-0.5 z-10"
@@ -182,10 +196,10 @@ export function Header() {
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
-                {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
+                {siteName}
               </span>
               <span className="text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-bold opacity-80">
-                {language === "hi" ? "बहपुरा" : "Bahpura"}
+                {siteSubtitle}
               </span>
             </div>
           </div>
@@ -258,7 +272,7 @@ export function Header() {
                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                   <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
                     <Image 
-                      src="/logo.png" 
+                      src={settings?.favicon || "/logo.png"} 
                       alt="Logo" 
                       fill 
                       className="object-contain p-0.5 z-10"
@@ -269,7 +283,7 @@ export function Header() {
                     <TempleIcon className="h-5 w-5 text-primary absolute" />
                   </div>
                   <span className={cn("text-lg font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-                    {language === 'hi' ? 'मंदिर समिति' : 'Mandir Samiti'}
+                    {siteName}
                   </span>
                 </Link>
               </div>

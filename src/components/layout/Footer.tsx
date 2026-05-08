@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Image from "next/image";
 import { Facebook, Instagram, Youtube } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,6 +9,14 @@ import TempleIcon from "@/components/icons/TempleIcon";
 
 export function Footer() {
   const { t, language } = useLanguage();
+  const [settings, setSettings] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    fetch('/content/settings.json')
+      .then(res => res.json())
+      .then(data => setSettings(data))
+      .catch(() => setSettings(null));
+  }, []);
 
   const navItems = [
     { href: "/#home", label: t.navHome },
@@ -23,6 +32,12 @@ export function Footer() {
     { icon: Youtube, href: "#", name: "Youtube" },
   ];
 
+  const siteName = language === 'hi' 
+    ? (settings?.site_title_hi || "मंदिर समिति")
+    : (settings?.site_title_en || "Mandir Samiti");
+
+  const siteSubtitle = language === 'hi' ? "बहपुरा" : "Bahpura";
+
   return (
     <footer className="bg-secondary">
       <div className="container mx-auto px-4 py-12">
@@ -31,7 +46,7 @@ export function Footer() {
             <div className="flex items-center gap-2">
               <div className="relative h-12 w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
                 <Image 
-                  src="/logo.png" 
+                  src={settings?.favicon || "/logo.png"} 
                   alt="Logo" 
                   fill 
                   className="object-contain p-1 z-10"
@@ -48,10 +63,10 @@ export function Footer() {
                     language === "hi" ? "font-hindi" : "font-headline"
                   )}
                 >
-                  {language === "hi" ? "मंदिर समिति" : "Mandir Samiti"}
+                  {siteName}
                 </span>
                 <span className="text-xs text-muted-foreground uppercase tracking-widest">
-                  {language === "hi" ? "बहपुरा" : "Bahpura"}
+                  {siteSubtitle}
                 </span>
               </div>
             </div>
