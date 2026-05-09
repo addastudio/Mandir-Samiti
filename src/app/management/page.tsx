@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,10 @@ import {
   TrendingUp,
   ArrowUpRight,
   Target,
-  Filter
+  Filter,
+  Upload,
+  X,
+  FileImage
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -113,6 +116,12 @@ export default function ManagementPage() {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [aiTopic, setAiTopic] = useState("");
 
+  // Upload Previews
+  const [eventImagePreview, setEventImagePreview] = useState<string | null>(null);
+  const [galleryImagePreview, setGalleryImagePreview] = useState<string | null>(null);
+  const eventFileRef = useRef<HTMLInputElement>(null);
+  const galleryFileRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -159,69 +168,47 @@ export default function ManagementPage() {
   // Analytics Data Processing
   const chartData = React.useMemo(() => {
     if (!allDonations) return [];
-    
     const now = new Date();
-    
     if (analyticsRange === '1y') {
-      // Monthly grouping for a cleaner yearly view
       return Array.from({ length: 12 }, (_, i) => {
         const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
         const monthYear = d.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', { month: 'short', year: '2-digit' });
-        
         const monthTotal = allDonations
           .filter(don => {
             const donDate = new Date(don.date);
             return donDate.getMonth() === d.getMonth() && donDate.getFullYear() === d.getFullYear();
           })
           .reduce((sum, don) => sum + (don.amount || 0), 0);
-          
         return { date: monthYear, amount: monthTotal };
       });
     }
-
-    // Daily grouping for 7d, 30d, 90d
     const daysCount = analyticsRange === '30d' ? 30 : analyticsRange === '90d' ? 90 : 7;
-    
     const days = Array.from({ length: daysCount }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (daysCount - 1 - i));
       return d.toISOString().split('T')[0];
     });
-
     return days.map(date => {
       const dayTotal = allDonations
         .filter(d => d.date?.split('T')[0] === date)
         .reduce((sum, d) => sum + (d.amount || 0), 0);
       return { 
-        date: new Date(date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', { 
-          day: 'numeric', 
-          month: 'short' 
-        }), 
+        date: new Date(date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', { day: 'numeric', month: 'short' }), 
         amount: dayTotal 
       };
     });
   }, [allDonations, language, analyticsRange]);
 
-  const totalRangeAmount = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.amount, 0);
-  }, [chartData]);
+  const totalRangeAmount = React.useMemo(() => chartData.reduce((acc, curr) => acc + curr.amount, 0), [chartData]);
 
   const roleStats = React.useMemo(() => {
     if (!allUsers) return [];
-    const counts: Record<string, number> = {
-      president: 0,
-      official: 0,
-      member: 0,
-      devotee: 0
-    };
+    const counts: Record<string, number> = { president: 0, official: 0, member: 0, devotee: 0 };
     allUsers.forEach(u => {
       const role = (u.role || 'devotee') as string;
       if (counts.hasOwnProperty(role)) counts[role]++;
     });
-    return Object.entries(counts).map(([role, count]) => ({ 
-      role: role.charAt(0).toUpperCase() + role.slice(1), 
-      count 
-    }));
+    return Object.entries(counts).map(([role, count]) => ({ role: role.charAt(0).toUpperCase() + role.slice(1), count }));
   }, [allUsers]);
 
   const logActivity = (action: string, entityType: string, title: string) => {
@@ -263,7 +250,6 @@ export default function ManagementPage() {
   const handleRoleAction = async () => {
     if (!firestore || !roleConfirm) return;
     const { userId, name, newRole, type } = roleConfirm;
-
     try {
       if (type === 'admin') {
         const isAdmin = allAdmins?.some(a => a.id === userId);
@@ -288,13 +274,21 @@ export default function ManagementPage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setPreview: (url: string | null) => void) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const sortedUsers = React.useMemo(() => {
     if (!allUsers) return [];
     const filtered = allUsers.filter(u => 
       (u.name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
     );
-
     return filtered.sort((a, b) => {
       if (userSort === 'name-asc') return (a.name || '').localeCompare(b.name || '');
       if (userSort === 'name-desc') return (b.name || '').localeCompare(a.name || '');
@@ -305,10 +299,7 @@ export default function ManagementPage() {
         if (weightA !== weightB) return weightB - weightA;
         return (a.name || '').localeCompare(b.name || '');
       }
-      if (userSort === 'recent') {
-        return (b.id || '').localeCompare(a.id || '');
-      }
-      return 0;
+      return (b.id || '').localeCompare(a.id || '');
     });
   }, [allUsers, userSearch, userSort]);
 
@@ -455,20 +446,8 @@ export default function ManagementPage() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                        <XAxis 
-                          dataKey="date" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{ fontSize: 9, fontWeight: 700 }}
-                          dy={10}
-                          minTickGap={15}
-                        />
-                        <YAxis 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{ fontSize: 9, fontWeight: 700 }}
-                          width={40}
-                        />
+                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} dy={10} minTickGap={15} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} width={40} />
                         <Tooltip 
                           content={({ active, payload }) => {
                             if (active && payload && payload.length) {
@@ -482,90 +461,14 @@ export default function ManagementPage() {
                             return null;
                           }}
                         />
-                        <Area 
-                          type="monotone" 
-                          dataKey="amount" 
-                          stroke="hsl(var(--primary))" 
-                          strokeWidth={3}
-                          fillOpacity={1} 
-                          fill="url(#colorAmount)" 
-                        />
+                        <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="shadow-md border-primary/10 overflow-hidden">
-                    <CardHeader className="bg-muted/10 border-b py-3 px-5">
-                      <CardTitle className="text-sm font-bold flex items-center gap-2">
-                        <Users className="h-4 w-4 text-primary" />
-                        {language === 'hi' ? 'भक्तों का विभाजन' : 'Role Distribution'}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-6 h-[200px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={roleStats} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                          <XAxis type="number" hide />
-                          <YAxis 
-                            dataKey="role" 
-                            type="category" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fontSize: 10, fontWeight: 700 }} 
-                            width={70}
-                          />
-                          <Tooltip 
-                            cursor={{ fill: 'transparent' }}
-                            content={({ active, payload }) => {
-                              if (active && payload && payload.length) {
-                                return (
-                                  <div className="bg-white p-2 border shadow-lg rounded border-primary/10">
-                                    <p className="text-xs font-bold">{payload[0].value} {payload[0].payload.role}s</p>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="shadow-md border-primary/10 bg-gradient-to-br from-white to-primary/5">
-                    <CardHeader className="py-3 px-5 border-b bg-white">
-                      <CardTitle className="text-sm font-bold flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-primary" />
-                        {language === 'hi' ? 'त्वरित नेविगेशन' : 'Quick Access'}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 grid grid-cols-2 gap-3">
-                      {[
-                        { label: language === 'hi' ? 'सूचना पोस्ट करें' : 'Post Notice', icon: Bell, tab: 'notices', color: 'text-amber-600 bg-amber-50 border-amber-100' },
-                        { label: language === 'hi' ? 'दान जोड़ें' : 'Add Donation', icon: Plus, tab: 'donations', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
-                        { label: language === 'hi' ? 'भक्त प्रबंधन' : 'Manage Roles', icon: UserCog, tab: 'users', color: 'text-blue-600 bg-blue-50 border-blue-100' },
-                        { label: language === 'hi' ? 'इवेंट शेड्यूल' : 'Add Event', icon: Calendar, tab: 'events', color: 'text-primary bg-primary/5 border-primary/10' }
-                      ].map((action, i) => (
-                        <Button 
-                          key={i} 
-                          variant="outline" 
-                          className={cn("h-auto py-3 px-3 flex flex-col items-center gap-2 text-center transition-all hover:scale-[1.03] shadow-sm", action.color)}
-                          onClick={() => setActiveTab(action.tab)}
-                        >
-                          <action.icon className="h-5 w-5" />
-                          <span className="text-[10px] font-black uppercase leading-none">{action.label}</span>
-                        </Button>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </div>
               </div>
-
               <div className="lg:col-span-4 space-y-6">
-                <Card className="shadow-md border-primary/10 h-full flex flex-col overflow-hidden">
+                 <Card className="shadow-md border-primary/10 h-full flex flex-col overflow-hidden">
                   <CardHeader className="bg-primary/5 border-b">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -574,7 +477,6 @@ export default function ManagementPage() {
                       </CardTitle>
                       <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
                     </div>
-                    <CardDescription className="text-[10px] uppercase font-bold tracking-widest opacity-60">{language === 'hi' ? 'नवीनतम गतिविधियां' : 'Latest events'}</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0 flex-1 overflow-y-auto">
                     <div className="divide-y divide-primary/5">
@@ -591,133 +493,14 @@ export default function ManagementPage() {
                                 <p className="text-xs font-bold truncate">{log.entityTitle}</p>
                                 <div className="flex items-center justify-between mt-1">
                                   <span className="text-[9px] text-muted-foreground uppercase font-black tracking-tighter">{log.adminName}</span>
-                                  <span className="text-[9px] text-muted-foreground opacity-60 flex items-center gap-1">
-                                    <Clock className="h-2 w-2" />
-                                    {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  </span>
+                                  <span className="text-[9px] text-muted-foreground opacity-60 flex items-center gap-1"><Clock className="h-2 w-2" />{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                               </div>
                             </div>
                           </div>
                         );
                       })}
-                      {requests?.filter(r => r.status === 'pending').slice(0, 3).map((r: any) => (
-                        <div key={r.id} className="p-4 bg-green-50/50 hover:bg-green-100/50 transition-colors border-l-4 border-l-green-500">
-                          <div className="flex items-center justify-between mb-1">
-                            <Badge className="bg-green-600 text-[8px] h-4 uppercase">New Request</Badge>
-                            <span className="text-[9px] opacity-60">{new Date(r.createdAt).toLocaleDateString()}</span>
-                          </div>
-                          <p className="text-xs font-bold">{r.name} - {r.requestType}</p>
-                          <Button variant="link" className="p-0 h-auto text-[10px] font-bold text-green-700 mt-1" onClick={() => setActiveTab('requests')}>
-                            {language === 'hi' ? 'अभी देखें' : 'View Request'} <ArrowUpRight className="h-2 w-2" />
-                          </Button>
-                        </div>
-                      ))}
                     </div>
-                  </CardContent>
-                  <div className="p-4 border-t bg-muted/5">
-                    <Button variant="ghost" className="w-full h-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary" onClick={() => setActiveTab('logs')}>
-                      {language === 'hi' ? 'सभी लॉग्स देखें' : 'View All Logs'}
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="donations" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-4">
-                <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5">
-                    <CardTitle className="text-lg">Record Manual Donation</CardTitle>
-                    <CardDescription className="text-xs">Add cash or offline contributions.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      const fd = new FormData(e.currentTarget);
-                      const amount = Number(fd.get('amount'));
-                      const name = fd.get('name') as string;
-                      const donationData = {
-                        amount,
-                        devoteeName: name,
-                        date: new Date().toISOString(),
-                        mode: fd.get('mode'),
-                        status: 'completed',
-                        notes: fd.get('notes')
-                      };
-                      addDocumentNonBlocking(collection(firestore!, "donations"), donationData);
-                      logActivity('CREATE', 'donations', `Manual: ${name} - ₹${amount}`);
-                      (e.target as HTMLFormElement).reset();
-                      toast({ title: "Donation Recorded" });
-                    }} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Devotee Name</Label>
-                        <Input name="name" placeholder="Full Name" required className="bg-secondary/30" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Amount (₹)</Label>
-                        <Input name="amount" type="number" placeholder="501" required className="bg-secondary/30" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Payment Mode</Label>
-                        <select name="mode" className="w-full h-10 rounded-md border border-input bg-secondary/30 px-3 text-sm focus:ring-2 focus:ring-primary outline-none">
-                          <option value="Cash">Cash</option>
-                          <option value="Offline UPI">Offline UPI</option>
-                          <option value="Cheque">Cheque</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Notes</Label>
-                        <Input name="notes" placeholder="Optional details..." className="bg-secondary/30" />
-                      </div>
-                      <Button className="w-full gap-2 shadow-lg"><Plus className="h-4 w-4" /> Save Record</Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="lg:col-span-8">
-                <Card className="shadow-md border-primary/10 overflow-hidden">
-                  <CardHeader className="border-b bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 px-5">
-                    <CardTitle className="text-lg">Donation Ledger</CardTitle>
-                    <div className="relative w-full sm:w-64">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 opacity-40" />
-                      <Input 
-                        placeholder="Search records..." 
-                        className="pl-8 h-9 text-xs bg-white" 
-                        value={donationSearch} 
-                        onChange={(e) => setDonationSearch(e.target.value)} 
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0 overflow-x-auto">
-                    <Table>
-                      <TableHeader className="bg-muted/10">
-                        <TableRow>
-                          <TableHead className="text-[10px] uppercase font-black tracking-tighter">Devotee</TableHead>
-                          <TableHead className="text-[10px] uppercase font-black tracking-tighter">Amount</TableHead>
-                          <TableHead className="text-[10px] uppercase font-black tracking-tighter hidden sm:table-cell">Date</TableHead>
-                          <TableHead className="text-[10px] uppercase font-black tracking-tighter">Mode</TableHead>
-                          <TableHead className="text-[10px] uppercase font-black tracking-tighter text-right">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {allDonations?.filter(d => 
-                          (d.devoteeName || d.userEmail || '').toLowerCase().includes(donationSearch.toLowerCase())
-                        ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((d: any) => (
-                          <TableRow key={d.id}>
-                            <TableCell className="font-bold text-xs truncate max-w-[120px]">{d.devoteeName || d.userEmail || 'Guest'}</TableCell>
-                            <TableCell className="font-black text-sm text-primary">₹{d.amount}</TableCell>
-                            <TableCell className="text-[10px] opacity-60 hidden sm:table-cell">{new Date(d.date).toLocaleDateString()}</TableCell>
-                            <TableCell className="text-[9px] opacity-70 uppercase font-bold">{d.mode || 'Direct'}</TableCell>
-                            <TableCell className="text-right">
-                              <Badge variant={d.status === 'completed' ? 'default' : 'outline'} className="text-[9px] px-2 py-0 h-5">{d.status}</Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
                   </CardContent>
                 </Card>
               </div>
@@ -747,14 +530,45 @@ export default function ManagementPage() {
                         title,
                         date: fd.get('date'),
                         description: fd.get('desc'),
-                        image: "https://picsum.photos/seed/event/600/400"
+                        image: eventImagePreview || "https://picsum.photos/seed/event/600/400"
                       });
                       logActivity('CREATE', 'events', title);
                       (e.target as HTMLFormElement).reset();
+                      setEventImagePreview(null);
                       toast({ title: "Event Posted" });
                     }} className="space-y-4">
                       <Input name="title" placeholder="Event Title" required className="bg-secondary/30" />
                       <Input name="date" type="datetime-local" required className="bg-secondary/30" />
+                      
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase opacity-60">Event Cover Image</Label>
+                        <div 
+                          className="relative border-2 border-dashed border-primary/20 rounded-xl p-4 flex flex-col items-center justify-center gap-2 bg-secondary/10 cursor-pointer hover:bg-secondary/20 transition-all"
+                          onClick={() => eventFileRef.current?.click()}
+                        >
+                          {eventImagePreview ? (
+                            <div className="relative w-full aspect-video rounded-lg overflow-hidden group">
+                              <img src={eventImagePreview} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <X className="h-6 w-6 text-white" onClick={(e) => { e.stopPropagation(); setEventImagePreview(null); }} />
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <Upload className="h-8 w-8 text-muted-foreground" />
+                              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Select local file</p>
+                            </>
+                          )}
+                          <input 
+                            type="file" 
+                            ref={eventFileRef} 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={(e) => handleFileChange(e, setEventImagePreview)} 
+                          />
+                        </div>
+                      </div>
+
                       <Textarea name="desc" placeholder="Details..." className="bg-secondary/30 min-h-[100px]" />
                       <Button className="w-full shadow-lg">Post Event</Button>
                     </form>
@@ -765,7 +579,7 @@ export default function ManagementPage() {
                 <div className="grid gap-3">
                   {events?.map(ev => (
                     <Card key={ev.id} className="flex flex-row items-center p-4 gap-4 hover:shadow-md border-primary/5">
-                      <div className="bg-primary/5 p-3 rounded-lg hidden xs:block"><Calendar className="h-5 w-5 text-primary" /></div>
+                      {ev.image && <div className="h-14 w-14 rounded-lg overflow-hidden shrink-0"><img src={ev.image} className="h-full w-full object-cover" /></div>}
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm sm:text-base truncate">{ev.title}</h4>
                         <p className="text-[10px] sm:text-xs opacity-60 flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(ev.date).toLocaleString()}</p>
@@ -780,6 +594,110 @@ export default function ManagementPage() {
             </div>
           </TabsContent>
 
+          <TabsContent value="gallery" className="space-y-6">
+            <Card className="shadow-md border-primary/10 overflow-hidden">
+              <CardHeader className="border-b bg-muted/10 p-5">
+                <CardTitle className="text-lg">Media Gallery</CardTitle>
+                <CardDescription className="text-xs">Upload local photos or add external links (YouTube/URLs).</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const fd = new FormData(e.currentTarget);
+                  const caption = fd.get('caption') as string;
+                  const url = galleryImagePreview || fd.get('url') as string;
+                  if (!url) {
+                    toast({ variant: "destructive", title: "Media Required", description: "Please upload a file or provide a URL." });
+                    return;
+                  }
+                  addDocumentNonBlocking(galleryRef!, {
+                    caption,
+                    imageURL: url,
+                    createdAt: new Date().toISOString()
+                  });
+                  logActivity('CREATE', 'gallery', caption);
+                  (e.target as HTMLFormElement).reset();
+                  setGalleryImagePreview(null);
+                  toast({ title: "Media Added" });
+                }} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Option 1: Local Upload</Label>
+                      <div 
+                        className="relative border-2 border-dashed border-primary/20 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 bg-secondary/10 cursor-pointer hover:bg-secondary/20 transition-all min-h-[200px]"
+                        onClick={() => galleryFileRef.current?.click()}
+                      >
+                        {galleryImagePreview ? (
+                          <div className="relative w-full h-full rounded-xl overflow-hidden group">
+                            <img src={galleryImagePreview} className="w-full h-40 object-contain mx-auto" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <X className="h-8 w-8 text-white" onClick={(e) => { e.stopPropagation(); setGalleryImagePreview(null); }} />
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center">
+                              <Upload className="h-8 w-8 text-primary" />
+                            </div>
+                            <div className="text-center">
+                              <p className="font-bold text-sm">Choose local file</p>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-tight mt-1">Images or Videos Supported</p>
+                            </div>
+                          </>
+                        )}
+                        <input type="file" ref={galleryFileRef} className="hidden" accept="image/*,video/*" onChange={(e) => handleFileChange(e, setGalleryImagePreview)} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Option 2: External Link</Label>
+                      <div className="bg-secondary/20 p-6 rounded-2xl border border-primary/5 flex flex-col justify-center min-h-[200px] gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold opacity-60">URL</Label>
+                          <Input name="url" placeholder="https://example.com/image.jpg" className="bg-white border-primary/10" disabled={!!galleryImagePreview} />
+                        </div>
+                        <p className="text-[10px] italic text-muted-foreground text-center">Use this for YouTube videos or Google Drive links.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-black uppercase tracking-widest">Media Caption</Label>
+                      <Input name="caption" placeholder="Evening Aarti at Temple..." className="h-12 bg-secondary/30" />
+                    </div>
+                    <Button size="lg" className="w-full h-14 font-bold shadow-xl gap-2"><CheckCircle2 className="h-5 w-5" /> Add to Gallery</Button>
+                  </div>
+                </form>
+
+                <div className="mt-12 pt-12 border-t">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-bold text-lg">Existing Media</h3>
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold">{gallery?.length || 0} Total Items</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+                    {gallery?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(item => (
+                      <div key={item.id} className="relative group aspect-square rounded-xl overflow-hidden border border-primary/5 bg-muted shadow-sm hover:shadow-lg transition-all">
+                        <img src={item.imageURL} className="w-full h-full object-cover" alt={item.caption} />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button variant="destructive" size="icon" className="h-8 w-8 shadow-xl" onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption || 'Image' })}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {item.caption && (
+                          <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-black/40 backdrop-blur-sm">
+                            <p className="text-[8px] text-white truncate font-medium">{item.caption}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ... other tabs content ... */}
           <TabsContent value="notices" className="space-y-6">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
@@ -833,55 +751,6 @@ export default function ManagementPage() {
                 </div>
               </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="gallery" className="space-y-6">
-            <Card className="shadow-md border-primary/10 overflow-hidden">
-              <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b bg-muted/10 p-5">
-                <CardTitle className="text-lg">Media Gallery</CardTitle>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const fd = new FormData(e.currentTarget);
-                  const caption = fd.get('caption') as string;
-                  addDocumentNonBlocking(galleryRef!, {
-                    caption,
-                    imageURL: fd.get('url'),
-                    createdAt: new Date().toISOString()
-                  });
-                  logActivity('CREATE', 'gallery', caption);
-                  (e.target as HTMLFormElement).reset();
-                  toast({ title: "Media Added" });
-                }} className="flex flex-col sm:flex-row gap-2 w-full sm:max-w-2xl">
-                  <Input name="url" placeholder="Image/Video URL" required className="h-9 text-xs bg-white flex-1" />
-                  <Input name="caption" placeholder="Caption" className="h-9 text-xs bg-white flex-1" />
-                  <Button size="sm" className="h-9 px-6"><Plus className="h-4 w-4 mr-2" /> Add</Button>
-                </form>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
-                <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-                  {gallery?.map(item => (
-                    <div key={item.id} className="relative group aspect-square rounded-xl overflow-hidden border border-primary/5 bg-muted shadow-sm hover:shadow-lg transition-all">
-                      <img src={item.imageURL} className="w-full h-full object-cover" alt={item.caption} />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button 
-                          variant="destructive" 
-                          size="icon" 
-                          className="h-8 w-8 shadow-xl" 
-                          onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption || 'Image' })}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {item.caption && (
-                        <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-black/40 backdrop-blur-sm">
-                          <p className="text-[8px] text-white truncate font-medium">{item.caption}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="requests" className="space-y-6">
