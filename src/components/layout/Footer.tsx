@@ -12,7 +12,7 @@ export function Footer() {
   const [settings, setSettings] = React.useState<any>(null);
 
   React.useEffect(() => {
-    fetch('/content/settings.json')
+    fetch('/api/settings')
       .then(res => res.json())
       .then(data => setSettings(data))
       .catch(() => setSettings(null));
@@ -21,7 +21,7 @@ export function Footer() {
   const navItems = [
     { href: "/#home", label: t.navHome },
     { href: "/#notices", label: t.noticesTitle },
-    { href: "/#about", label: t.navAbout },
+    { href: "/about", label: t.navAbout },
     { href: "/donate", label: t.navDonate },
     { href: "/#contact", label: t.navContact },
   ];
@@ -33,10 +33,10 @@ export function Footer() {
   ];
 
   const siteName = language === 'hi' 
-    ? (settings?.site_title_hi || "मंदिर समिति")
-    : (settings?.site_title_en || "Mandir Samiti");
+    ? (settings?.site_title_hi || "मंदिर समिति बहपुरा")
+    : (settings?.site_title_en || "Mandir Samiti Bahpura");
 
-  const siteSubtitle = language === 'hi' ? "बहपुरा" : "Bahpura";
+  const siteSubtitle = language === 'hi' ? "श्रद्धा और सेवा" : "Faith and Service";
 
   return (
     <footer className="bg-secondary">
