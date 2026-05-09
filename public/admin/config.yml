@@ -19,3 +19,48 @@ collections:
           - { label: "Site Title (English)", name: "site_title_en", widget: "string" }
           - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
           - { label: "Favicon", name: "favicon", widget: "image" }
+
+  - name: "pages"
+    label: "Pages"
+    files:
+      - name: "hero"
+        label: "Hero Section"
+        file: "content/hero.json"
+        fields:
+          - { label: "Headline (English)", name: "headline_en", widget: "string" }
+          - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
+          - { label: "Subtitle (English)", name: "subtitle_en", widget: "text" }
+          - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "text" }
+          - { label: "Background Video URL", name: "video_url", widget: "string", required: false }
+          - { label: "Fallback Image", name: "fallback_image", widget: "image" }
+
+      - name: "about"
+        label: "About Us Content"
+        file: "content/about.json"
+        fields:
+          - { label: "History Title (English)", name: "history_title_en", widget: "string" }
+          - { label: "History Title (Hindi)", name: "history_title_hi", widget: "string" }
+          - { label: "History Content (English)", name: "history_en", widget: "markdown" }
+          - { label: "History Content (Hindi)", name: "history_hi", widget: "markdown" }
+          - { label: "Mission Title (English)", name: "mission_title_en", widget: "string" }
+          - { label: "Mission Title (Hindi)", name: "mission_title_hi", widget: "string" }
+          - { label: "Mission Content (English)", name: "mission_en", widget: "markdown" }
+          - { label: "Mission Content (Hindi)", name: "mission_hi", widget: "markdown" }
+          - { label: "Featured Image", name: "featured_image", widget: "image" }
+
+  - name: "seva"
+    label: "Seva Programs"
+    folder: "content/seva"
+    create: true
+    slug: "{{title_en}}"
+    fields:
+      - { label: "Title (English)", name: "title_en", widget: "string" }
+      - { label: "Title (Hindi)", name: "title_hi", widget: "string" }
+      - { label: "Description (English)", name: "desc_en", widget: "text" }
+      - { label: "Description (Hindi)", name: "desc_hi", widget: "text" }
+      - { 
+          label: "Icon", 
+          name: "icon", 
+          widget: "select", 
+          options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] 
+        }

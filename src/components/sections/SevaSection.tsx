@@ -43,14 +43,19 @@ export function SevaSection() {
   const { t, language } = useLanguage();
   const firestore = useFirestore();
   const [cmsSeva, setCmsSeva] = useState<any[]>([]);
+  const [isCmsLoading, setIsCmsLoading] = useState(true);
 
   useEffect(() => {
-    // Attempt to fetch custom Seva programs from CMS files
-    // This assumes a directory of JSON files or a consolidated list
-    fetch('/content/seva.json')
+    fetch('/api/content/seva')
       .then(res => res.json())
-      .then(data => setCmsSeva(Array.isArray(data) ? data : [data]))
-      .catch(() => setCmsSeva([]));
+      .then(data => {
+        setCmsSeva(Array.isArray(data) ? data : []);
+        setIsCmsLoading(false);
+      })
+      .catch(() => {
+        setCmsSeva([]);
+        setIsCmsLoading(false);
+      });
   }, []);
 
   const testimonialsRef = useMemoFirebase(() => {
@@ -120,30 +125,36 @@ export function SevaSection() {
         </div>
 
         <div className="mt-12 sm:mt-16 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3">
-          {sevaPrograms.map((program, index) => {
-            const Icon = SEVA_ICONS[program.icon as keyof typeof SEVA_ICONS] || Hand;
-            return (
-              <Card key={index} className="text-center shadow-lg border-primary/5 hover:border-primary/20 transition-colors group">
-                <CardHeader className="p-5 sm:p-6">
-                  <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-primary/10 transition-transform group-hover:scale-110">
-                    <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                  </div>
-                  <CardTitle
-                    className={cn("pt-4 text-xl sm:text-2xl", language === "hi" ? "font-hindi" : "")}
-                  >
-                    {program.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 sm:p-6 pt-0">
-                  <CardDescription
-                    className={cn("text-sm sm:text-base leading-relaxed", language === "hi" ? "font-hindi" : "")}
-                  >
-                    {program.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {isCmsLoading ? (
+             Array(3).fill(0).map((_, i) => (
+               <Card key={i} className="animate-pulse h-48 bg-white/50 rounded-xl" />
+             ))
+          ) : (
+            sevaPrograms.map((program, index) => {
+              const Icon = SEVA_ICONS[program.icon as keyof typeof SEVA_ICONS] || Hand;
+              return (
+                <Card key={index} className="text-center shadow-lg border-primary/5 hover:border-primary/20 transition-colors group">
+                  <CardHeader className="p-5 sm:p-6">
+                    <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-primary/10 transition-transform group-hover:scale-110">
+                      <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                    </div>
+                    <CardTitle
+                      className={cn("pt-4 text-xl sm:text-2xl", language === "hi" ? "font-hindi" : "")}
+                    >
+                      {program.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5 sm:p-6 pt-0">
+                    <CardDescription
+                      className={cn("text-sm sm:text-base leading-relaxed", language === "hi" ? "font-hindi" : "")}
+                    >
+                      {program.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         <div className="mt-16 sm:mt-20 md:mt-24">

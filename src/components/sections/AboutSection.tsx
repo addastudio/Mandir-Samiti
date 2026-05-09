@@ -17,7 +17,7 @@ export function AboutSection() {
   const galleryImage = PlaceHolderImages.find((img) => img.id === "gallery-1");
 
   useEffect(() => {
-    fetch('/content/about.json')
+    fetch('/api/content/about')
       .then(res => res.json())
       .then(data => setCmsContent(data))
       .catch(() => setCmsContent(null));
@@ -72,7 +72,7 @@ export function AboutSection() {
             <div className="absolute -inset-4 bg-accent/10 rounded-[2rem] -rotate-3 transition-transform group-hover:-rotate-1 duration-700" />
             <div className="relative overflow-hidden rounded-[1.5rem] shadow-2xl border-4 border-white aspect-[4/3]">
               <Image 
-                  src={cmsContent?.featuredImage || galleryImage?.imageUrl || "https://picsum.photos/seed/about-main/800/600"}
+                  src={cmsContent?.featured_image || galleryImage?.imageUrl || "https://picsum.photos/seed/about-main/800/600"}
                   alt="Temple Heritage"
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
@@ -95,7 +95,7 @@ export function AboutSection() {
               <Quote className="absolute -top-6 -left-6 h-12 w-12 text-primary/10 -scale-x-100" />
               <div className="bg-white/60 backdrop-blur-sm p-8 sm:p-10 rounded-[2rem] shadow-sm border border-primary/10 transition-all hover:shadow-md">
                   <h3 className={cn("text-2xl sm:text-3xl font-bold flex items-center gap-3 text-text-accent", language === "hi" ? "font-hindi" : "font-headline")}>
-                    {t.aboutHistory}
+                    {language === 'hi' ? (cmsContent?.history_title_hi || t.aboutHistory) : (cmsContent?.history_title_en || t.aboutHistory)}
                   </h3>
                   <div className={cn("mt-6 text-muted-foreground text-sm sm:text-lg leading-relaxed italic prose prose-sm sm:prose-base", language === "hi" ? "font-hindi" : "")}>
                     {historyText}
@@ -105,7 +105,7 @@ export function AboutSection() {
 
             <div className="bg-gradient-to-br from-primary to-accent p-8 sm:p-10 rounded-[2rem] shadow-xl text-white">
                 <h3 className={cn("text-2xl sm:text-3xl font-bold flex items-center gap-3", language === "hi" ? "font-hindi" : "font-headline")}>
-                  <Target className="h-7 w-7" /> {t.aboutMission}
+                  <Target className="h-7 w-7" /> {language === 'hi' ? (cmsContent?.mission_title_hi || t.aboutMission) : (cmsContent?.mission_title_en || t.aboutMission)}
                 </h3>
                 <div className={cn("mt-6 text-white/90 text-sm sm:text-lg leading-relaxed font-medium prose prose-invert prose-sm sm:prose-base", language === "hi" ? "font-hindi" : "")}>
                   {missionText}

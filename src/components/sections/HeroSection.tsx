@@ -15,7 +15,7 @@ export function HeroSection() {
   const heroImage = PlaceHolderImages.find((img) => img.id === "hero-background");
 
   useEffect(() => {
-    fetch('/content/hero.json')
+    fetch('/api/content/hero')
       .then(res => res.json())
       .then(data => setCmsHero(data))
       .catch(() => setCmsHero(null));
