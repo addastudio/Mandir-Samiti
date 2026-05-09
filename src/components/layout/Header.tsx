@@ -31,6 +31,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
   const [settings, setSettings] = React.useState<any>(null);
+  const [logoError, setLogoError] = React.useState(false);
 
   // Fetch global settings via the dedicated API route
   React.useEffect(() => {
@@ -100,10 +101,10 @@ export function Header() {
     if (user) {
       return (
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-          <Avatar className="h-10 w-10 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer">
+          <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer ring-2 ring-white ring-offset-1">
             <AvatarImage src={user.photoURL || userProfile?.photoURL || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-              <UserIcon className="h-6 w-6" />
+              <UserIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </AvatarFallback>
           </Avatar>
         </Link>
@@ -111,7 +112,7 @@ export function Header() {
     }
     return (
       <Link href="/login" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-        <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:justify-center">
+        <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:justify-center h-10">
           <LogIn className="h-4 w-4" />
           <span className={cn(language === "hi" ? "font-hindi" : "")}>
             {language === "hi" ? "लॉग इन" : "Login"}
@@ -175,24 +176,25 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-sm ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
-            <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner">
-              <Image 
-                src={settings?.favicon || "/logo.png"} 
-                alt="Logo" 
-                fill 
-                className="object-contain p-0.5 z-10"
-                onError={(e) => {
-                  (e.target as any).style.opacity = '0';
-                }}
-              />
-              <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-primary absolute" />
+        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink-0">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner shrink-0">
+              {settings?.favicon && !logoError ? (
+                <Image 
+                  src={settings.favicon} 
+                  alt="Logo" 
+                  fill 
+                  className="object-contain p-1 z-10"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-primary" />
+              )}
             </div>
             <div className="flex flex-col items-start leading-tight">
               <span
                 className={cn(
-                  "text-base sm:text-lg lg:text-xl font-bold text-foreground",
+                  "text-sm sm:text-base lg:text-xl font-bold text-foreground",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
@@ -205,28 +207,28 @@ export function Header() {
           </div>
         </Link>
 
-        <div className="hidden items-center gap-4 lg:flex">
+        <div className="hidden items-center gap-6 lg:flex">
           <NavLinks />
           <div className="h-6 w-px bg-border/60" />
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {adminDoc && (
                 <Link href="/management">
                   <Button 
                     variant="default" 
                     size="icon" 
-                    className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white" 
+                    className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white ring-2 ring-primary/10" 
                     title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                   >
-                    <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
+                    <ShieldCheck className="h-5 w-5 stroke-[2.5px]" />
                   </Button>
                 </Link>
               )}
               <AuthButton />
             </div>
             <Link href="/donate">
-              <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+              <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm">
                 <Heart className="h-4 w-4 fill-current" />
                 <span className={cn(language === "hi" ? "font-hindi" : "")}>
                   {t.navDonate}
@@ -236,24 +238,24 @@ export function Header() {
           </div>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 lg:hidden">
+        <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2 sm:gap-3">
             {adminDoc && (
               <Link href="/management">
                 <Button 
                   variant="default" 
                   size="icon" 
-                  className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
+                  className="bg-primary text-primary-foreground h-9 w-9 sm:h-10 sm:w-10 rounded-full shadow-md active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
                   title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                 >
-                  <ShieldCheck className="h-6 w-6 stroke-[2.5px]" />
+                  <ShieldCheck className="h-5 w-5 stroke-[2.5px]" />
                 </Button>
               </Link>
             )}
-            <AuthButton className="flex" />
+            <AuthButton />
           </div>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -271,18 +273,19 @@ export function Header() {
               <div className="flex h-20 items-center border-b px-6 bg-amber-50">
                 <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
                   <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
-                    <Image 
-                      src={settings?.favicon || "/logo.png"} 
-                      alt="Logo" 
-                      fill 
-                      className="object-contain p-0.5 z-10"
-                      onError={(e) => {
-                        (e.target as any).style.opacity = '0';
-                      }}
-                    />
-                    <TempleIcon className="h-5 w-5 text-primary absolute" />
+                    {settings?.favicon && !logoError ? (
+                      <Image 
+                        src={settings.favicon} 
+                        alt="Logo" 
+                        fill 
+                        className="object-contain p-0.5 z-10"
+                        onError={() => setLogoError(true)}
+                      />
+                    ) : (
+                      <TempleIcon className="h-5 w-5 text-primary" />
+                    )}
                   </div>
-                  <span className={cn("text-lg font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                  <span className={cn("text-base font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                     {siteName}
                   </span>
                 </Link>
@@ -316,7 +319,7 @@ export function Header() {
                   <LanguageSwitcher />
                 </div>
                 <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
-                  <Button className="w-full gap-2 bg-accent text-accent-foreground">
+                  <Button className="w-full gap-2 bg-accent text-accent-foreground h-12">
                     <Heart className="h-4 w-4 fill-current" />
                     {t.navDonate}
                   </Button>
