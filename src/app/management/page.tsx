@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -97,6 +98,10 @@ import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+/**
+ * Management Panel: Professional Administrative Dashboard.
+ * Optimized for leadership oversight and data-driven temple operations.
+ */
 export default function ManagementPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -108,15 +113,12 @@ export default function ManagementPage() {
   
   const [userSearch, setUserSearch] = useState("");
   const [userSort, setUserSort] = useState<string>("role");
-  const [donationSearch, setDonationSearch] = useState("");
   const [analyticsRange, setAnalyticsRange] = useState("7d");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string } | null>(null);
   const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' } | null>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [aiTopic, setAiTopic] = useState("");
 
-  // Upload Previews
   const [eventImagePreview, setEventImagePreview] = useState<string | null>(null);
   const [galleryImagePreview, setGalleryImagePreview] = useState<string | null>(null);
   const eventFileRef = useRef<HTMLInputElement>(null);
@@ -165,9 +167,9 @@ export default function ManagementPage() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, isProfileLoading, router, mounted]);
 
-  // Analytics Data Processing
+  // Analytics Data Processing: Safely computed after mounting to prevent hydration errors
   const chartData = React.useMemo(() => {
-    if (!allDonations) return [];
+    if (!mounted || !allDonations) return [];
     const now = new Date();
     if (analyticsRange === '1y') {
       return Array.from({ length: 12 }, (_, i) => {
@@ -197,19 +199,9 @@ export default function ManagementPage() {
         amount: dayTotal 
       };
     });
-  }, [allDonations, language, analyticsRange]);
+  }, [allDonations, language, analyticsRange, mounted]);
 
   const totalRangeAmount = React.useMemo(() => chartData.reduce((acc, curr) => acc + curr.amount, 0), [chartData]);
-
-  const roleStats = React.useMemo(() => {
-    if (!allUsers) return [];
-    const counts: Record<string, number> = { president: 0, official: 0, member: 0, devotee: 0 };
-    allUsers.forEach(u => {
-      const role = (u.role || 'devotee') as string;
-      if (counts.hasOwnProperty(role)) counts[role]++;
-    });
-    return Object.entries(counts).map(([role, count]) => ({ role: role.charAt(0).toUpperCase() + role.slice(1), count }));
-  }, [allUsers]);
 
   const logActivity = (action: string, entityType: string, title: string) => {
     if (!logsRef || !user) return;
@@ -631,7 +623,7 @@ export default function ManagementPage() {
                           <div className="relative w-full h-full rounded-xl overflow-hidden group">
                             <img src={galleryImagePreview} className="w-full h-40 object-contain mx-auto" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                              <X className="h-8 w-8 text-white" onClick={(e) => { e.stopPropagation(); setGalleryImagePreview(null); }} />
+                              <X className="h-6 w-6 text-white" onClick={(e) => { e.stopPropagation(); setGalleryImagePreview(null); }} />
                             </div>
                           </div>
                         ) : (
