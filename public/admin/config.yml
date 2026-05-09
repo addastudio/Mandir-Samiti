@@ -2,6 +2,8 @@ backend:
   name: git-gateway
   branch: main
 
+local_backend: true
+
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
@@ -12,7 +14,7 @@ collections:
     editor:
       preview: false
     files:
-      - name: "identity"
+      - name: "site_identity"
         label: "Site Identity"
         file: "content/settings.json"
         fields:
@@ -20,22 +22,31 @@ collections:
           - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
           - { label: "Favicon", name: "favicon", widget: "image" }
 
-  - name: "pages"
-    label: "Pages"
+  - name: "hero"
+    label: "Hero Section"
+    delete: false
+    editor:
+      preview: false
     files:
-      - name: "hero"
-        label: "Hero Section"
+      - name: "hero_content"
+        label: "Hero Content"
         file: "content/hero.json"
         fields:
           - { label: "Headline (English)", name: "headline_en", widget: "string" }
           - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
-          - { label: "Subtitle (English)", name: "subtitle_en", widget: "text" }
-          - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "text" }
-          - { label: "Background Video URL", name: "video_url", widget: "string", required: false }
+          - { label: "Subtitle (English)", name: "subtitle_en", widget: "string" }
+          - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "string" }
+          - { label: "Background Video URL", name: "video_url", widget: "string" }
           - { label: "Fallback Image", name: "fallback_image", widget: "image" }
 
-      - name: "about"
-        label: "About Us Content"
+  - name: "about"
+    label: "About Us"
+    delete: false
+    editor:
+      preview: false
+    files:
+      - name: "about_content"
+        label: "About Page Content"
         file: "content/about.json"
         fields:
           - { label: "History Title (English)", name: "history_title_en", widget: "string" }
@@ -53,6 +64,8 @@ collections:
     folder: "content/seva"
     create: true
     slug: "{{title_en}}"
+    editor:
+      preview: false
     fields:
       - { label: "Title (English)", name: "title_en", widget: "string" }
       - { label: "Title (Hindi)", name: "title_hi", widget: "string" }
