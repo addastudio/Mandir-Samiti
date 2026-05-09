@@ -123,7 +123,7 @@ export function GallerySection() {
         <img 
           src={url} 
           alt={title || "Gallery view"} 
-          className="max-w-full max-h-full w-auto h-auto object-contain transition-all duration-300" 
+          className="max-w-full max-h-full w-auto h-auto object-contain transition-all duration-300 block" 
         />
       </div>
     );
@@ -154,13 +154,13 @@ export function GallerySection() {
             <div className="col-span-full flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
           ) : (
             allMedia.slice(0, 8).map((item, index) => (
-              <div key={item.id} className="group overflow-hidden rounded-xl shadow-md border border-primary/5 cursor-pointer aspect-[3/2] relative transition-transform hover:scale-[1.02] bg-muted flex items-center justify-center" onClick={() => openLightbox(index)}>
+              <div key={item.id} className="group overflow-hidden rounded-xl shadow-md border border-primary/5 cursor-pointer aspect-[3/2] relative transition-transform hover:scale-[1.02] bg-muted flex items-center justify-center z-0" onClick={() => openLightbox(index)}>
                 {isVideo(item.imageURL) ? (
                   <div className="relative w-full h-full bg-black"><video src={item.imageURL} className="w-full h-full object-cover" muted /><div className="absolute inset-0 flex items-center justify-center bg-black/30"><PlayCircle className="h-10 w-10 text-white opacity-80" /></div></div>
                 ) : (
-                  <img src={item.imageURL} alt={item.caption} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+                  <img src={item.imageURL} alt={item.caption} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 block" loading="lazy" />
                 )}
-                <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform">
+                <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform z-10">
                   <p className="text-[10px] text-white truncate">{item.caption}</p>
                 </div>
               </div>
@@ -219,21 +219,35 @@ export function GallerySection() {
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-[98vw] sm:max-w-5xl p-0 bg-black/95 border-0 shadow-none ring-0 overflow-hidden rounded-none sm:rounded-2xl">
           <DialogTitle className="sr-only">Gallery Media View</DialogTitle>
-          <div className="relative flex flex-col h-[85vh] sm:h-[85vh]">
+          <div className="relative flex flex-col h-[85vh]">
             <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
-              <div className="text-white text-xs sm:text-sm">{selectedIndex + 1} / {allMedia.length}</div>
+              <div className="text-white text-xs sm:text-sm font-medium">{selectedIndex + 1} / {allMedia.length}</div>
               <Button variant="ghost" size="icon" onClick={() => setLightboxOpen(false)} className="text-white hover:bg-white/20 rounded-full backdrop-blur-md bg-black/20"><X className="h-6 w-6" /></Button>
             </div>
-            <div className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
-              {currentItem && <div className="relative w-full h-full animate-in fade-in zoom-in-95 duration-300 flex items-center justify-center">{renderMedia(currentItem.imageURL, currentItem.caption)}</div>}
+            
+            {/* Added padding to prevent overlap with buttons */}
+            <div className="flex-1 flex items-center justify-center p-8 sm:p-12 overflow-hidden">
+              {currentItem && (
+                <div className="relative w-full h-full animate-in fade-in zoom-in-95 duration-300 flex items-center justify-center">
+                  {renderMedia(currentItem.imageURL, currentItem.caption)}
+                </div>
+              )}
             </div>
-            <div className="absolute inset-y-0 left-0 flex items-center px-2 sm:px-4 pointer-events-none">
-              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="h-12 w-12 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm pointer-events-auto"><ChevronLeft className="h-8 w-8" /></Button>
+
+            <div className="absolute inset-y-0 left-0 flex items-center px-2 sm:px-4 pointer-events-none z-40">
+              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm pointer-events-auto shadow-lg"><ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" /></Button>
             </div>
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 sm:px-4 pointer-events-none">
-              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleNext(); }} className="h-12 w-12 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm pointer-events-auto"><ChevronRight className="h-8 w-8" /></Button>
+            <div className="absolute inset-y-0 right-0 flex items-center px-2 sm:px-4 pointer-events-none z-40">
+              <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleNext(); }} className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm pointer-events-auto shadow-lg"><ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" /></Button>
             </div>
-            {currentItem?.caption && <div className="p-4 sm:p-6 bg-gradient-to-t from-black/80 to-transparent"><p className="text-white text-center text-sm sm:text-base font-medium max-w-3xl mx-auto line-clamp-2">{currentItem.caption}</p></div>}
+            
+            {currentItem?.caption && (
+              <div className="p-4 sm:p-6 bg-gradient-to-t from-black/80 to-transparent z-40">
+                <p className="text-white text-center text-sm sm:text-base font-medium max-w-3xl mx-auto line-clamp-2 leading-relaxed">
+                  {currentItem.caption}
+                </p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

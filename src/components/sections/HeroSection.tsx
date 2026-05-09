@@ -29,7 +29,7 @@ export function HeroSection() {
     ? (cmsHero?.subtitle_hi || t.heroSubtitle)
     : (cmsHero?.subtitle_en || t.heroSubtitle);
 
-  const videoUrl = cmsHero?.video_url || "https://assets.mixkit.co/videos/preview/mixkit-top-view-of-a-temple-complex-in-india-40000-large.mp4";
+  const videoUrl = cmsHero?.video_url || "https://assets.mixkit.co/videos/preview/kit-top-view-of-a-temple-complex-in-india-40000-large.mp4";
   const bgImage = cmsHero?.fallback_image || heroImage?.imageUrl;
 
   return (
@@ -37,16 +37,9 @@ export function HeroSection() {
       id="home"
       className="relative flex min-h-[100dvh] w-full items-center justify-center text-center text-white overflow-hidden"
     >
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster={bgImage}
-        className="absolute inset-0 z-0 h-full w-full object-cover"
-      >
-        <source src={videoUrl} type="video/mp4" />
-        {bgImage && (
+      {/* Layer 1: Fallback Image */}
+      {bgImage && (
+        <div className="absolute inset-0 z-0">
           <Image
             src={bgImage}
             alt="Hero Background"
@@ -54,12 +47,25 @@ export function HeroSection() {
             className="object-cover"
             priority
           />
-        )}
+        </div>
+      )}
+
+      {/* Layer 2: Video Overlay */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 z-[1] h-full w-full object-cover opacity-80"
+      >
+        <source src={videoUrl} type="video/mp4" />
       </video>
 
-      <div className="absolute inset-0 bg-black/40 z-[1]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20 z-[2]" />
+      {/* Layer 3: Dark Overlays */}
+      <div className="absolute inset-0 bg-black/40 z-[2]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20 z-[3]" />
       
+      {/* Layer 4: Content */}
       <div className="relative z-10 flex flex-col items-center px-4 sm:px-6 w-full max-w-6xl mx-auto py-20 sm:py-0">
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
           <h1

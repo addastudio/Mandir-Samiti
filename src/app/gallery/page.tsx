@@ -139,7 +139,7 @@ export default function GalleryPage() {
         <img 
           src={url} 
           alt={title || "Gallery view"} 
-          className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl transition-all duration-300" 
+          className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl transition-all duration-300 block" 
         />
       </div>
     );
@@ -230,27 +230,27 @@ export default function GalleryPage() {
                 return (
                   <div 
                     key={item.id} 
-                    className="group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-lg border border-primary/5 cursor-pointer bg-muted transition-all hover:-translate-y-1 hover:shadow-2xl"
+                    className="group relative aspect-[4/5] rounded-2xl overflow-hidden shadow-lg border border-primary/5 cursor-pointer bg-muted transition-all hover:-translate-y-1 hover:shadow-2xl z-0"
                     onClick={() => openLightbox(index)}
                   >
                     {isVid ? (
                       <div className="w-full h-full relative bg-black">
                         <video src={url} className="w-full h-full object-cover" muted />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors z-10">
                           <PlayCircle className="h-12 w-12 text-white/90 drop-shadow-lg" />
                         </div>
-                        <Badge className="absolute top-3 left-3 bg-primary/90 text-white border-0 shadow-lg">Video</Badge>
+                        <Badge className="absolute top-3 left-3 bg-primary/90 text-white border-0 shadow-lg z-10">Video</Badge>
                       </div>
                     ) : (
                       <img
                         src={url}
                         alt={item.caption || "Gallery"}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 block"
                         loading="lazy"
                       />
                     )}
                     
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end z-20">
                       <p className="text-white text-xs font-medium line-clamp-2 leading-snug">{item.caption}</p>
                     </div>
 
@@ -258,7 +258,7 @@ export default function GalleryPage() {
                       <Button 
                         variant="destructive" 
                         size="icon" 
-                        className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                        className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-30"
                         onClick={(e) => {
                           e.stopPropagation();
                           setItemToDelete(item.id);
@@ -300,7 +300,8 @@ export default function GalleryPage() {
               </Button>
             </div>
 
-            <div className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+            {/* Added padding and z-index safety */}
+            <div className="flex-1 flex items-center justify-center p-6 sm:p-12 overflow-hidden z-10">
               {currentItem && (
                 <div className="relative w-full h-full animate-in fade-in zoom-in-95 duration-300 flex items-center justify-center">
                   {renderMedia(itemToUrl(currentItem), currentItem.caption)}
@@ -308,30 +309,30 @@ export default function GalleryPage() {
               )}
             </div>
 
-            <div className="absolute inset-y-0 left-0 flex items-center px-2 sm:px-6 pointer-events-none">
+            <div className="absolute inset-y-0 left-0 flex items-center px-2 sm:px-6 pointer-events-none z-20">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-all pointer-events-auto"
+                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-all pointer-events-auto shadow-xl"
               >
                 <ChevronLeft className="h-8 w-8 sm:h-12 sm:w-12" />
               </Button>
             </div>
             
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 sm:px-6 pointer-events-none">
+            <div className="absolute inset-y-0 right-0 flex items-center px-2 sm:px-6 pointer-events-none z-20">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={(e) => { e.stopPropagation(); handleNext(); }}
-                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-all pointer-events-auto"
+                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-all pointer-events-auto shadow-xl"
               >
                 <ChevronRight className="h-8 w-8 sm:h-12 sm:w-12" />
               </Button>
             </div>
 
             {currentItem?.caption && (
-              <div className="p-4 sm:p-8 bg-gradient-to-t from-black/90 to-transparent">
+              <div className="p-4 sm:p-8 bg-gradient-to-t from-black/90 to-transparent z-30">
                 <p className="text-white text-center text-sm sm:text-xl font-medium max-w-4xl mx-auto leading-relaxed line-clamp-3">
                   {currentItem.caption}
                 </p>

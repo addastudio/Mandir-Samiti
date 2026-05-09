@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -72,17 +71,20 @@ export function DonateSection() {
                 </div>
 
                 <div className="relative aspect-square hidden md:block">
-                  <div className="absolute inset-0 bg-primary/10 rounded-3xl rotate-6 -z-10" />
-                  <div className="absolute inset-0 bg-accent/10 rounded-3xl -rotate-3 -z-10" />
-                  <div className="w-full h-full rounded-3xl overflow-hidden shadow-xl border-4 border-white">
+                  {/* Ensuring z-index prevents frame overlap */}
+                  <div className="absolute inset-0 bg-primary/10 rounded-3xl rotate-6 z-0" />
+                  <div className="absolute inset-0 bg-accent/10 rounded-3xl -rotate-3 z-0" />
+                  
+                  <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl border-4 border-white z-10">
                     <img 
                       src="https://picsum.photos/seed/donate-hero/600/600" 
                       alt="Donation Impact" 
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover block"
                     />
                   </div>
-                  {/* Floating Stat Card */}
-                  <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-2xl shadow-2xl border border-primary/5 flex items-center gap-3 animate-in slide-in-from-left duration-1000">
+                  
+                  {/* Floating Stat Card with higher z-index */}
+                  <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-2xl shadow-2xl border border-primary/5 flex items-center gap-3 animate-in slide-in-from-left duration-1000 z-20">
                     <div className="bg-green-100 p-2 rounded-full"><CheckCircle2 className="h-5 w-5 text-green-600" /></div>
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Community Impact</p>

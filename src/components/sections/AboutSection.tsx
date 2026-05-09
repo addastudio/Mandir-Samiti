@@ -67,10 +67,12 @@ export function AboutSection() {
         </div>
 
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 items-center">
-          <div className="relative order-2 lg:order-1 group">
-            <div className="absolute -inset-4 bg-primary/20 rounded-[2rem] rotate-3 transition-transform group-hover:rotate-6 duration-700" />
-            <div className="absolute -inset-4 bg-accent/10 rounded-[2rem] -rotate-3 transition-transform group-hover:-rotate-1 duration-700" />
-            <div className="relative overflow-hidden rounded-[1.5rem] shadow-2xl border-4 border-white aspect-[4/3]">
+          <div className="relative order-2 lg:order-1 group p-4 sm:p-0">
+            {/* Decorative backgrounds with explicit z-index to avoid overlap */}
+            <div className="absolute -inset-2 sm:-inset-4 bg-primary/20 rounded-[2rem] rotate-3 transition-transform group-hover:rotate-6 duration-700 z-0" />
+            <div className="absolute -inset-2 sm:-inset-4 bg-accent/10 rounded-[2rem] -rotate-3 transition-transform group-hover:-rotate-1 duration-700 z-0" />
+            
+            <div className="relative overflow-hidden rounded-[1.5rem] shadow-2xl border-4 border-white aspect-[4/3] z-10">
               <Image 
                   src={cmsContent?.featured_image || galleryImage?.imageUrl || "https://picsum.photos/seed/about-main/800/600"}
                   alt="Temple Heritage"
@@ -79,21 +81,22 @@ export function AboutSection() {
                   data-ai-hint="indian temple architecture"
               />
             </div>
-            <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-xl border border-primary/5 hidden sm:flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-1000">
-              <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <History className="h-6 w-6 text-primary" />
+            
+            <div className="absolute -bottom-6 -right-2 sm:-right-6 bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-primary/5 hidden sm:flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-1000 z-20">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                <History className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{language === 'hi' ? 'स्थापित' : 'Established'}</p>
-                <p className="text-lg font-bold text-foreground">1970s</p>
+                <p className="text-base sm:text-lg font-bold text-foreground">1970s</p>
               </div>
             </div>
           </div>
 
           <div className="space-y-8 order-1 lg:order-2">
             <div className="relative">
-              <Quote className="absolute -top-6 -left-6 h-12 w-12 text-primary/10 -scale-x-100" />
-              <div className="bg-white/60 backdrop-blur-sm p-8 sm:p-10 rounded-[2rem] shadow-sm border border-primary/10 transition-all hover:shadow-md">
+              <Quote className="absolute -top-6 -left-6 h-12 w-12 text-primary/10 -scale-x-100 hidden sm:block" />
+              <div className="bg-white/60 backdrop-blur-sm p-6 sm:p-10 rounded-[2rem] shadow-sm border border-primary/10 transition-all hover:shadow-md">
                   <h3 className={cn("text-2xl sm:text-3xl font-bold flex items-center gap-3 text-text-accent", language === "hi" ? "font-hindi" : "font-headline")}>
                     {language === 'hi' ? (cmsContent?.history_title_hi || t.aboutHistory) : (cmsContent?.history_title_en || t.aboutHistory)}
                   </h3>
@@ -103,9 +106,9 @@ export function AboutSection() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-primary to-accent p-8 sm:p-10 rounded-[2rem] shadow-xl text-white">
+            <div className="bg-gradient-to-br from-primary to-accent p-6 sm:p-10 rounded-[2rem] shadow-xl text-white">
                 <h3 className={cn("text-2xl sm:text-3xl font-bold flex items-center gap-3", language === "hi" ? "font-hindi" : "font-headline")}>
-                  <Target className="h-7 w-7" /> {language === 'hi' ? (cmsContent?.mission_title_hi || t.aboutMission) : (cmsContent?.mission_title_en || t.aboutMission)}
+                  <Target className="h-7 w-7 shrink-0" /> {language === 'hi' ? (cmsContent?.mission_title_hi || t.aboutMission) : (cmsContent?.mission_title_en || t.aboutMission)}
                 </h3>
                 <div className={cn("mt-6 text-white/90 text-sm sm:text-lg leading-relaxed font-medium prose prose-invert prose-sm sm:prose-base", language === "hi" ? "font-hindi" : "")}>
                   {missionText}
