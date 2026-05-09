@@ -2,26 +2,23 @@ backend:
   name: git-gateway
   branch: main
 
-local_backend: true
-
-publish_mode: editorial_workflow
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
 collections:
   - name: "settings"
-    label: "General Settings"
+    label: "Global Settings"
     delete: false
     editor:
       preview: false
     files:
-      - name: "site_identity"
+      - name: "general"
         label: "Site Identity"
         file: "content/settings.json"
         fields:
           - { label: "English Site Title", name: "site_title_en", widget: "string" }
           - { label: "Hindi Site Title", name: "site_title_hi", widget: "string" }
-          - { label: "Favicon/Logo", name: "favicon", widget: "image" }
+          - { label: "Favicon", name: "favicon", widget: "image" }
 
   - name: "pages"
     label: "Pages"
@@ -30,19 +27,18 @@ collections:
         label: "Hero Section"
         file: "content/hero.json"
         fields:
-          - { label: "Hindi Headline", name: "headline_hi", widget: "string" }
-          - { label: "English Headline", name: "headline_en", widget: "string" }
-          - { label: "Hindi Subtitle", name: "subtitle_hi", widget: "text" }
-          - { label: "English Subtitle", name: "subtitle_en", widget: "text" }
+          - { label: "Headline (HI)", name: "headline_hi", widget: "string" }
+          - { label: "Headline (EN)", name: "headline_en", widget: "string" }
+          - { label: "Subtitle (HI)", name: "subtitle_hi", widget: "string" }
+          - { label: "Subtitle (EN)", name: "subtitle_en", widget: "string" }
           - { label: "Background Video URL", name: "video_url", widget: "string" }
           - { label: "Fallback Image", name: "fallback_image", widget: "image" }
-
       - name: "about"
-        label: "About Section"
+        label: "About Us Page"
         file: "content/about.json"
         fields:
-          - { label: "Hindi History", name: "history_hi", widget: "markdown" }
-          - { label: "English History", name: "history_en", widget: "markdown" }
-          - { label: "Hindi Mission", name: "mission_hi", widget: "markdown" }
-          - { label: "English Mission", name: "mission_en", widget: "markdown" }
+          - { label: "History (HI)", name: "history_hi", widget: "text" }
+          - { label: "History (EN)", name: "history_en", widget: "text" }
+          - { label: "Mission (HI)", name: "mission_hi", widget: "text" }
+          - { label: "Mission (EN)", name: "mission_en", widget: "text" }
           - { label: "Featured Image", name: "featuredImage", widget: "image" }
