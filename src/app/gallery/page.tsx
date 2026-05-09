@@ -132,11 +132,15 @@ export default function GalleryPage() {
       );
     }
     if (isVideo(url)) {
-      return <video src={url} controls autoPlay className="max-w-full max-h-full mx-auto" />;
+      return <video src={url} controls autoPlay className="max-w-full max-h-full mx-auto rounded-lg" />;
     }
     return (
-      <div className="relative w-full h-full flex items-center justify-center">
-        <img src={url} alt={title || "Gallery view"} className="max-w-full max-h-full object-contain shadow-2xl" />
+      <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+        <img 
+          src={url} 
+          alt={title || "Gallery view"} 
+          className="max-w-full max-h-full w-auto h-auto object-contain shadow-2xl transition-all duration-300" 
+        />
       </div>
     );
   };
@@ -279,9 +283,9 @@ export default function GalleryPage() {
       </main>
 
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-6xl p-0 bg-black/95 border-0 shadow-none ring-0 overflow-hidden rounded-none sm:rounded-2xl">
+        <DialogContent className="max-w-[98vw] sm:max-w-6xl p-0 bg-black/95 border-0 shadow-none ring-0 overflow-hidden rounded-none sm:rounded-2xl">
           <DialogTitle className="sr-only">Gallery Media View</DialogTitle>
-          <div className="relative flex flex-col h-[85vh]">
+          <div className="relative flex flex-col h-[90vh] sm:h-[85vh]">
             <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 sm:p-6 bg-gradient-to-b from-black/80 to-transparent">
               <div className="text-white/80 text-xs sm:text-sm font-bold tracking-widest uppercase">
                 {selectedIndex + 1} / {filteredMedia.length}
@@ -296,39 +300,39 @@ export default function GalleryPage() {
               </Button>
             </div>
 
-            <div className="flex-1 flex items-center justify-center p-4">
+            <div className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
               {currentItem && (
-                <div className="relative w-full h-full animate-in fade-in zoom-in-95 duration-300">
+                <div className="relative w-full h-full animate-in fade-in zoom-in-95 duration-300 flex items-center justify-center">
                   {renderMedia(itemToUrl(currentItem), currentItem.caption)}
                 </div>
               )}
             </div>
 
-            <div className="absolute inset-y-0 left-0 flex items-center px-2 sm:px-6">
+            <div className="absolute inset-y-0 left-0 flex items-center px-2 sm:px-6 pointer-events-none">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={handlePrev}
-                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-all"
+                onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-all pointer-events-auto"
               >
                 <ChevronLeft className="h-8 w-8 sm:h-12 sm:w-12" />
               </Button>
             </div>
             
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 sm:px-6">
+            <div className="absolute inset-y-0 right-0 flex items-center px-2 sm:px-6 pointer-events-none">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={handleNext}
-                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-all"
+                onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-black/20 text-white hover:bg-black/40 backdrop-blur-sm transition-all pointer-events-auto"
               >
                 <ChevronRight className="h-8 w-8 sm:h-12 sm:w-12" />
               </Button>
             </div>
 
             {currentItem?.caption && (
-              <div className="p-6 sm:p-8 bg-gradient-to-t from-black/90 to-transparent">
-                <p className="text-white text-center text-sm sm:text-xl font-medium max-w-4xl mx-auto leading-relaxed">
+              <div className="p-4 sm:p-8 bg-gradient-to-t from-black/90 to-transparent">
+                <p className="text-white text-center text-sm sm:text-xl font-medium max-w-4xl mx-auto leading-relaxed line-clamp-3">
                   {currentItem.caption}
                 </p>
               </div>
