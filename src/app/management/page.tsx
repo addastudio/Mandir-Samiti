@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, collectionGroup, query, where, serverTimestamp, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, collectionGroup, query, where, serverTimestamp, setDoc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
 import { 
   Trash2, 
   Loader2, 
@@ -54,7 +54,11 @@ import {
   Filter,
   Upload,
   X,
-  FileImage
+  FileImage,
+  CreditCard,
+  QrCode,
+  Banknote,
+  IndianRupee
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -112,9 +116,10 @@ export default function ManagementPage() {
   const [activeTab, setActiveTab] = useState("overview");
   
   const [userSearch, setUserSearch] = useState("");
+  const [donationSearch, setDonationSearch] = useState("");
   const [userSort, setUserSort] = useState<string>("role");
   const [analyticsRange, setAnalyticsRange] = useState("7d");
-  const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string, path?: string } | null>(null);
   const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' } | null>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [aiTopic, setAiTopic] = useState("");
@@ -167,7 +172,7 @@ export default function ManagementPage() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, isProfileLoading, router, mounted]);
 
-  // Analytics Data Processing: Safely computed after mounting to prevent hydration errors
+  // Analytics Data Processing
   const chartData = React.useMemo(() => {
     if (!mounted || !allDonations) return [];
     const now = new Date();
@@ -233,7 +238,8 @@ export default function ManagementPage() {
 
   const confirmDelete = () => {
     if (!firestore || !deleteConfirm) return;
-    deleteDocumentNonBlocking(doc(firestore, deleteConfirm.col, deleteConfirm.id));
+    const ref = deleteConfirm.path ? doc(firestore, deleteConfirm.path) : doc(firestore, deleteConfirm.col, deleteConfirm.id);
+    deleteDocumentNonBlocking(ref);
     logActivity('DELETE', deleteConfirm.col, deleteConfirm.title);
     toast({ title: "Deleted Successfully" });
     setDeleteConfirm(null);
@@ -295,6 +301,17 @@ export default function ManagementPage() {
     });
   }, [allUsers, userSearch, userSort]);
 
+  const filteredDonations = React.useMemo(() => {
+    if (!allDonations) return [];
+    return allDonations
+      .filter(d => 
+        (d.devoteeName || '').toLowerCase().includes(donationSearch.toLowerCase()) ||
+        (d.amount || '').toString().includes(donationSearch) ||
+        (d.mode || '').toLowerCase().includes(donationSearch.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [allDonations, donationSearch]);
+
   const getActionDetails = (type: string) => {
     switch (type) {
       case 'CREATE': return { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: Plus };
@@ -311,7 +328,7 @@ export default function ManagementPage() {
     return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  const totalDonations = allDonations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
+  const totalDonationsCount = allDonations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
   const isLeadership = userProfile?.role === 'president' || userProfile?.role === 'official';
 
   return (
@@ -380,7 +397,7 @@ export default function ManagementPage() {
           <TabsContent value="overview" className="space-y-6 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: t.mgmtStatTotalCollection, value: `₹${totalDonations.toLocaleString()}`, color: 'bg-primary/10 border-primary/20', icon: HandCoins },
+                { label: t.mgmtStatTotalCollection, value: `₹${totalDonationsCount.toLocaleString()}`, color: 'bg-primary/10 border-primary/20', icon: HandCoins },
                 { label: t.mgmtStatPendingRequests, value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200', icon: MessageSquare },
                 { label: t.mgmtStatActiveEvents, value: events?.length || 0, color: 'bg-amber-50 border-amber-200', icon: Calendar },
                 { label: t.mgmtStatTotalDevotees, value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200', icon: Users }
@@ -493,6 +510,146 @@ export default function ManagementPage() {
                         );
                       })}
                     </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="donations" className="space-y-6 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-4">
+                <Card className="shadow-md border-primary/10">
+                  <CardHeader className="bg-primary/5">
+                    <CardTitle className="text-lg">Record Manual Donation</CardTitle>
+                    <CardDescription className="text-xs">Add cash or direct bank transfers received at the temple.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const fd = new FormData(e.currentTarget);
+                      const amount = Number(fd.get('amount'));
+                      const devoteeName = fd.get('devoteeName') as string;
+                      const mode = fd.get('mode') as string;
+                      const date = (fd.get('date') as string) || new Date().toISOString();
+
+                      // Manual donations are typically stored in a generic 'manual_donations' collection or linked to a system user
+                      // Here we add it to the collection group directly via a dedicated path if possible, or using a fallback logic.
+                      // For simplicity in this architecture, we add to a 'donations' collection at root for manual entries
+                      const manualRef = collection(firestore!, "donations");
+                      addDoc(manualRef, {
+                        amount,
+                        devoteeName,
+                        mode,
+                        date,
+                        status: 'completed',
+                        isManual: true
+                      });
+
+                      logActivity('CREATE', 'donations', `Manual Donation: ₹${amount} from ${devoteeName}`);
+                      (e.target as HTMLFormElement).reset();
+                      toast({ title: "Donation Recorded" });
+                    }} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase opacity-60">Devotee Name</Label>
+                        <Input name="devoteeName" placeholder="Full Name" required className="bg-secondary/30" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase opacity-60">Amount (₹)</Label>
+                        <Input name="amount" type="number" placeholder="501" required className="bg-secondary/30" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase opacity-60">Payment Mode</Label>
+                        <Select name="mode" defaultValue="Cash">
+                          <SelectTrigger className="bg-secondary/30">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cash">Cash</SelectItem>
+                            <SelectItem value="UPI (Manual)">Direct UPI</SelectItem>
+                            <SelectItem value="Cheque">Cheque</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase opacity-60">Date</Label>
+                        <Input name="date" type="datetime-local" className="bg-secondary/30" />
+                      </div>
+                      <Button className="w-full shadow-lg gap-2">
+                        <CheckCircle className="h-4 w-4" /> Save Record
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="lg:col-span-8">
+                <Card className="shadow-xl border-primary/10 overflow-hidden">
+                  <CardHeader className="flex flex-col sm:flex-row items-center justify-between py-6 px-6 bg-white border-b gap-4">
+                    <div className="space-y-1">
+                      <CardTitle className="text-xl font-bold flex items-center gap-2">
+                        <IndianRupee className="h-5 w-5 text-primary" />
+                        Global Donation Ledger
+                      </CardTitle>
+                      <CardDescription className="text-xs uppercase tracking-widest font-semibold opacity-60">All online and offline contributions</CardDescription>
+                    </div>
+                    <div className="relative w-full sm:w-72">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="Search devotee or amount..." 
+                        className="pl-10 h-10 text-sm bg-secondary/10 border-primary/5 shadow-inner" 
+                        value={donationSearch} 
+                        onChange={(e) => setDonationSearch(e.target.value)} 
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0 overflow-x-auto">
+                    <Table>
+                      <TableHeader className="bg-muted/30">
+                        <TableRow>
+                          <TableHead className="text-[10px] uppercase font-black pl-6">Devotee</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black text-center">Amount</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black text-center">Mode</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black text-center">Date</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black text-right pr-6">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredDonations.map(d => (
+                          <TableRow key={d.id} className="group hover:bg-primary/5 transition-colors">
+                            <TableCell className="pl-6 py-4">
+                              <span className="font-bold text-sm">{d.devoteeName || 'Anonymous'}</span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <span className="font-black text-primary">₹{d.amount}</span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="text-[9px] uppercase tracking-tighter h-5 px-2 bg-white">
+                                {d.mode?.includes('Stripe') ? <CreditCard className="h-2.5 w-2.5 mr-1" /> : 
+                                 d.mode?.includes('UPI') ? <QrCode className="h-2.5 w-2.5 mr-1" /> : <Banknote className="h-2.5 w-2.5 mr-1" />}
+                                {d.mode}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center text-[10px] text-muted-foreground">
+                              {new Date(d.date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right pr-6">
+                              <Badge className={cn(
+                                "text-[9px] font-black uppercase",
+                                d.status === 'completed' ? "bg-emerald-500 hover:bg-emerald-600" : "bg-amber-500"
+                              )}>
+                                {d.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {filteredDonations.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic">No donations found.</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </div>
@@ -689,7 +846,6 @@ export default function ManagementPage() {
             </Card>
           </TabsContent>
 
-          {/* ... other tabs content ... */}
           <TabsContent value="notices" className="space-y-6">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
