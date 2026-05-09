@@ -49,7 +49,8 @@ import {
   Activity,
   TrendingUp,
   ArrowUpRight,
-  Target
+  Target,
+  Filter
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -105,6 +106,7 @@ export default function ManagementPage() {
   const [userSearch, setUserSearch] = useState("");
   const [userSort, setUserSort] = useState<string>("role");
   const [donationSearch, setDonationSearch] = useState("");
+  const [analyticsRange, setAnalyticsRange] = useState("7d");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string } | null>(null);
   const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' } | null>(null);
@@ -157,22 +159,52 @@ export default function ManagementPage() {
   // Analytics Data Processing
   const chartData = React.useMemo(() => {
     if (!allDonations) return [];
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    
+    const now = new Date();
+    
+    if (analyticsRange === '1y') {
+      // Monthly grouping for a cleaner yearly view
+      return Array.from({ length: 12 }, (_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+        const monthYear = d.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', { month: 'short', year: '2-digit' });
+        
+        const monthTotal = allDonations
+          .filter(don => {
+            const donDate = new Date(don.date);
+            return donDate.getMonth() === d.getMonth() && donDate.getFullYear() === d.getFullYear();
+          })
+          .reduce((sum, don) => sum + (don.amount || 0), 0);
+          
+        return { date: monthYear, amount: monthTotal };
+      });
+    }
+
+    // Daily grouping for 7d, 30d, 90d
+    const daysCount = analyticsRange === '30d' ? 30 : analyticsRange === '90d' ? 90 : 7;
+    
+    const days = Array.from({ length: daysCount }, (_, i) => {
       const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
+      d.setDate(d.getDate() - (daysCount - 1 - i));
       return d.toISOString().split('T')[0];
     });
 
-    return last7Days.map(date => {
+    return days.map(date => {
       const dayTotal = allDonations
         .filter(d => d.date?.split('T')[0] === date)
         .reduce((sum, d) => sum + (d.amount || 0), 0);
       return { 
-        date: new Date(date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', { day: 'numeric', month: 'short' }), 
+        date: new Date(date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', { 
+          day: 'numeric', 
+          month: 'short' 
+        }), 
         amount: dayTotal 
       };
     });
-  }, [allDonations, language]);
+  }, [allDonations, language, analyticsRange]);
+
+  const totalRangeAmount = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.amount, 0);
+  }, [chartData]);
 
   const roleStats = React.useMemo(() => {
     if (!allUsers) return [];
@@ -386,15 +418,31 @@ export default function ManagementPage() {
               <div className="lg:col-span-8 space-y-6">
                 <Card className="shadow-md border-primary/10 overflow-hidden">
                   <CardHeader className="bg-white border-b py-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <CardTitle className="text-lg font-bold flex items-center gap-2">
                           <TrendingUp className="h-5 w-5 text-primary" />
                           {language === 'hi' ? 'दान विश्लेषण' : 'Donation Trends'}
                         </CardTitle>
-                        <CardDescription className="text-xs">{language === 'hi' ? 'पिछले ७ दिनों का योगदान' : 'Last 7 days of contributions'}</CardDescription>
+                        <CardDescription className="text-xs">{language === 'hi' ? 'चयनित अवधि का योगदान' : 'Contributions for selected period'}</CardDescription>
                       </div>
-                      <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">₹{chartData.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} Total (7d)</Badge>
+                      <div className="flex items-center gap-3">
+                        <Select value={analyticsRange} onValueChange={setAnalyticsRange}>
+                          <SelectTrigger className="w-32 h-8 text-[10px] font-black uppercase tracking-wider border-primary/10">
+                            <Filter className="h-3 w-3 mr-2" />
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl">
+                            <SelectItem value="7d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '७ दिन' : '7 Days'}</SelectItem>
+                            <SelectItem value="30d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '३० दिन' : '30 Days'}</SelectItem>
+                            <SelectItem value="90d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '९० दिन' : '90 Days'}</SelectItem>
+                            <SelectItem value="1y" className="text-[10px] font-bold uppercase">{language === 'hi' ? '१ साल' : '1 Year'}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                          ₹{totalRangeAmount.toLocaleString()} Total ({analyticsRange})
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-6 h-[300px]">
@@ -411,13 +459,14 @@ export default function ManagementPage() {
                           dataKey="date" 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{ fontSize: 10, fontWeight: 700 }}
+                          tick={{ fontSize: 9, fontWeight: 700 }}
                           dy={10}
+                          minTickGap={15}
                         />
                         <YAxis 
                           axisLine={false} 
                           tickLine={false} 
-                          tick={{ fontSize: 10, fontWeight: 700 }}
+                          tick={{ fontSize: 9, fontWeight: 700 }}
                           width={40}
                         />
                         <Tooltip 
