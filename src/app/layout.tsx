@@ -10,7 +10,7 @@ import { BackToTop } from '@/components/layout/BackToTop';
 import Script from 'next/script';
 import { getLocalCmsContent } from '@/lib/cms';
 
-// Force revalidation to ensure CMS changes like title/favicon are updated
+// Force revalidation to ensure CMS changes like title/favicon are updated in real-time on build
 export const revalidate = 0;
 
 const poppins = Poppins({
@@ -25,11 +25,18 @@ const mukta = Mukta({
   variable: '--font-mukta',
 });
 
+/**
+ * Dynamically generates metadata for the website.
+ * Reads from content/settings.json which is managed by Decap CMS.
+ */
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getLocalCmsContent('settings.json');
   
   const siteTitle = settings?.site_title_en || 'Mandir Samiti Bahpura';
   const hindiTitle = settings?.site_title_hi || 'मंदिर समिति बहपुरा';
+  
+  // The CMS saves paths as /uploads/filename.png. 
+  // Next.js metadata will resolve this correctly from the public directory.
   const faviconPath = settings?.favicon || '/favicon.ico';
 
   return {
@@ -40,9 +47,12 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       'मंदिर समिति बहपुरा में आपका स्वागत है। Welcome to Mandir Samiti Bahpura.',
     icons: {
-      icon: faviconPath,
+      icon: [
+        { url: faviconPath },
+        { url: faviconPath, sizes: '32x32', type: 'image/png' },
+      ],
       shortcut: faviconPath,
-      apple: '/logo.png',
+      apple: faviconPath,
     },
   };
 }

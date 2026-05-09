@@ -7,38 +7,15 @@ public_folder: "/uploads"
 
 collections:
   - name: "settings"
-    label: "Global Settings"
+    label: "General Settings"
     delete: false
     editor:
       preview: false
     files:
-      - name: "general"
+      - name: "identity"
         label: "Site Identity"
         file: "content/settings.json"
         fields:
-          - { label: "English Site Title", name: "site_title_en", widget: "string" }
-          - { label: "Hindi Site Title", name: "site_title_hi", widget: "string" }
+          - { label: "Site Title (English)", name: "site_title_en", widget: "string" }
+          - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
           - { label: "Favicon", name: "favicon", widget: "image" }
-
-  - name: "pages"
-    label: "Pages"
-    files:
-      - name: "hero"
-        label: "Hero Section"
-        file: "content/hero.json"
-        fields:
-          - { label: "Headline (HI)", name: "headline_hi", widget: "string" }
-          - { label: "Headline (EN)", name: "headline_en", widget: "string" }
-          - { label: "Subtitle (HI)", name: "subtitle_hi", widget: "string" }
-          - { label: "Subtitle (EN)", name: "subtitle_en", widget: "string" }
-          - { label: "Background Video URL", name: "video_url", widget: "string" }
-          - { label: "Fallback Image", name: "fallback_image", widget: "image" }
-      - name: "about"
-        label: "About Us Page"
-        file: "content/about.json"
-        fields:
-          - { label: "History (HI)", name: "history_hi", widget: "text" }
-          - { label: "History (EN)", name: "history_en", widget: "text" }
-          - { label: "Mission (HI)", name: "mission_hi", widget: "text" }
-          - { label: "Mission (EN)", name: "mission_en", widget: "text" }
-          - { label: "Featured Image", name: "featuredImage", widget: "image" }
