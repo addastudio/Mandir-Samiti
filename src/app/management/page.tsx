@@ -46,7 +46,10 @@ import {
   Fingerprint,
   ListOrdered,
   ArrowDownAZ,
-  Activity
+  Activity,
+  TrendingUp,
+  ArrowUpRight,
+  Target
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -79,6 +82,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, Bar, BarChart, YAxis, Tooltip } from "recharts";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -90,6 +100,7 @@ export default function ManagementPage() {
   const { toast } = useToast();
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   
   const [userSearch, setUserSearch] = useState("");
   const [userSort, setUserSort] = useState<string>("role");
@@ -142,6 +153,44 @@ export default function ManagementPage() {
       else if (!adminDoc) router.push("/dashboard");
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, isProfileLoading, router, mounted]);
+
+  // Analytics Data Processing
+  const chartData = React.useMemo(() => {
+    if (!allDonations) return [];
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toISOString().split('T')[0];
+    });
+
+    return last7Days.map(date => {
+      const dayTotal = allDonations
+        .filter(d => d.date?.split('T')[0] === date)
+        .reduce((sum, d) => sum + (d.amount || 0), 0);
+      return { 
+        date: new Date(date).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-US', { day: 'numeric', month: 'short' }), 
+        amount: dayTotal 
+      };
+    });
+  }, [allDonations, language]);
+
+  const roleStats = React.useMemo(() => {
+    if (!allUsers) return [];
+    const counts: Record<string, number> = {
+      president: 0,
+      official: 0,
+      member: 0,
+      devotee: 0
+    };
+    allUsers.forEach(u => {
+      const role = (u.role || 'devotee') as string;
+      if (counts.hasOwnProperty(role)) counts[role]++;
+    });
+    return Object.entries(counts).map(([role, count]) => ({ 
+      role: role.charAt(0).toUpperCase() + role.slice(1), 
+      count 
+    }));
+  }, [allUsers]);
 
   const logActivity = (action: string, entityType: string, title: string) => {
     if (!logsRef || !user) return;
@@ -287,7 +336,7 @@ export default function ManagementPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="overview" className="w-full space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
           <div className="w-full overflow-x-auto bg-muted/40 p-1 rounded-xl touch-scroll">
             <TabsList className="flex h-auto w-max justify-start gap-1 bg-transparent border-0 flex-nowrap">
               {[
@@ -316,12 +365,13 @@ export default function ManagementPage() {
           <TabsContent value="overview" className="space-y-6 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: t.mgmtStatTotalCollection, value: `₹${totalDonations.toLocaleString()}`, color: 'bg-primary/10 border-primary/20' },
-                { label: t.mgmtStatPendingRequests, value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200' },
-                { label: t.mgmtStatActiveEvents, value: events?.length || 0, color: 'bg-amber-50 border-amber-200' },
-                { label: t.mgmtStatTotalDevotees, value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200' }
+                { label: t.mgmtStatTotalCollection, value: `₹${totalDonations.toLocaleString()}`, color: 'bg-primary/10 border-primary/20', icon: HandCoins },
+                { label: t.mgmtStatPendingRequests, value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200', icon: MessageSquare },
+                { label: t.mgmtStatActiveEvents, value: events?.length || 0, color: 'bg-amber-50 border-amber-200', icon: Calendar },
+                { label: t.mgmtStatTotalDevotees, value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200', icon: Users }
               ].map((stat, i) => (
-                <Card key={i} className={stat.color}>
+                <Card key={i} className={cn("relative overflow-hidden group transition-all hover:shadow-md", stat.color)}>
+                  <stat.icon className="absolute -right-2 -bottom-2 h-16 w-16 opacity-10 rotate-12 transition-transform group-hover:scale-110" />
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs font-black uppercase tracking-widest opacity-70">{stat.label}</CardTitle>
                   </CardHeader>
@@ -330,6 +380,199 @@ export default function ManagementPage() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8 space-y-6">
+                <Card className="shadow-md border-primary/10 overflow-hidden">
+                  <CardHeader className="bg-white border-b py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                          {language === 'hi' ? 'दान विश्लेषण' : 'Donation Trends'}
+                        </CardTitle>
+                        <CardDescription className="text-xs">{language === 'hi' ? 'पिछले ७ दिनों का योगदान' : 'Last 7 days of contributions'}</CardDescription>
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">₹{chartData.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()} Total (7d)</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6 h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="date" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fontSize: 10, fontWeight: 700 }}
+                          dy={10}
+                        />
+                        <YAxis 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fontSize: 10, fontWeight: 700 }}
+                          width={40}
+                        />
+                        <Tooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              return (
+                                <div className="bg-white p-2 border shadow-xl rounded-lg border-primary/10">
+                                  <p className="text-[10px] font-black uppercase text-muted-foreground">{payload[0].payload.date}</p>
+                                  <p className="text-sm font-black text-primary">₹{payload[0].value?.toLocaleString()}</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="amount" 
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={3}
+                          fillOpacity={1} 
+                          fill="url(#colorAmount)" 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="shadow-md border-primary/10 overflow-hidden">
+                    <CardHeader className="bg-muted/10 border-b py-3 px-5">
+                      <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        {language === 'hi' ? 'भक्तों का विभाजन' : 'Role Distribution'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6 h-[200px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={roleStats} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            dataKey="role" 
+                            type="category" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 10, fontWeight: 700 }} 
+                            width={70}
+                          />
+                          <Tooltip 
+                            cursor={{ fill: 'transparent' }}
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-white p-2 border shadow-lg rounded border-primary/10">
+                                    <p className="text-xs font-bold">{payload[0].value} {payload[0].payload.role}s</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="shadow-md border-primary/10 bg-gradient-to-br from-white to-primary/5">
+                    <CardHeader className="py-3 px-5 border-b bg-white">
+                      <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-primary" />
+                        {language === 'hi' ? 'त्वरित नेविगेशन' : 'Quick Access'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 grid grid-cols-2 gap-3">
+                      {[
+                        { label: language === 'hi' ? 'सूचना पोस्ट करें' : 'Post Notice', icon: Bell, tab: 'notices', color: 'text-amber-600 bg-amber-50 border-amber-100' },
+                        { label: language === 'hi' ? 'दान जोड़ें' : 'Add Donation', icon: Plus, tab: 'donations', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+                        { label: language === 'hi' ? 'भक्त प्रबंधन' : 'Manage Roles', icon: UserCog, tab: 'users', color: 'text-blue-600 bg-blue-50 border-blue-100' },
+                        { label: language === 'hi' ? 'इवेंट शेड्यूल' : 'Add Event', icon: Calendar, tab: 'events', color: 'text-primary bg-primary/5 border-primary/10' }
+                      ].map((action, i) => (
+                        <Button 
+                          key={i} 
+                          variant="outline" 
+                          className={cn("h-auto py-3 px-3 flex flex-col items-center gap-2 text-center transition-all hover:scale-[1.03] shadow-sm", action.color)}
+                          onClick={() => setActiveTab(action.tab)}
+                        >
+                          <action.icon className="h-5 w-5" />
+                          <span className="text-[10px] font-black uppercase leading-none">{action.label}</span>
+                        </Button>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="lg:col-span-4 space-y-6">
+                <Card className="shadow-md border-primary/10 h-full flex flex-col overflow-hidden">
+                  <CardHeader className="bg-primary/5 border-b">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-primary" />
+                        {language === 'hi' ? 'सिस्टम फीड' : 'Live Feed'}
+                      </CardTitle>
+                      <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                    </div>
+                    <CardDescription className="text-[10px] uppercase font-bold tracking-widest opacity-60">{language === 'hi' ? 'नवीनतम गतिविधियां' : 'Latest events'}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0 flex-1 overflow-y-auto">
+                    <div className="divide-y divide-primary/5">
+                      {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8).map((log: any) => {
+                        const details = getActionDetails(log.actionType);
+                        const ActionIcon = details.icon;
+                        return (
+                          <div key={log.id} className="p-4 hover:bg-muted/10 transition-colors group">
+                            <div className="flex items-start gap-3">
+                              <div className={cn("p-2 rounded-lg shrink-0", details.color)}>
+                                <ActionIcon className="h-3.5 w-3.5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold truncate">{log.entityTitle}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                  <span className="text-[9px] text-muted-foreground uppercase font-black tracking-tighter">{log.adminName}</span>
+                                  <span className="text-[9px] text-muted-foreground opacity-60 flex items-center gap-1">
+                                    <Clock className="h-2 w-2" />
+                                    {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {requests?.filter(r => r.status === 'pending').slice(0, 3).map((r: any) => (
+                        <div key={r.id} className="p-4 bg-green-50/50 hover:bg-green-100/50 transition-colors border-l-4 border-l-green-500">
+                          <div className="flex items-center justify-between mb-1">
+                            <Badge className="bg-green-600 text-[8px] h-4 uppercase">New Request</Badge>
+                            <span className="text-[9px] opacity-60">{new Date(r.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-xs font-bold">{r.name} - {r.requestType}</p>
+                          <Button variant="link" className="p-0 h-auto text-[10px] font-bold text-green-700 mt-1" onClick={() => setActiveTab('requests')}>
+                            {language === 'hi' ? 'अभी देखें' : 'View Request'} <ArrowUpRight className="h-2 w-2" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                  <div className="p-4 border-t bg-muted/5">
+                    <Button variant="ghost" className="w-full h-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary" onClick={() => setActiveTab('logs')}>
+                      {language === 'hi' ? 'सभी लॉग्स देखें' : 'View All Logs'}
+                    </Button>
+                  </div>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
