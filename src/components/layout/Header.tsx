@@ -20,7 +20,7 @@ import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
 export function Header() {
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const pathname = usePathname();
@@ -197,8 +197,26 @@ export function Header() {
                     {item.label}
                   </Link>
                 ))}
-                <div className="xs:hidden py-4 border-b border-border/50">
-                  <LanguageSwitcher />
+                <div className="xs:hidden py-8 border-b border-border/50">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4">
+                    {language === 'hi' ? 'भाषा चुनें' : 'Choose Language'}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      variant={language === 'hi' ? 'default' : 'outline'} 
+                      className={cn("h-11 rounded-xl font-bold", language === 'hi' && "bg-primary text-primary-foreground")}
+                      onClick={() => setLanguage('hi')}
+                    >
+                      हिंदी
+                    </Button>
+                    <Button 
+                      variant={language === 'en' ? 'default' : 'outline'} 
+                      className={cn("h-11 rounded-xl font-bold", language === 'en' && "bg-primary text-primary-foreground")}
+                      onClick={() => setLanguage('en')}
+                    >
+                      English
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">

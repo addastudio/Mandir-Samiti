@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -109,11 +108,6 @@ export default function ManagementPage() {
   const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' } | null>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [aiTopic, setAiTopic] = useState("");
-
-  const [eventImagePreview, setEventImagePreview] = useState<string | null>(null);
-  const [galleryImagePreview, setGalleryImagePreview] = useState<string | null>(null);
-  const eventFileRef = useRef<HTMLInputElement>(null);
-  const galleryFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -553,7 +547,7 @@ export default function ManagementPage() {
                           placeholder="Search..." 
                           className="pl-10 h-10 text-sm bg-secondary/10" 
                           value={donationSearch} 
-                          onChange={(e) => setInpu(e.target.value)} 
+                          onChange={(e) => setDonationSearch(e.target.value)} 
                         />
                       </div>
                     </div>
