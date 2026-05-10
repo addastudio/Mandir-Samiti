@@ -2,54 +2,64 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, initializeFirestore, Firestore } from 'firebase/firestore'
 
 /**
- * Initializes Firebase SDKs.
+ * Singleton instances to prevent redundant initialization 
+ * and internal assertion errors in the Firebase SDK.
+ */
+let appInstance: FirebaseApp | undefined;
+let authInstance: Auth | undefined;
+let firestoreInstance: Firestore | undefined;
+
+/**
+ * Initializes Firebase SDKs as singletons.
  * Handles fallback for environments where automatic environment-based 
  * initialization is not available (e.g. Vercel, Local Development).
  */
 export function initializeFirebase() {
-  if (getApps().length > 0) {
-    return getSdks(getApp());
+  // Ensure this only runs on the client side
+  if (typeof window === 'undefined') {
+    return {} as any;
   }
 
-  let firebaseApp;
-  try {
-    // Attempt argument-less init (works automatically on Firebase App Hosting)
-    firebaseApp = initializeApp();
-  } catch (e) {
-    // Fallback to local config object. 
-    // We catch silently because this is expected on non-Firebase Hosting platforms.
-    firebaseApp = initializeApp(firebaseConfig);
+  if (!appInstance) {
+    if (getApps().length > 0) {
+      appInstance = getApp();
+    } else {
+      try {
+        // Attempt argument-less init (works automatically on Firebase App Hosting)
+        appInstance = initializeApp();
+      } catch (e) {
+        // Fallback to local config object. 
+        appInstance = initializeApp(firebaseConfig);
+      }
+    }
   }
 
-  return getSdks(firebaseApp);
-}
+  if (!firestoreInstance) {
+    try {
+      // initializeFirestore is used to apply experimental connectivity settings
+      // We use a singleton here to avoid "Firestore already initialized" errors
+      firestoreInstance = initializeFirestore(appInstance, {
+        experimentalForceLongPolling: true,
+        experimentalAutoDetectLongPolling: false,
+      });
+    } catch (e) {
+      // Fallback if firestore is already initialized (e.g., during hot reload)
+      firestoreInstance = getFirestore(appInstance);
+    }
+  }
 
-/**
- * Provides access to initialized SDKs.
- * Specifically forces long polling and disables auto-detection to ensure 
- * connectivity in environments with restrictive WebSocket proxies.
- */
-export function getSdks(firebaseApp: FirebaseApp) {
-  let firestore: Firestore;
-  try {
-    // initializeFirestore is used to apply experimental connectivity settings
-    firestore = initializeFirestore(firebaseApp, {
-      experimentalForceLongPolling: true,
-      experimentalAutoDetectLongPolling: false,
-    });
-  } catch (e) {
-    // Fallback if firestore is already initialized (e.g., during hot reload)
-    firestore = getFirestore(firebaseApp);
+  if (!authInstance) {
+    authInstance = getAuth(appInstance);
   }
 
   return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore
+    firebaseApp: appInstance,
+    auth: authInstance,
+    firestore: firestoreInstance
   };
 }
 

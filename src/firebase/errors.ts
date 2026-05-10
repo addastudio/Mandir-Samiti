@@ -1,5 +1,6 @@
 'use client';
-import { getAuth, type User } from 'firebase/auth';
+import { type Auth, type User } from 'firebase/auth';
+import { initializeFirebase } from '@/firebase';
 
 type SecurityRuleContext = {
   path: string;
@@ -70,28 +71,27 @@ function buildAuthObject(currentUser: User | null): FirebaseAuthObject | null {
 
 /**
  * Builds the complete, simulated request object for the error message.
- * It safely tries to get the current authenticated user.
+ * Safely accesses the auth singleton to avoid re-initialization assertion errors.
  * @param context The context of the failed Firestore operation.
  * @returns A structured request object.
  */
 function buildRequestObject(context: SecurityRuleContext): SecurityRuleRequest {
   let authObject: FirebaseAuthObject | null = null;
   try {
-    // Safely attempt to get the current user.
-    const firebaseAuth = getAuth();
-    const currentUser = firebaseAuth.currentUser;
+    // Access the existing initialized auth singleton instead of calling getAuth() directly
+    const { auth } = initializeFirebase();
+    const currentUser = auth?.currentUser;
     if (currentUser) {
       authObject = buildAuthObject(currentUser);
     }
   } catch {
-    // This will catch errors if the Firebase app is not yet initialized.
-    // In this case, we'll proceed without auth information.
+    // If services aren't ready, we proceed without auth context
   }
 
   return {
     auth: authObject,
     method: context.operation,
-    path: `/databases/(default)/documents/${context.path}`,
+    path: `/databases/(default)/documents/${context.path.startsWith('/') ? context.path.substring(1) : context.path}`,
     resource: context.requestResourceData ? { data: context.requestResourceData } : undefined,
   };
 }
