@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, LogIn, LayoutDashboard, Heart, User as UserIcon, ShieldCheck } from "lucide-react";
+import { Menu, X, LogIn, Heart, User as UserIcon, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -44,7 +44,6 @@ export function Header() {
     if (!firestore || !user) return null;
     return doc(firestore, "roles_admin", user.uid);
   }, [firestore, user]);
-
   const { data: adminDoc } = useDoc(adminRoleRef);
 
   const userDocRef = useMemoFirebase(() => {
@@ -58,9 +57,6 @@ export function Header() {
     { href: "/#notices", label: t.noticesTitle, isAnchor: true },
     { href: "/about", label: t.navAbout, isAnchor: false },
     { href: "/#events", label: t.navEvents, isAnchor: true },
-    { href: "/#seva", label: t.navSeva, isAnchor: true },
-    { href: "/prayer-request", label: t.navPrayer, isAnchor: false },
-    { href: "/donate", label: t.navDonate, isAnchor: false },
     { href: "/gallery", label: t.navGallery, isAnchor: false },
     { href: "/#contact", label: t.navContact, isAnchor: true },
   ];
@@ -68,262 +64,140 @@ export function Header() {
   React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
-
       if (pathname === '/') {
         const sections = navItems
           .filter(item => item.isAnchor)
           .map((item) => document.querySelector(item.href.replace('/', '')));
-        
-        let currentSection = "home";
+        let current = "home";
         sections.forEach((section) => {
-          if (section) {
-            const sectionTop = (section as HTMLElement).offsetTop;
-            if (window.scrollY >= sectionTop - 120) {
-              currentSection = section.id;
-            }
+          if (section && window.scrollY >= (section as HTMLElement).offsetTop - 120) {
+            current = section.id;
           }
         });
-        setActiveSection(currentSection);
-      } else {
-        setActiveSection(pathname.replace('/', ''));
+        setActiveSection(current);
       }
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [navItems, pathname]);
+  }, [pathname, navItems]);
 
-  const AuthButton = ({ className, isMobile = false }: { className?: string; isMobile?: boolean }) => {
-    if (isUserLoading) {
-      return <div className={cn("h-9 w-9 sm:h-10 sm:w-10 animate-pulse rounded-full bg-muted", className)} />;
-    }
+  const siteName = language === 'hi' 
+    ? (settings?.site_title_hi || "मंदिर समिति बहपुरा")
+    : (settings?.site_title_en || "Mandir Samiti Bahpura");
+
+  const AuthButton = ({ isMobile = false }: { isMobile?: boolean }) => {
+    if (isUserLoading) return <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />;
     if (user) {
       return (
-        <Link href="/dashboard" className={cn("shrink-0", className)} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer ring-2 ring-white ring-offset-1">
+        <Link href="/dashboard" onClick={() => isMobile && setIsMobileMenuOpen(false)}>
+          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-105 transition-all">
             <AvatarImage src={user.photoURL || userProfile?.photoURL || undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-              <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">
+              <UserIcon className="h-4 w-4" />
             </AvatarFallback>
           </Avatar>
         </Link>
       );
     }
     return (
-      <Link href="/login" className={cn("shrink-0", className)} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-        <Button variant="ghost" size="sm" className="gap-2 h-9 sm:h-10">
-          <LogIn className="h-4 w-4" />
-          <span className={cn("text-xs sm:text-sm", language === "hi" ? "font-hindi" : "")}>
-            {language === "hi" ? "लॉग इन" : "Login"}
-          </span>
+      <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)}>
+        <Button variant="ghost" size="sm" className="h-9 px-2 sm:px-4">
+          <LogIn className="h-4 w-4 mr-2" />
+          <span className={cn("text-xs sm:text-sm", language === "hi" && "font-hindi")}>Login</span>
         </Button>
       </Link>
     );
   };
 
-  const NavLinks = ({
-    className,
-    itemClassName,
-    isMobile = false,
-  }: {
-    className?: string;
-    itemClassName?: string;
-    isMobile?: boolean;
-  }) => (
-    <nav className={cn("flex items-center gap-1", className)}>
-      {navItems.map((item) => {
-        const isActive = pathname === '/' 
-          ? (item.isAnchor && activeSection === item.href.replace('/#', ''))
-          : (pathname === item.href || (pathname.startsWith('/gallery') && item.href === '/gallery'));
-
-        return (
-          <Link
-            key={item.label}
-            href={item.href}
-            onClick={() => setIsMobileMenuOpen(false)}
-            className={cn(
-              "relative px-3 py-2 text-[13px] font-medium transition-colors hover:text-primary whitespace-nowrap",
-              isActive ? "text-primary" : "text-muted-foreground",
-              isMobile && "w-full py-4 text-lg border-b border-border/50",
-              itemClassName,
-              language === "hi" ? "font-hindi" : ""
-            )}
-          >
-            {item.label}
-            {!isMobile && isActive && (
-              <span className="absolute bottom-0 left-0 h-0.5 w-full bg-primary animate-in fade-in slide-in-from-bottom-1" />
-            )}
-          </Link>
-        );
-      })}
-    </nav>
-  );
-
-  const siteName = language === 'hi' 
-    ? (settings?.site_title_hi || "मंदिर समिति बहपुरा")
-    : (settings?.site_title_en || "Mandir Samiti Bahpura");
-
-  const siteSubtitle = language === 'hi' ? "श्रद्धा और सेवा" : "Faith and Service";
-
   return (
-    <header
-      className={cn(
-        "fixed top-0 z-50 w-full transition-all duration-500",
-        isScrolled || pathname !== '/'
-          ? "border-b border-border/40 bg-background/80 shadow-sm backdrop-blur-md"
-          : "bg-transparent"
-      )}
-    >
-      <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
-        {/* Branding Section - Refined for No Overlap */}
-        <Link href="/" className="flex flex-shrink min-w-0 items-center gap-2 transition-transform hover:scale-[1.02] active:scale-95 group">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 min-w-0">
-            <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-11 lg:w-11 overflow-hidden rounded-full border border-primary/20 bg-white flex flex-shrink-0 items-center justify-center shadow-inner">
+    <header className={cn(
+      "fixed top-0 z-50 w-full transition-all duration-300",
+      isScrolled || pathname !== '/' ? "border-b bg-background/95 backdrop-blur-md shadow-sm" : "bg-transparent"
+    )}>
+      <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+        
+        {/* Branding - Fixed Overlap Logic */}
+        <Link href="/" className="flex items-center gap-3 min-w-0 flex-shrink mr-4 group">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-xl bg-amber-50/80 px-2 py-1.5 shadow-sm border border-primary/10">
+            <div className="relative h-9 w-9 sm:h-10 sm:w-10 overflow-hidden rounded-full bg-white flex-shrink-0 flex items-center justify-center border border-primary/5">
               {settings?.favicon && !logoError ? (
-                <Image 
-                  src={settings.favicon} 
-                  alt="Logo" 
-                  fill 
-                  className="object-contain p-0.5 z-10"
-                  onError={() => setLogoError(true)}
-                />
+                <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1" onError={() => setLogoError(true)} />
               ) : (
-                <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-primary" />
+                <TempleIcon className="h-6 w-6 text-primary" />
               )}
             </div>
-            <div className="flex flex-col items-start leading-tight min-w-0">
-              <span
-                className={cn(
-                  "text-xs sm:text-base lg:text-lg font-bold text-foreground truncate block w-full max-w-[120px] sm:max-w-[200px] lg:max-w-none",
-                  language === "hi" ? "font-hindi" : "font-headline"
-                )}
-              >
+            <div className="flex flex-col min-w-0 max-w-[140px] sm:max-w-[240px] lg:max-w-none">
+              <span className={cn("text-sm sm:text-base lg:text-lg font-bold truncate block leading-tight", language === "hi" ? "font-hindi" : "font-headline")}>
                 {siteName}
               </span>
-              <span className="text-[7px] sm:text-[8px] lg:text-[9px] uppercase tracking-widest text-muted-foreground font-black opacity-80 whitespace-nowrap hidden xs:block">
-                {siteSubtitle}
+              <span className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground font-black opacity-70 hidden xs:block">
+                {language === 'hi' ? 'श्रद्धा और सेवा' : 'Faith and Service'}
               </span>
             </div>
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden items-center gap-2 lg:flex flex-shrink-0">
-          <NavLinks className="gap-0.5" />
-          <div className="h-6 w-px bg-border/60 mx-1" />
-          <div className="flex items-center gap-4">
+        {/* Desktop Nav */}
+        <div className="hidden lg:flex items-center gap-6">
+          <nav className="flex items-center gap-1">
+            {navItems.map((item) => (
+              <Link key={item.label} href={item.href} className={cn(
+                "px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
+                pathname === '/' ? (activeSection === item.href.replace('/#', '') ? "text-primary" : "text-muted-foreground") : (pathname === item.href ? "text-primary" : "text-muted-foreground")
+              )}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="flex items-center gap-4 border-l pl-6">
             <LanguageSwitcher />
-            <div className="flex items-center gap-4">
-              {adminDoc && (
-                <Link href="/management" className="shrink-0">
-                  <Button 
-                    variant="default" 
-                    size="icon" 
-                    className="bg-primary text-primary-foreground h-9 w-9 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white ring-2 ring-primary/10" 
-                    title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
-                  >
-                    <ShieldCheck className="h-4 w-4 stroke-[2.5px]" />
-                  </Button>
-                </Link>
-              )}
-              <AuthButton />
-            </div>
-            <Link href="/donate" className="shrink-0">
-              <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm h-9 px-4">
-                <Heart className="h-4 w-4 fill-current" />
-                <span className={cn("font-bold text-xs", language === "hi" ? "font-hindi" : "")}>
-                  {t.navDonate}
-                </span>
+            {adminDoc && (
+              <Link href="/management">
+                <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-sm">
+                  <ShieldCheck className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
+            <AuthButton />
+            <Link href="/donate">
+              <Button size="sm" className="bg-accent text-accent-foreground font-bold h-9 px-4 shadow-sm hover:scale-105 transition-transform">
+                <Heart className="h-4 w-4 mr-2 fill-current" />
+                {t.navDonate}
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Mobile Actions */}
-        <div className="flex items-center gap-2 sm:gap-4 lg:hidden flex-shrink-0">
-          <div className="hidden xs:block">
-            <LanguageSwitcher />
-          </div>
-          <div className="flex items-center gap-3 sm:gap-4">
-            {adminDoc && (
-              <Link href="/management" className="shrink-0">
-                <Button 
-                  variant="default" 
-                  size="icon" 
-                  className="bg-primary text-primary-foreground h-8 w-8 sm:h-9 sm:w-9 rounded-full shadow-md active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
-                  title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
-                >
-                  <ShieldCheck className="h-4 w-4 stroke-[2.5px]" />
-                </Button>
-              </Link>
-            )}
-            <AuthButton />
-          </div>
+        {/* Mobile Nav Toggle */}
+        <div className="flex lg:hidden items-center gap-2">
+          <LanguageSwitcher />
+          <AuthButton isMobile />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
-                <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
-                <span className="sr-only">Open menu</span>
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-xs">
-              <SheetHeader className="sr-only">
-                <SheetTitle>Navigation Menu</SheetTitle>
-                <SheetDescription>Main navigation menu for the temple website.</SheetDescription>
-              </SheetHeader>
-              
-              <div className="flex h-20 items-center border-b px-6 bg-amber-50">
-                <Link href="/" className="flex items-center gap-2 min-w-0" onClick={() => setIsMobileMenuOpen(false)}>
-                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white flex flex-shrink-0 items-center justify-center">
-                    {settings?.favicon && !logoError ? (
-                      <Image 
-                        src={settings.favicon} 
-                        alt="Logo" 
-                        fill 
-                        className="object-contain p-0.5 z-10"
-                        onError={() => setLogoError(true)}
-                      />
-                    ) : (
-                      <TempleIcon className="h-5 w-5 text-primary" />
-                    )}
-                  </div>
-                  <span className={cn("text-base font-bold truncate", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-                    {siteName}
-                  </span>
-                </Link>
+            <SheetContent side="right" className="flex flex-col p-0">
+              <div className="h-20 flex items-center px-6 border-b bg-amber-50">
+                <span className="font-bold text-lg truncate">{siteName}</span>
               </div>
-
-              <div className="flex-1 overflow-y-auto px-6 py-4">
-                <NavLinks
-                  className="flex-col items-start gap-0"
-                  isMobile
-                />
+              <div className="flex-1 overflow-y-auto py-6 px-6">
+                {navItems.map((item) => (
+                  <Link key={item.label} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className="block py-4 text-lg font-medium border-b border-border/50">
+                    {item.label}
+                  </Link>
+                ))}
                 {adminDoc && (
-                   <Link 
-                    href="/management" 
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 w-full py-4 text-lg border-b border-border/50 text-primary font-bold",
-                      language === "hi" ? "font-hindi" : ""
-                    )}
-                   >
-                     <ShieldCheck className="h-6 w-6" />
-                     {language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
-                   </Link>
+                  <Link href="/management" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 py-4 text-lg font-bold text-primary border-b border-border/50">
+                    <ShieldCheck className="h-5 w-5" /> Management
+                  </Link>
                 )}
               </div>
-
-              <div className="border-t bg-secondary/30 p-6 space-y-4">
-                <div className="flex items-center justify-between xs:hidden">
-                   <span className="text-sm font-medium text-muted-foreground">
-                    {language === 'hi' ? 'भाषा' : 'Language'}
-                  </span>
-                  <LanguageSwitcher />
-                </div>
-                <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
-                  <Button className="w-full gap-2 bg-accent text-accent-foreground h-12 shadow-lg">
-                    <Heart className="h-5 w-5 fill-current" />
-                    <span className="font-bold">{t.navDonate}</span>
+              <div className="p-6 border-t bg-secondary/30">
+                <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button className="w-full h-12 bg-accent text-accent-foreground font-bold shadow-lg">
+                    <Heart className="h-5 w-5 mr-2 fill-current" /> {t.navDonate}
                   </Button>
                 </Link>
               </div>

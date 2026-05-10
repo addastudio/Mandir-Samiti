@@ -10,7 +10,6 @@ import { BackToTop } from '@/components/layout/BackToTop';
 import Script from 'next/script';
 import { getLocalCmsContent } from '@/lib/cms';
 
-// Force revalidation to ensure CMS changes like title/favicon are updated in real-time on build
 export const revalidate = 0;
 
 const poppins = Poppins({
@@ -25,18 +24,11 @@ const mukta = Mukta({
   variable: '--font-mukta',
 });
 
-/**
- * Dynamically generates metadata for the website.
- * Reads from content/settings.json which is managed by Decap CMS.
- */
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getLocalCmsContent('settings.json');
   
   const siteTitle = settings?.site_title_en || 'Mandir Samiti Bahpura';
   const hindiTitle = settings?.site_title_hi || 'मंदिर समिति बहपुरा';
-  
-  // The CMS saves paths as /uploads/filename.png. 
-  // Next.js metadata will resolve this correctly from the public directory.
   const faviconPath = settings?.favicon || '/favicon.ico';
 
   return {
@@ -44,13 +36,9 @@ export async function generateMetadata(): Promise<Metadata> {
       default: `${siteTitle} | ${hindiTitle}`,
       template: `%s | ${siteTitle}`
     },
-    description:
-      'मंदिर समिति बहपुरा में आपका स्वागत है। Welcome to Mandir Samiti Bahpura.',
+    description: 'Welcome to Mandir Samiti Bahpura. Preserve Faith, Serve Community.',
     icons: {
-      icon: [
-        { url: faviconPath },
-        { url: faviconPath, sizes: '32x32', type: 'image/png' },
-      ],
+      icon: [{ url: faviconPath }],
       shortcut: faviconPath,
       apple: faviconPath,
     },
@@ -61,8 +49,6 @@ export default function RootLayout(props: {
   children: React.ReactNode;
   params: Promise<any>;
 }) {
-  const children = props.children;
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -86,13 +72,8 @@ export default function RootLayout(props: {
               strategy="afterInteractive" 
             />
             
-            <a 
-              href="#main-content" 
-              className="skip-link"
-            >
-              Skip to main content
-            </a>
-            {children}
+            <a href="#main-content" className="skip-link">Skip to main content</a>
+            {props.children}
             <BackToTop />
             <Toaster />
 
@@ -106,11 +87,10 @@ export default function RootLayout(props: {
                       });
                     }
                   });
-                  // For Vercel deployments using Netlify Identity for CMS
-                  const netlifySiteUrl = process.env.NEXT_PUBLIC_NETLIFY_SITE_URL;
-                  if (netlifySiteUrl && window.location.hostname !== new URL(netlifySiteUrl).hostname) {
-                    console.log("Setting Netlify Identity site URL for cross-domain auth");
-                    localStorage.setItem("netlifySiteURL", netlifySiteUrl);
+                  // Cross-domain fix for Vercel/Netlify CMS authentication
+                  const netlifyUrl = "${process.env.NEXT_PUBLIC_NETLIFY_SITE_URL || ''}";
+                  if (netlifyUrl && window.location.hostname !== new URL(netlifyUrl).hostname) {
+                    localStorage.setItem("netlifySiteURL", netlifyUrl);
                   }
                 }
               `}
