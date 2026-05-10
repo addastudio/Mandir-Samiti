@@ -67,6 +67,7 @@ function DashboardContent() {
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const [changePwdCurrent, setChangePwdCurrent] = useState("");
   const [changePwdNew, setChangePwdNew] = useState("");
+  const [changePwdConfirm, setChangePwdConfirm] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   useEffect(() => {
@@ -128,7 +129,8 @@ function DashboardContent() {
   }, [user, isUserLoading, router, mounted]);
 
   const handleLogout = async () => {
-    await signOut(auth!);
+    if (!auth) return;
+    await signOut(auth);
     router.push("/");
   };
 
@@ -187,6 +189,12 @@ function DashboardContent() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth || !user || !changePwdCurrent || !changePwdNew) return;
+    
+    if (changePwdNew !== changePwdConfirm) {
+      toast({ variant: "destructive", title: "Error", description: t.dashboardPasswordMismatch });
+      return;
+    }
+
     setIsUpdatingPassword(true);
     try {
       const credential = EmailAuthProvider.credential(user.email!, changePwdCurrent);
@@ -196,6 +204,7 @@ function DashboardContent() {
       setShowChangePasswordDialog(false);
       setChangePwdCurrent("");
       setChangePwdNew("");
+      setChangePwdConfirm("");
     } catch (err: any) {
       let msg = err.message;
       if (err.code === 'auth/wrong-password') msg = t.authErrorWrongPassword;
@@ -563,6 +572,10 @@ function DashboardContent() {
                               <div className="space-y-2">
                                 <Label>{t.dashboardNewPassword}</Label>
                                 <Input type="password" value={changePwdNew} onChange={(e) => setChangePwdNew(e.target.value)} required minLength={6} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>{t.dashboardConfirmPassword}</Label>
+                                <Input type="password" value={changePwdConfirm} onChange={(e) => setChangePwdConfirm(e.target.value)} required minLength={6} />
                               </div>
                               <DialogFooter>
                                 <Button type="submit" className="w-full h-12" disabled={isUpdatingPassword}>

@@ -183,6 +183,8 @@ export type TranslationKeys = {
   dashboardResetEmailSent: string;
   dashboardCurrentPassword: string;
   dashboardNewPassword: string;
+  dashboardConfirmPassword: string;
+  dashboardPasswordMismatch: string;
   dashboardPasswordUpdateSuccess: string;
 
   // Prayer Request
@@ -404,6 +406,8 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardResetEmailSent: 'रीसेट ईमेल आपके इनबॉक्स में भेज दिया गया है।',
     dashboardCurrentPassword: 'वर्तमान पासवर्ड',
     dashboardNewPassword: 'नया पासवर्ड',
+    dashboardConfirmPassword: 'नया पासवर्ड पुनः दर्ज करें',
+    dashboardPasswordMismatch: 'पासवर्ड मेल नहीं खाते!',
     dashboardPasswordUpdateSuccess: 'पासवर्ड सफलतापूर्वक अपडेट किया गया!',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
@@ -609,6 +613,8 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardResetEmailSent: 'A reset email has been sent to your inbox.',
     dashboardCurrentPassword: 'Current Password',
     dashboardNewPassword: 'New Password',
+    dashboardConfirmPassword: 'Confirm New Password',
+    dashboardPasswordMismatch: 'Passwords do not match!',
     dashboardPasswordUpdateSuccess: 'Password updated successfully!',
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
