@@ -30,7 +30,6 @@ import {
   Clock,
   AlertTriangle,
   Wand2,
-  CheckCircle,
   Settings,
   History,
   UserPlus,
@@ -77,6 +76,11 @@ import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis, Tool
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
+/**
+ * MANDIR MANAGEMENT PANEL
+ * The central command center for Mandir Samiti Bahpura.
+ * Features: Analytics, CRUD for Content, Role Management, and Security Audit Logs.
+ */
 export default function ManagementPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -86,10 +90,13 @@ export default function ManagementPage() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   
+  // Search & Filter States
   const [userSearch, setUserSearch] = useState("");
   const [donationSearch, setDonationSearch] = useState("");
   const [userSort, setUserSort] = useState<string>("role");
   const [analyticsRange, setAnalyticsRange] = useState("7d");
+
+  // Interaction States
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string, path?: string } | null>(null);
   const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' | 'resign' } | null>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -99,6 +106,7 @@ export default function ManagementPage() {
     setMounted(true);
   }, []);
 
+  // Admin Access Check
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "roles_admin", user.uid);
@@ -111,6 +119,7 @@ export default function ManagementPage() {
   }, [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
+  // Collection References
   const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "events"), [firestore, adminDoc]);
   const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "gallery"), [firestore, adminDoc]);
   const noticesRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "notices"), [firestore, adminDoc]);
@@ -138,6 +147,7 @@ export default function ManagementPage() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, isProfileLoading, router, mounted]);
 
+  // Analytics Calculation
   const chartData = React.useMemo(() => {
     if (!mounted || !allDonations) return [];
     const now = new Date();
@@ -171,6 +181,10 @@ export default function ManagementPage() {
     });
   }, [allDonations, language, analyticsRange, mounted]);
 
+  /**
+   * Logs administrative actions for audit trails.
+   * Crucial: This must be called BEFORE permission removal if possible.
+   */
   const logActivity = async (action: string, entityType: string, title: string) => {
     if (!firestore || !user) return;
     try {
@@ -187,6 +201,7 @@ export default function ManagementPage() {
     }
   };
 
+  // AI Integration for Content Generation
   const handleAiGenerate = async (type: 'event' | 'notice', formRef: HTMLFormElement) => {
     if (!aiTopic) {
       toast({ variant: "destructive", title: "Topic Required", description: "Please enter a keyword or topic first." });
@@ -211,18 +226,26 @@ export default function ManagementPage() {
     }
   };
 
+  // Core Mutation Handlers
   const confirmDelete = async () => {
     if (!firestore || !deleteConfirm) return;
     const { col, id, title, path } = deleteConfirm;
-    const ref = path ? doc(firestore, path) : doc(firestore, col, id);
     
+    // Log before action to ensure permission exists
     await logActivity('DELETE', col, title);
+    
+    const ref = path ? doc(firestore, path) : doc(firestore, col, id);
     await deleteDoc(ref);
     
     toast({ title: "Deleted Successfully" });
     setDeleteConfirm(null);
   };
 
+  /**
+   * BUSINESS RULES FOR ROLES:
+   * 1. Cannot resign if last admin.
+   * 2. Must log action before committing sensitive permission removal.
+   */
   const handleRoleAction = async () => {
     if (!firestore || !roleConfirm || !user) return;
     const { userId, name, newRole, type } = roleConfirm;
@@ -233,7 +256,9 @@ export default function ManagementPage() {
           toast({ variant: "destructive", title: "Action Denied", description: "Cannot resign as you are the last administrator." });
           return;
         }
+        // Log first
         await logActivity('RESIGN', 'roles_admin', name);
+        // Then delete
         await deleteDoc(doc(firestore, "roles_admin", userId));
         toast({ title: "You have resigned as administrator" });
         router.push("/dashboard");
@@ -246,6 +271,10 @@ export default function ManagementPage() {
           if (userId === user.uid) {
             toast({ variant: "destructive", title: "Use Resignation", description: "Please use the 'Resign' button to remove your own access." });
             return;
+          }
+          if (allAdmins && allAdmins.length <= 1) {
+             toast({ variant: "destructive", title: "Action Denied", description: "Cannot remove the last administrator." });
+             return;
           }
           await logActivity('REMOVE_ADMIN', 'roles_admin', name);
           await deleteDoc(doc(firestore, "roles_admin", userId));
@@ -267,6 +296,7 @@ export default function ManagementPage() {
     }
   };
 
+  // Sorting Logic for User Table
   const sortedUsers = React.useMemo(() => {
     if (!allUsers) return [];
     const filtered = allUsers.filter(u => 
@@ -316,7 +346,6 @@ export default function ManagementPage() {
   }
 
   const totalDonationsCount = allDonations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
-  const isLeadership = userProfile?.role === 'president' || userProfile?.role === 'official';
 
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-16 sm:pt-20">
@@ -341,7 +370,7 @@ export default function ManagementPage() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="gap-2 text-destructive hover:bg-destructive/10"
+              className="gap-2 text-destructive border-destructive/20 hover:bg-destructive/10"
               onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}
             >
               <LogOut className="h-4 w-4" />
@@ -350,7 +379,7 @@ export default function ManagementPage() {
             <Link href="/" className="flex-1 sm:flex-initial">
               <Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm">
                 <Globe className="h-4 w-4" />
-                <span className="hidden xs:inline">{language === 'hi' ? 'वेबसाइट' : 'Website'}</span>
+                {language === 'hi' ? 'वेबसाइट' : 'Website'}
               </Button>
             </Link>
           </div>
@@ -403,8 +432,8 @@ export default function ManagementPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-8 space-y-6">
-                <Card className="shadow-md border-primary/10 overflow-hidden">
+              <div className="lg:col-span-8">
+                <Card className="shadow-md border-primary/10 overflow-hidden h-full">
                   <CardHeader className="bg-white border-b py-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1">
@@ -412,17 +441,16 @@ export default function ManagementPage() {
                           <TrendingUp className="h-5 w-5 text-primary" />
                           {language === 'hi' ? 'दान विश्लेषण' : 'Donation Trends'}
                         </CardTitle>
-                        <CardDescription className="text-xs">{language === 'hi' ? 'चयनित अवधि का योगदान' : 'Contributions for selected period'}</CardDescription>
                       </div>
                       <Select value={analyticsRange} onValueChange={setAnalyticsRange}>
-                        <SelectTrigger className="w-32 h-8 text-[10px] font-black uppercase tracking-wider border-primary/10">
+                        <SelectTrigger className="w-32 h-8 text-[10px] font-black uppercase border-primary/10">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                          <SelectItem value="7d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '७ दिन' : '7 Days'}</SelectItem>
-                          <SelectItem value="30d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '३० दिन' : '30 Days'}</SelectItem>
-                          <SelectItem value="90d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '९० दिन' : '90 Days'}</SelectItem>
-                          <SelectItem value="1y" className="text-[10px] font-bold uppercase">{language === 'hi' ? '१ साल' : '1 Year'}</SelectItem>
+                        <SelectContent>
+                          <SelectItem value="7d">7 Days</SelectItem>
+                          <SelectItem value="30d">30 Days</SelectItem>
+                          <SelectItem value="90d">90 Days</SelectItem>
+                          <SelectItem value="1y">1 Year</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -437,8 +465,8 @@ export default function ManagementPage() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} dy={10} minTickGap={15} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} width={40} />
+                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
                         <Tooltip />
                         <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
                       </AreaChart>
@@ -454,7 +482,7 @@ export default function ManagementPage() {
                       {language === 'hi' ? 'सिस्टम फीड' : 'Live Feed'}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-0 flex-1 overflow-y-auto">
+                  <CardContent className="p-0 flex-1 overflow-y-auto max-h-[400px]">
                     <div className="divide-y divide-primary/5">
                       {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10).map((log: any) => {
                         const details = getActionDetails(log.actionType);
@@ -496,6 +524,9 @@ export default function ManagementPage() {
                       const fd = new FormData(e.currentTarget);
                       const amount = Number(fd.get('amount'));
                       const devoteeName = fd.get('devoteeName') as string;
+                      
+                      await logActivity('CREATE', 'donations', `Manual: ₹${amount} from ${devoteeName}`);
+                      
                       const manualRef = collection(firestore!, "donations");
                       await addDoc(manualRef, {
                         amount,
@@ -504,31 +535,27 @@ export default function ManagementPage() {
                         date: (fd.get('date') as string) || new Date().toISOString(),
                         status: 'completed'
                       });
-                      await logActivity('CREATE', 'donations', `Manual: ₹${amount} from ${devoteeName}`);
+                      
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Donation Recorded" });
                     }} className="space-y-4">
                       <div className="space-y-1">
                         <Label className="text-[10px] uppercase font-bold opacity-60">Devotee Name</Label>
-                        <Input name="devoteeName" placeholder="Full Name" required className="bg-secondary/30" />
+                        <Input name="devoteeName" placeholder="Full Name" required />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] uppercase font-bold opacity-60">Amount (₹)</Label>
-                        <Input name="amount" type="number" required className="bg-secondary/30" />
+                        <Input name="amount" type="number" required />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] uppercase font-bold opacity-60">Payment Mode</Label>
                         <Select name="mode" defaultValue="Cash">
-                          <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Cash">Cash</SelectItem>
                             <SelectItem value="UPI (Manual)">Direct UPI</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Date</Label>
-                        <Input name="date" type="datetime-local" className="bg-secondary/30" />
                       </div>
                       <Button className="w-full shadow-lg gap-2">Save Record</Button>
                     </form>
@@ -606,15 +633,15 @@ export default function ManagementPage() {
                         image: fd.get('image') as string,
                         createdAt: new Date().toISOString()
                       };
-                      await addDoc(eventsRef!, data);
                       await logActivity('CREATE', 'events', data.title);
+                      await addDoc(eventsRef!, data);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Event Published" });
                     }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Title</Label><Input name="title" required className="bg-secondary/30" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Date</Label><Input name="date" type="datetime-local" required className="bg-secondary/30" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Description</Label><Textarea name="description" rows={4} className="bg-secondary/30" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Image URL</Label><Input name="image" className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Title</Label><Input name="title" required /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Date</Label><Input name="date" type="datetime-local" required /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Description</Label><Textarea name="description" rows={4} /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Image URL</Label><Input name="image" /></div>
                       <Button className="w-full shadow-lg gap-2"><Calendar className="h-4 w-4" /> Publish Event</Button>
                     </form>
                   </CardContent>
@@ -665,19 +692,19 @@ export default function ManagementPage() {
                         importance: fd.get('importance') as string,
                         createdAt: new Date().toISOString()
                       };
-                      await addDoc(noticesRef!, data);
                       await logActivity('CREATE', 'notices', data.title);
+                      await addDoc(noticesRef!, data);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Notice Posted" });
                     }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Headline</Label><Input name="title" required className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Headline</Label><Input name="title" required /></div>
                       <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Priority</Label>
                         <Select name="importance" defaultValue="normal">
-                          <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent><SelectItem value="normal">Normal</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Content</Label><Textarea name="content" rows={5} className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Content</Label><Textarea name="content" rows={5} /></div>
                       <Button className="w-full shadow-lg gap-2"><Bell className="h-4 w-4" /> Broadcast Notice</Button>
                     </form>
                   </CardContent>
@@ -715,13 +742,13 @@ export default function ManagementPage() {
                         imageURL: fd.get('url') as string,
                         createdAt: new Date().toISOString()
                       };
-                      await addDoc(galleryRef!, data);
                       await logActivity('CREATE', 'gallery', data.caption);
+                      await addDoc(galleryRef!, data);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Media Added" });
                     }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Caption</Label><Input name="caption" required className="bg-secondary/30" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">URL</Label><Input name="url" placeholder="Image or YouTube" required className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Caption</Label><Input name="caption" required /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">URL</Label><Input name="url" placeholder="Image or YouTube" required /></div>
                       <Button className="w-full shadow-lg"><Plus className="h-4 w-4 mr-2" /> Add Media</Button>
                     </form>
                   </CardContent>
@@ -790,15 +817,15 @@ export default function ManagementPage() {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
                       const data = { name: fd.get('name') as string, role: fd.get('role') as string, displayOrder: Number(fd.get('order')), createdAt: new Date().toISOString() };
-                      await addDoc(membersRef!, data);
                       await logActivity('CREATE', 'mandir_samiti_members', data.name);
+                      await addDoc(membersRef!, data);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Member Added" });
                     }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Full Name</Label><Input name="name" required className="bg-secondary/30" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Role</Label><Input name="role" required className="bg-secondary/30" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Order</Label><Input name="order" type="number" defaultValue={0} className="bg-secondary/30" /></div>
-                      <Button className="w-full shadow-lg"><UserPlus className="h-4 w-4 mr-2" /> Save Member</Button>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Full Name</Label><Input name="name" required /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Role</Label><Input name="role" required /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Order</Label><Input name="order" type="number" defaultValue={0} /></div>
+                      <Button className="w-full shadow-lg"><Plus className="h-4 w-4 mr-2" /> Save Member</Button>
                     </form>
                   </CardContent>
                 </Card>
@@ -938,6 +965,7 @@ export default function ManagementPage() {
         </Tabs>
       </main>
 
+      {/* MODALS */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader>

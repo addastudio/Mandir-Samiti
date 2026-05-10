@@ -61,8 +61,8 @@ function DashboardContent() {
       toast({
         title: language === 'hi' ? "दान सफल!" : "Donation Successful!",
         description: language === 'hi' 
-          ? "आपके उदार योगदान के लिए धन्यवाद। हम आपकी सहायता की सराहना करते हैं।" 
-          : "Thank you for your generous contribution. We appreciate your support!",
+          ? "आपके उदार योगदान के लिए धन्यवाद।" 
+          : "Thank you for your generous contribution.",
       });
       window.history.replaceState({}, '', window.location.pathname);
     }
@@ -201,19 +201,16 @@ function DashboardContent() {
   if (!user) return null;
 
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
-  const isVerified = userProfile?.isVerified ?? true;
   
   const getTierInfo = (amount: number) => {
     if (amount >= 100000) {
       return { 
         label: t.dashboardTierGrandPatron, 
-        badge: 'bg-indigo-600 text-white shadow-indigo-200 ring-2 ring-indigo-400', 
+        badge: 'bg-indigo-600 text-white', 
         icon: Crown,
         progress: 100,
         nextTier: null,
         needed: 0,
-        variant: 'grand-patron',
-        glow: 'shadow-[0_0_25px_rgba(79,70,229,0.25)]',
         barColor: 'bg-indigo-600',
         textColor: 'text-indigo-900',
         bgTheme: 'bg-indigo-50/50'
@@ -222,13 +219,11 @@ function DashboardContent() {
     if (amount >= 10000) {
       return { 
         label: t.dashboardTierGuardian, 
-        badge: 'bg-emerald-600 text-white shadow-emerald-200 ring-1 ring-emerald-400', 
+        badge: 'bg-emerald-600 text-white', 
         icon: Shield,
         progress: ((amount - 10000) / (100000 - 10000)) * 100,
         nextTier: t.dashboardTierGrandPatron,
         needed: 100000 - amount,
-        variant: 'guardian',
-        glow: 'shadow-[0_0_15px_rgba(16,185,129,0.15)]',
         barColor: 'bg-emerald-600',
         textColor: 'text-emerald-900',
         bgTheme: 'bg-emerald-50/30'
@@ -237,13 +232,11 @@ function DashboardContent() {
     if (amount >= 5000) {
       return { 
         label: t.dashboardTierPatron, 
-        badge: 'bg-primary text-primary-foreground shadow-primary/30 ring-1 ring-primary/20', 
+        badge: 'bg-primary text-primary-foreground', 
         icon: Sparkles,
         progress: ((amount - 5000) / (10000 - 5000)) * 100,
         nextTier: t.dashboardTierGuardian,
         needed: 10000 - amount,
-        variant: 'patron',
-        glow: 'shadow-[0_0_15px_rgba(245,158,11,0.2)]',
         barColor: 'bg-primary',
         textColor: 'text-primary',
         bgTheme: 'bg-primary/5'
@@ -252,13 +245,11 @@ function DashboardContent() {
     if (amount >= 1000) {
       return { 
         label: t.dashboardTierPillar, 
-        badge: 'bg-amber-100 text-amber-700 border-amber-200 shadow-amber-50', 
+        badge: 'bg-amber-100 text-amber-700 border-amber-200', 
         icon: Star,
         progress: ((amount - 1000) / (5000 - 1000)) * 100,
         nextTier: t.dashboardTierPatron,
         needed: 5000 - amount,
-        variant: 'pillar',
-        glow: '',
         barColor: 'bg-amber-500',
         textColor: 'text-amber-800',
         bgTheme: 'bg-amber-50/20'
@@ -266,13 +257,11 @@ function DashboardContent() {
     }
     return { 
       label: t.dashboardTierSupporter, 
-      badge: 'bg-secondary text-secondary-foreground border-border/50', 
+      badge: 'bg-secondary text-secondary-foreground', 
       icon: Heart,
-      progress: (amount / 1000) * 100,
+      progress: Math.min((amount / 1000) * 100, 100),
       nextTier: t.dashboardTierPillar,
       needed: 1000 - amount,
-      variant: 'supporter',
-      glow: '',
       barColor: 'bg-muted-foreground/40',
       textColor: 'text-muted-foreground',
       bgTheme: 'bg-transparent'
@@ -292,58 +281,36 @@ function DashboardContent() {
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     : [];
 
-  const upcomingEvents = events
-    ? [...events]
-        .filter(e => new Date(e.date) >= new Date())
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    : [];
-
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-24 sm:pt-28">
       <main id="main-content" className="container mx-auto px-4 sm:px-6 md:px-8 space-y-6">
         <Breadcrumbs items={[{ label: language === 'hi' ? 'डैशबोर्ड' : 'Dashboard' }]} />
 
-        {!isVerified && (
-          <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{language === 'hi' ? 'खाता सत्यापित नहीं है' : 'Account Not Verified'}</AlertTitle>
-            <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between mt-2 gap-4">
-              <p className="text-sm">{language === 'hi' ? 'कृपया अपनी लॉगिन स्क्रीन पर जाकर खाता सत्यापित करें।' : 'Please complete your account verification to access all features.'}</p>
-              <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 w-fit" onClick={() => router.push('/login')}>
-                {language === 'hi' ? 'अभी सत्यापित करें' : 'Verify Now'}
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-5 sm:p-6 rounded-xl border shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary shadow-sm">
-                <AvatarImage src={profilePhotoPreview || user.photoURL || userProfile?.photoURL || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
-                  <UserIcon className="h-8 w-8" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1 bg-green-500 h-4 w-4 rounded-full border-2 border-white" />
-            </div>
-            <div className="space-y-0.5 min-w-0">
-              <h1 className={cn("text-xl sm:text-2xl font-bold flex items-center gap-2", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-                {t.dashboardWelcome}, <span className="truncate max-w-[150px] sm:max-w-none">{user.displayName || user.email?.split('@')[0]}</span>
+            <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary shadow-sm">
+              <AvatarImage src={profilePhotoPreview || user.photoURL || undefined} />
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+                <UserIcon className="h-8 w-8" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-0.5">
+              <h1 className={cn("text-xl sm:text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                {t.dashboardWelcome}, {user.displayName || user.email?.split('@')[0]}
               </h1>
-              <p className={cn("text-xs sm:text-sm text-muted-foreground", language === 'hi' ? 'font-hindi' : '')}>{t.dashboardSubtitle}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t.dashboardSubtitle}</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/"><Button variant="outline" size="sm" className="gap-2 h-9 text-xs sm:text-sm"><Globe className="h-4 w-4" />{t.browseWebsite}</Button></Link>
-            {adminDoc && <Link href="/management"><Button variant="default" size="sm" className="gap-2 bg-primary text-primary-foreground h-9 text-xs sm:text-sm"><ShieldCheck className="h-4 w-4" />{t.dashboardAdminPanel}</Button></Link>}
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 text-destructive hover:bg-destructive/10 h-9 text-xs sm:text-sm"><LogOut className="h-4 w-4" />{t.dashboardLogout}</Button>
+            <Link href="/"><Button variant="outline" size="sm" className="gap-2"><Globe className="h-4 w-4" />{t.browseWebsite}</Button></Link>
+            {adminDoc && <Link href="/management"><Button variant="default" size="sm" className="gap-2 bg-primary text-primary-foreground"><ShieldCheck className="h-4 w-4" />{t.dashboardAdminPanel}</Button></Link>}
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 text-destructive"><LogOut className="h-4 w-4" />{t.dashboardLogout}</Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 space-y-6">
-            <Card className={cn("border-primary/20 shadow-md overflow-hidden transition-all duration-500", tier.glow, tier.bgTheme)}>
+            <Card className={cn("border-primary/20 shadow-md overflow-hidden", tier.bgTheme)}>
               <CardHeader className="bg-primary/5 py-4 px-5 flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">{t.dashboardProfileInfo}</CardTitle>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleRefreshStatus} disabled={isRefreshing}>
@@ -353,159 +320,67 @@ function DashboardContent() {
               <CardContent className="pt-6 px-5 space-y-6">
                 <div className="space-y-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{t.dashboardTierLabel}</span>
-                    <Badge className={cn("text-[10px] gap-1 px-3 py-1 font-black uppercase tracking-wider", tier.badge)}>
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t.dashboardTierLabel}</span>
+                    <Badge className={cn("gap-1 px-3 py-1 uppercase tracking-wider", tier.badge)}>
                       <TierIcon className="h-3 w-3" /> {tier.label}
                     </Badge>
                   </div>
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-end">
-                      <p className={cn("text-[10px] font-bold uppercase tracking-tight", tier.textColor)}>
-                        {tier.nextTier 
-                          ? (language === 'hi' ? `${tier.nextTier} लक्ष्य` : `Target: ${tier.nextTier}`)
-                          : (language === 'hi' ? 'सर्वोच्च आध्यात्मिक सम्मान' : 'Peak Recognition Achieved')}
+                      <p className={cn("text-[10px] font-bold uppercase", tier.textColor)}>
+                        {tier.nextTier ? `Target: ${tier.nextTier}` : 'Peak Recognition'}
                       </p>
                       {tier.nextTier && <span className="text-[10px] font-black text-primary">₹{totalDonated} / ₹{tier.needed + totalDonated}</span>}
                     </div>
-                    
-                    <div className="h-2.5 w-full bg-black/5 rounded-full overflow-hidden border border-black/5">
-                      <div 
-                        className={cn("h-full transition-all duration-1000 rounded-full", tier.barColor)}
-                        style={{ width: `${tier.progress}%` }}
-                      />
+                    <div className="h-2.5 w-full bg-black/5 rounded-full overflow-hidden">
+                      <div className={cn("h-full transition-all duration-1000", tier.barColor)} style={{ width: `${tier.progress}%` }} />
                     </div>
-
-                    {tier.nextTier && (
-                      <p className="text-[10px] italic text-muted-foreground leading-relaxed bg-white/40 p-2 rounded border border-dashed">
-                        {language === 'hi' 
-                          ? `केवल ₹${tier.needed} और दान करके मंदिर के ${tier.nextTier} बनें और विशेष सम्मान प्राप्त करें।` 
-                          : `Contribute ₹${tier.needed} more to achieve ${tier.nextTier} status and receive community honors.`}
-                      </p>
-                    )}
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-black/5 space-y-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tighter">{t.dashboardEmail}</label>
-                    <div className="font-medium text-sm flex items-center gap-2 min-w-0">
-                      <span className="truncate">{user.email}</span>
-                      {isVerified ? (
-                        <Badge className="bg-green-100 text-green-700 h-5 text-[9px] shrink-0 border-0">Verified</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-destructive h-5 text-[9px] shrink-0">Unverified</Badge>
-                      )}
-                    </div>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase">{t.dashboardEmail}</label>
+                    <p className="font-medium text-sm truncate">{user.email}</p>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-tighter">{t.dashboardMemberSince}</label>
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase">{t.dashboardMemberSince}</label>
                     <p className="font-medium text-sm">{new Date(user.metadata.creationTime || "").toLocaleDateString()}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-amber-200 shadow-sm overflow-hidden bg-amber-50/30">
-              <CardHeader className="bg-amber-100/50 py-3 px-5 border-b border-amber-200">
-                <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-900">
-                  <Sparkles className="h-4 w-4" /> {t.dashboardTierHonorsTitle}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-5 space-y-4">
-                <div className="space-y-3">
-                  <div className="flex gap-3 items-start group">
-                    <div className="bg-secondary p-2 rounded-lg h-fit group-hover:scale-110 transition-transform"><Heart className="h-4 w-4 text-secondary-foreground" /></div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">{t.dashboardTierSupporter}</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierSupporterDesc}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 items-start group">
-                    <div className="bg-amber-100 p-2 rounded-lg h-fit border border-amber-200 group-hover:scale-110 transition-transform shadow-sm"><Star className="h-4 w-4 text-amber-700" /></div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">{t.dashboardTierPillar} (₹1,000+)</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierPillarDesc}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 items-start group">
-                    <div className="bg-primary p-2 rounded-lg h-fit group-hover:scale-110 transition-transform shadow-md ring-1 ring-white/20"><Sparkles className="h-4 w-4 text-primary-foreground" /></div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">{t.dashboardTierPatron} (₹5,000+)</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierPatronDesc}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 items-start group">
-                    <div className="bg-emerald-600 p-2 rounded-lg h-fit group-hover:scale-110 transition-transform shadow-emerald-200 shadow-lg"><Shield className="h-4 w-4 text-white" /></div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">{t.dashboardTierGuardian} (₹10,000+)</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierGuardianDesc}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 items-start group">
-                    <div className="bg-indigo-600 p-2 rounded-lg h-fit group-hover:scale-110 transition-transform shadow-indigo-200 shadow-xl ring-2 ring-white/30"><Crown className="h-4 w-4 text-white" /></div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">{t.dashboardTierGrandPatron} (₹1,00,000+)</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">{t.dashboardTierGrandPatronDesc}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-amber-200">
-                  <p className="text-[9px] italic text-amber-800 opacity-70">
-                    <Info className="h-3 w-3 inline mr-1" />
-                    {language === 'hi' 
-                      ? 'सहयोग स्तर पिछले १२ महीनों के कुल दान पर आधारित होते हैं।' 
-                      : 'Patronage levels are based on total contributions over the last 12 months.'}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-accent/20 bg-gradient-to-br from-white to-accent/5 p-5 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Trophy className="h-24 w-24 text-accent" />
-              </div>
-              <CardDescription className="text-xs font-bold uppercase tracking-widest relative z-10">{t.dashboardTotalContribution}</CardDescription>
-              <CardTitle className="text-3xl font-bold flex items-center gap-1 text-primary mt-1 relative z-10">
+            <Card className="border-accent/20 bg-gradient-to-br from-white to-accent/5 p-5 shadow-sm relative overflow-hidden">
+              <Trophy className="absolute -right-4 -bottom-4 h-24 w-24 text-accent/10 rotate-12" />
+              <CardDescription className="text-xs font-bold uppercase tracking-widest">{t.dashboardTotalContribution}</CardDescription>
+              <CardTitle className="text-3xl font-bold flex items-center gap-1 text-primary mt-1">
                 <IndianRupee className="h-7 w-7" />{totalDonated}
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground mt-2 relative z-10 flex items-center gap-1">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                {language === 'hi' ? 'आपका दान मंदिर के विकास में सहायक है।' : 'Your Sewa builds a stronger temple.'}
-              </p>
-              <div className="mt-4 pt-4 border-t border-accent/10 relative z-10">
-                <Link href="/donate">
-                  <Button variant="secondary" className="w-full h-10 text-xs font-bold uppercase tracking-wider group-hover:scale-105 transition-transform" size="sm">
-                    {t.navDonate}
-                  </Button>
-                </Link>
+              <div className="mt-4 pt-4 border-t border-accent/10">
+                <Link href="/donate"><Button variant="secondary" className="w-full h-10 text-xs font-bold uppercase" size="sm">{t.navDonate}</Button></Link>
               </div>
             </Card>
           </div>
 
           <div className="lg:col-span-8">
             <Card className="border-primary/20 shadow-md h-full overflow-hidden flex flex-col">
-              <Tabs defaultValue="donations" className="w-full flex-grow flex flex-col">
-                <div className="border-b bg-white overflow-x-auto touch-scroll py-1">
-                  <TabsList className="flex w-max min-w-full justify-start h-12 bg-transparent border-b-0 p-0 rounded-none flex-nowrap">
-                    <TabsTrigger value="donations" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger>
-                    <TabsTrigger value="requests" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><MessageSquare className="h-4 w-4 mr-2" />{t.dashboardMyRequests}</TabsTrigger>
-                    <TabsTrigger value="events" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Calendar className="h-4 w-4 mr-2" />{t.dashboardEventsTab}</TabsTrigger>
-                    <TabsTrigger value="profile" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><UserIcon className="h-4 w-4 mr-2" />{t.dashboardProfileTab}</TabsTrigger>
-                    <TabsTrigger value="settings" className="shrink-0 h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Settings className="h-4 w-4 mr-2" />{t.dashboardSettingsTab}</TabsTrigger>
+              <Tabs defaultValue="donations" className="w-full flex-grow">
+                <div className="border-b bg-white overflow-x-auto touch-scroll">
+                  <TabsList className="flex w-max min-w-full justify-start h-12 bg-transparent p-0">
+                    <TabsTrigger value="donations" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger>
+                    <TabsTrigger value="requests" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><MessageSquare className="h-4 w-4 mr-2" />{t.dashboardMyRequests}</TabsTrigger>
+                    <TabsTrigger value="profile" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><UserIcon className="h-4 w-4 mr-2" />{t.dashboardProfileTab}</TabsTrigger>
+                    <TabsTrigger value="settings" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Settings className="h-4 w-4 mr-2" />{t.dashboardSettingsTab}</TabsTrigger>
                   </TabsList>
                 </div>
 
-                <TabsContent value="donations" className="m-0 flex-grow">
+                <TabsContent value="donations" className="m-0">
                   <div className="p-4 border-b bg-muted/10">
                     <div className="relative max-w-sm">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        placeholder={t.dashboardHistorySearch} 
-                        className="pl-10 h-9 text-xs" 
-                        value={historySearch} 
-                        onChange={(e) => setHistorySearch(e.target.value)} 
-                      />
+                      <Input placeholder={t.dashboardHistorySearch} className="pl-10 h-9" value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} />
                     </div>
                   </div>
                   <CardContent className="p-0">
@@ -514,220 +389,104 @@ function DashboardContent() {
                     ) : filteredDonations.length > 0 ? (
                       <div className="divide-y">
                         {filteredDonations.map(d => (
-                          <div key={d.id} className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:bg-muted/30 transition-colors">
-                            <div className="flex items-start gap-4">
-                              <div className={cn(
-                                "p-2 sm:p-3 rounded-full",
-                                d.mode?.includes('Stripe') ? "bg-blue-50 text-blue-600" : 
-                                d.mode?.includes('UPI') ? "bg-green-50 text-green-600" : "bg-primary/5 text-primary"
-                              )}>
-                                {d.mode?.includes('Stripe') ? <CreditCard className="h-5 w-5" /> : 
-                                 d.mode?.includes('UPI') ? <QrCode className="h-5 w-5" /> : <Banknote className="h-5 w-5" />}
-                              </div>
-                              <div className="space-y-1">
-                                <p className="font-bold text-lg text-primary flex items-center gap-1"><IndianRupee className="h-4 w-4" />{d.amount}</p>
-                                <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
-                                  <Calendar className="h-3 w-3" /> {new Date(d.date).toLocaleString()}
-                                </div>
-                                <div className="text-[9px] uppercase font-bold tracking-tighter text-muted-foreground/60">{d.mode || 'Direct'}</div>
+                          <div key={d.id} className="p-4 sm:p-6 flex flex-col sm:row justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                              <div className="p-3 bg-primary/5 rounded-full text-primary"><IndianRupee className="h-5 w-5" /></div>
+                              <div>
+                                <p className="font-bold text-lg">₹{d.amount}</p>
+                                <p className="text-xs text-muted-foreground">{new Date(d.date).toLocaleString()}</p>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{d.mode}</p>
                               </div>
                             </div>
-                            <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2">
-                              {d.status === 'completed' ? (
-                                <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-0 gap-1.5 px-3 py-1 rounded-full shadow-sm">
-                                  <CheckCircle2 className="h-3 w-3" />
-                                  <span className="text-[9px] font-black uppercase tracking-wider">{language === 'hi' ? 'सफल' : 'Success'}</span>
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 gap-1.5 px-3 py-1 rounded-full">
-                                  <Clock className="h-3 w-3" />
-                                  <span className="text-[9px] font-black uppercase tracking-wider">{d.status}</span>
-                                </Badge>
-                              )}
-                              {d.id && <span className="text-[8px] font-mono text-muted-foreground opacity-40">Ref: {d.id.slice(0, 8)}</span>}
-                            </div>
+                            <Badge className={d.status === 'completed' ? "bg-emerald-500" : "bg-amber-500"}>{d.status}</Badge>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-20 text-center text-muted-foreground px-4 space-y-4">
-                        <History className="h-12 w-12 mx-auto opacity-20" />
-                        <p>{t.dashboardNoDonations}</p>
-                        <Link href="/donate"><Button variant="outline" size="sm" className="gap-2"><Plus className="h-4 w-4" /> {t.navDonate}</Button></Link>
-                      </div>
-                    )}
-                  </CardContent>
-                </TabsContent>
-
-                <TabsContent value="requests" className="m-0 flex-grow">
-                  <CardContent className="p-0">
-                    <div className="p-4 bg-muted/20 flex justify-end">
-                      <Link href="/prayer-request"><Button size="sm" className="gap-2 h-8 text-xs"><Plus className="h-3 w-3" />{t.dashboardNewRequest}</Button></Link>
-                    </div>
-                    {isRequestsLoading ? (
-                      <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                    ) : userRequests && userRequests.length > 0 ? (
-                      <div className="divide-y">
-                        {userRequests.map(r => (
-                          <div key={r.id} className="p-4 hover:bg-muted/30">
-                            <div className="flex justify-between items-start gap-2 mb-2">
-                              <h4 className="font-bold text-sm uppercase tracking-wider">{r.requestType}</h4>
-                              {r.status === 'completed' ? (
-                                <Badge className="bg-emerald-500 text-white border-0 gap-1.5 px-3 py-1 rounded-full shadow-sm">
-                                  <CheckCircle2 className="h-3 w-3" />
-                                  <span className="text-[9px] font-black uppercase tracking-wider">{language === 'hi' ? 'पूर्ण' : 'Completed'}</span>
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 gap-1.5 px-3 py-1 rounded-full">
-                                  <Clock className="h-3 w-3" />
-                                  <span className="text-[9px] font-black uppercase tracking-wider">{r.status}</span>
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-muted-foreground bg-muted/30 p-2 rounded-md italic">"{r.message}"</p>
-                            <p className="text-[9px] text-muted-foreground/60 mt-2">{new Date(r.createdAt).toLocaleString()}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-20 sm:py-24 text-center text-muted-foreground px-4">
-                        <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                        <p className="mb-4">{language === 'hi' ? 'कोई निवेदन नहीं मिला।' : 'No requests found.'}</p>
-                        <Link href="/prayer-request">
-                          <Button size="sm" variant="outline" className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            {t.dashboardNewRequest}
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-                  </CardContent>
-                </TabsContent>
-
-                <TabsContent value="events" className="m-0 flex-grow">
-                  <CardContent className="p-6">
-                    {isEventsLoading ? (
-                      <div className="py-10 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                    ) : upcomingEvents.length > 0 ? (
-                      <div className="grid gap-4">
-                        {upcomingEvents.map(e => (
-                          <Card key={e.id} className="overflow-hidden flex items-stretch border-primary/10 hover:shadow-md transition-shadow">
-                            {e.image && <div className="w-24 sm:w-32 shrink-0"><img src={e.image} className="h-full w-full object-cover" /></div>}
-                            <div className="p-4 flex flex-col justify-center min-w-0">
-                              <h4 className="font-bold text-sm sm:text-base truncate">{e.title}</h4>
-                              <p className="text-xs text-primary font-medium mt-1 flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(e.date).toLocaleDateString()}</p>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 mt-2">{e.description}</p>
-                            </div>
-                          </Card>
                         ))}
                       </div>
                     ) : (
                       <div className="py-20 text-center text-muted-foreground px-4">
-                        <Calendar className="h-12 w-12 mx-auto opacity-20 mb-4" />
-                        <p>{t.dashboardNoEvents}</p>
+                        <History className="h-12 w-12 mx-auto opacity-20 mb-4" />
+                        <p>{t.dashboardNoDonations}</p>
                       </div>
                     )}
                   </CardContent>
                 </TabsContent>
 
-                <TabsContent value="profile" className="m-0 flex-grow p-6">
+                <TabsContent value="requests" className="m-0">
+                  <CardContent className="p-6">
+                    <div className="flex justify-end mb-6">
+                      <Link href="/prayer-request"><Button size="sm" className="gap-2"><Plus className="h-4 w-4" />{t.dashboardNewRequest}</Button></Link>
+                    </div>
+                    {isRequestsLoading ? (
+                      <div className="py-10 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+                    ) : userRequests && userRequests.length > 0 ? (
+                      <div className="space-y-4">
+                        {userRequests.map(r => (
+                          <Card key={r.id} className="p-4 border-l-4 border-l-primary">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-bold text-sm uppercase">{r.requestType}</h4>
+                              <Badge variant="outline">{r.status}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground italic">"{r.message}"</p>
+                            <p className="text-[10px] text-muted-foreground mt-2">{new Date(r.createdAt).toLocaleString()}</p>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-10 text-center text-muted-foreground">
+                        <p>No prayer requests found.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="profile" className="m-0 p-6">
                   <form onSubmit={handleUpdateProfile} className="space-y-8 max-w-lg mx-auto">
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex flex-col items-center">
                       <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.dashboardUpdatePhoto}</Label>
-                      <div className="flex flex-col items-center gap-4">
-                        <div 
-                          className="relative group cursor-pointer"
-                          onClick={() => document.getElementById('profile-img-input')?.click()}
-                        >
-                          <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-xl ring-1 ring-primary/10">
-                            <AvatarImage src={profilePhotoPreview || user.photoURL || userProfile?.photoURL || undefined} />
-                            <AvatarFallback className="bg-primary/5 text-primary text-3xl font-bold">
-                              <UserIcon className="h-12 w-12" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Camera className="h-8 w-8 text-white" />
-                          </div>
-                          <div className="absolute bottom-1 right-1 bg-primary text-white p-1.5 rounded-full shadow-lg">
-                            <Upload className="h-4 w-4" />
-                          </div>
+                      <div className="relative group cursor-pointer" onClick={() => document.getElementById('dash-img-input')?.click()}>
+                        <Avatar className="h-24 w-24 border-4 border-white shadow-xl">
+                          <AvatarImage src={profilePhotoPreview || user.photoURL || undefined} />
+                          <AvatarFallback className="bg-primary/5 text-primary text-3xl font-bold"><UserIcon className="h-12 w-12" /></AvatarFallback>
+                        </Avatar>
+                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Camera className="h-8 w-8 text-white" />
                         </div>
-                        <p className="text-[10px] text-muted-foreground italic">{language === 'hi' ? 'फोटो बदलने के लिए क्लिक करें' : 'Click to change profile picture'}</p>
-                        <input 
-                          id="profile-img-input" 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*" 
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => setProfilePhotoPreview(reader.result as string);
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
+                        <input id="dash-img-input" type="file" className="hidden" accept="image/*" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => setProfilePhotoPreview(reader.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }} />
                       </div>
                     </div>
-
-                    <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="prof-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.dashboardUpdateName}</Label>
-                        <Input 
-                          id="prof-name" 
-                          value={profileName} 
-                          onChange={(e) => setProfileName(e.target.value)}
-                          placeholder="Your Name"
-                          className="h-12 text-base"
-                          required
-                        />
+                        <Label htmlFor="d-prof-name" className="text-xs font-bold uppercase text-muted-foreground">{t.dashboardUpdateName}</Label>
+                        <Input id="d-prof-name" value={profileName} onChange={(e) => setProfileName(e.target.value)} required />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.dashboardEmail}</Label>
-                        <Input 
-                          value={user.email || ""} 
-                          disabled 
-                          className="h-12 bg-muted/50 text-muted-foreground"
-                        />
-                        <p className="text-[10px] text-muted-foreground flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {language === 'hi' ? 'ईमेल पता बदला नहीं जा सकता।' : 'Email address cannot be changed.'}</p>
-                      </div>
+                      <Button type="submit" className="w-full h-12" disabled={isUpdatingProfile}>
+                        {isUpdatingProfile ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                        {t.dashboardUpdateBtn}
+                      </Button>
                     </div>
-
-                    <Button type="submit" className="w-full h-12 gap-2 shadow-lg" disabled={isUpdatingProfile}>
-                      {isUpdatingProfile ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                      {t.dashboardUpdateBtn}
-                    </Button>
                   </form>
                 </TabsContent>
 
-                <TabsContent value="settings" className="m-0 flex-grow p-6 space-y-8">
+                <TabsContent value="settings" className="m-0 p-6 space-y-8">
                   <div className="space-y-4">
                     <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">{t.dashboardLanguagePref}</h3>
                     <div className="flex gap-2">
-                      <Button 
-                        variant={language === 'hi' ? 'default' : 'outline'} 
-                        className="flex-1 h-12 gap-2" 
-                        onClick={() => setLanguage('hi')}
-                      >
-                        <span className="text-lg">🇮🇳</span> हिंदी
-                      </Button>
-                      <Button 
-                        variant={language === 'en' ? 'default' : 'outline'} 
-                        className="flex-1 h-12 gap-2" 
-                        onClick={() => setLanguage('en')}
-                      >
-                        <span className="text-lg">🇬🇧</span> English
-                      </Button>
+                      <Button variant={language === 'hi' ? 'default' : 'outline'} className="flex-1 h-12" onClick={() => setLanguage('hi')}>हिंदी</Button>
+                      <Button variant={language === 'en' ? 'default' : 'outline'} className="flex-1 h-12" onClick={() => setLanguage('en')}>English</Button>
                     </div>
                   </div>
-
                   <div className="space-y-4 pt-8 border-t">
-                    <h3 className="font-bold text-sm uppercase tracking-widest text-destructive">{language === 'hi' ? 'खतरनाक जोन' : 'Danger Zone'}</h3>
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-destructive">Danger Zone</h3>
                     <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="w-full justify-start gap-2 h-12">
-                          <Trash2 className="h-4 w-4" />{t.dashboardDeleteAccount}
-                        </Button>
+                        <Button variant="destructive" className="w-full justify-start h-12"><Trash2 className="h-4 w-4 mr-2" />{t.dashboardDeleteAccount}</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="w-[95%] max-w-md">
                         <AlertDialogHeader>
@@ -735,25 +494,12 @@ function DashboardContent() {
                           <AlertDialogDescription>{t.dashboardDeleteConfirmDesc}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="del-password">{t.dashboardDeletePasswordLabel}</Label>
-                            <Input 
-                              id="del-password" 
-                              type="password" 
-                              value={confirmPassword} 
-                              onChange={(e) => setConfirmPassword(e.target.value)}
-                              placeholder={t.dashboardDeletePasswordPlaceholder}
-                            />
-                          </div>
+                          <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Enter password to confirm" />
                         </div>
                         <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setConfirmPassword("")}>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleDeleteAccount} 
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90" 
-                            disabled={isDeleting || !confirmPassword}
-                          >
-                            {isDeleting ? '...' : 'Delete'}
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-white" disabled={isDeleting || !confirmPassword}>
+                            {isDeleting ? 'Deleting...' : 'Delete Permanently'}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -771,11 +517,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
       <DashboardContent />
     </Suspense>
   );
