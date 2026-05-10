@@ -177,6 +177,13 @@ export type TranslationKeys = {
   dashboardUpdatePhoto: string;
   dashboardUpdateBtn: string;
   dashboardProfileSuccess: string;
+  dashboardSecurityTitle: string;
+  dashboardChangePassword: string;
+  dashboardForgotPassword: string;
+  dashboardResetEmailSent: string;
+  dashboardCurrentPassword: string;
+  dashboardNewPassword: string;
+  dashboardPasswordUpdateSuccess: string;
 
   // Prayer Request
   prayerTitle: string;
@@ -391,6 +398,13 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardUpdatePhoto: 'प्रोफ़ाइल फोटो',
     dashboardUpdateBtn: 'विवरण सुरक्षित करें',
     dashboardProfileSuccess: 'प्रोफ़ाइल सफलतापूर्वक अपडेट की गई!',
+    dashboardSecurityTitle: 'खाता सुरक्षा',
+    dashboardChangePassword: 'पासवर्ड बदलें',
+    dashboardForgotPassword: 'पासवर्ड भूल गए?',
+    dashboardResetEmailSent: 'रीसेट ईमेल आपके इनबॉक्स में भेज दिया गया है।',
+    dashboardCurrentPassword: 'वर्तमान पासवर्ड',
+    dashboardNewPassword: 'नया पासवर्ड',
+    dashboardPasswordUpdateSuccess: 'पासवर्ड सफलतापूर्वक अपडेट किया गया!',
     prayerTitle: 'प्रार्थना एवं अनुष्ठान निवेदन',
     prayerSubtitle: 'अपनी विशेष प्रार्थना या अनुष्ठान के लिए निवेदन भेजें। मंदिर के पुजारी आपके लिए मंगल कामना करेंगे।',
     prayerFormType: 'निवेदन का प्रकार',
@@ -589,6 +603,13 @@ export const translations: { [key: string]: TranslationKeys } = {
     dashboardUpdatePhoto: 'Profile Photo',
     dashboardUpdateBtn: 'Save Changes',
     dashboardProfileSuccess: 'Profile updated successfully!',
+    dashboardSecurityTitle: 'Account Security',
+    dashboardChangePassword: 'Change Password',
+    dashboardForgotPassword: 'Forgot Password?',
+    dashboardResetEmailSent: 'A reset email has been sent to your inbox.',
+    dashboardCurrentPassword: 'Current Password',
+    dashboardNewPassword: 'New Password',
+    dashboardPasswordUpdateSuccess: 'Password updated successfully!',
     prayerTitle: 'Prayer & Ritual Request',
     prayerSubtitle: 'Submit a request for a special prayer or ritual. The temple priests will pray for your well-being.',
     prayerFormType: 'Request Type',

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -8,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updateProfile } from "firebase/auth";
+import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updateProfile, sendPasswordResetEmail, updatePassword } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info, Shield, Gem, Crown, Clock } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info, Shield, Gem, Crown, Clock, KeyRound, MailCheck, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -51,6 +61,13 @@ function DashboardContent() {
   const [profileName, setProfileName] = useState("");
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  // Security States
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [changePwdCurrent, setChangePwdCurrent] = useState("");
+  const [changePwdNew, setChangePwdNew] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -111,7 +128,7 @@ function DashboardContent() {
   }, [user, isUserLoading, router, mounted]);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await signOut(auth!);
     router.push("/");
   };
 
@@ -151,6 +168,40 @@ function DashboardContent() {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
       setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleSendResetEmail = async () => {
+    if (!auth || !user?.email) return;
+    setIsResettingPassword(true);
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      toast({ title: "Success", description: t.dashboardResetEmailSent });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth || !user || !changePwdCurrent || !changePwdNew) return;
+    setIsUpdatingPassword(true);
+    try {
+      const credential = EmailAuthProvider.credential(user.email!, changePwdCurrent);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, changePwdNew);
+      toast({ title: "Success", description: t.dashboardPasswordUpdateSuccess });
+      setShowChangePasswordDialog(false);
+      setChangePwdCurrent("");
+      setChangePwdNew("");
+    } catch (err: any) {
+      let msg = err.message;
+      if (err.code === 'auth/wrong-password') msg = t.authErrorWrongPassword;
+      toast({ variant: "destructive", title: "Error", description: msg });
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -280,6 +331,8 @@ function DashboardContent() {
         )
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     : [];
+
+  const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
 
   return (
     <div className="min-h-screen bg-secondary/30 pb-20 pt-24 sm:pt-28">
@@ -482,6 +535,58 @@ function DashboardContent() {
                       <Button variant={language === 'en' ? 'default' : 'outline'} className="flex-1 h-12" onClick={() => setLanguage('en')}>English</Button>
                     </div>
                   </div>
+
+                  {isPasswordUser && (
+                    <div className="space-y-4 pt-8 border-t">
+                      <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <KeyRound className="h-4 w-4" />
+                        {t.dashboardSecurityTitle}
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full h-12 justify-start gap-2">
+                              <RefreshCw className="h-4 w-4" />
+                              {t.dashboardChangePassword}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="w-[95%] max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>{t.dashboardChangePassword}</DialogTitle>
+                              <DialogDescription>{language === 'hi' ? 'अपना पासवर्ड अपडेट करने के लिए विवरण भरें।' : 'Fill in the details to update your password.'}</DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleChangePassword} className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label>{t.dashboardCurrentPassword}</Label>
+                                <Input type="password" value={changePwdCurrent} onChange={(e) => setChangePwdCurrent(e.target.value)} required />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>{t.dashboardNewPassword}</Label>
+                                <Input type="password" value={changePwdNew} onChange={(e) => setChangePwdNew(e.target.value)} required minLength={6} />
+                              </div>
+                              <DialogFooter>
+                                <Button type="submit" className="w-full h-12" disabled={isUpdatingPassword}>
+                                  {isUpdatingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                  {t.dashboardUpdateBtn}
+                                </Button>
+                              </DialogFooter>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+
+                        <Button 
+                          variant="outline" 
+                          className="w-full h-12 justify-start gap-2" 
+                          onClick={handleSendResetEmail}
+                          disabled={isResettingPassword}
+                        >
+                          {isResettingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <MailCheck className="h-4 w-4" />}
+                          {t.dashboardForgotPassword}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-4 pt-8 border-t">
                     <h3 className="font-bold text-sm uppercase tracking-widest text-destructive">Danger Zone</h3>
                     <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -493,12 +598,19 @@ function DashboardContent() {
                           <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
                           <AlertDialogDescription>{t.dashboardDeleteConfirmDesc}</AlertDialogDescription>
                         </AlertDialogHeader>
-                        <div className="space-y-4 py-4">
-                          <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Enter password to confirm" />
-                        </div>
+                        {isPasswordUser && (
+                          <div className="space-y-4 py-4">
+                            <Label>{t.dashboardDeletePasswordLabel}</Label>
+                            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t.dashboardDeletePasswordPlaceholder} />
+                          </div>
+                        )}
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-white" disabled={isDeleting || !confirmPassword}>
+                          <AlertDialogAction 
+                            onClick={handleDeleteAccount} 
+                            className="bg-destructive text-white" 
+                            disabled={isDeleting || (isPasswordUser && !confirmPassword)}
+                          >
                             {isDeleting ? 'Deleting...' : 'Delete Permanently'}
                           </AlertDialogAction>
                         </AlertDialogFooter>
