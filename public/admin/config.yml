@@ -1,4 +1,3 @@
-
 backend:
   name: git-gateway
   branch: main
@@ -13,33 +12,36 @@ collections:
     editor:
       preview: false
     files:
-      - name: "identity"
+      - name: "site_identity"
         label: "Site Identity"
         file: "content/settings.json"
         fields:
-          - { label: "English Site Title", name: "site_title_en", widget: "string" }
-          - { label: "Hindi Site Title", name: "site_title_hi", widget: "string" }
-          - { label: "Favicon", name: "favicon", widget: "image" }
+          - { label: "Site Title (English)", name: "site_title_en", widget: "string" }
+          - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
+          - { label: "Favicon / Logo", name: "favicon", widget: "image" }
+          - { label: "Live Aarti (YouTube URL)", name: "live_aarti_url", widget: "string", required: false }
 
-  - name: "pages"
-    label: "Main Sections"
+  - name: "hero"
+    label: "Hero Section"
     delete: false
-    editor:
-      preview: false
     files:
-      - name: "hero"
-        label: "Hero Section"
+      - name: "hero_content"
+        label: "Hero Content"
         file: "content/hero.json"
         fields:
           - { label: "Headline (English)", name: "headline_en", widget: "string" }
           - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
           - { label: "Subtitle (English)", name: "subtitle_en", widget: "string" }
           - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "string" }
-          - { label: "Background Video URL", name: "video_url", widget: "string", required: false }
-          - { label: "Fallback Image", name: "fallback_image", widget: "image" }
+          - { label: "Background Video URL", name: "video_url", widget: "string" }
+          - { label: "Fallback Background Image", name: "fallback_image", widget: "image" }
 
-      - name: "about"
-        label: "About Us"
+  - name: "about"
+    label: "About Us"
+    delete: false
+    files:
+      - name: "about_content"
+        label: "About Content"
         file: "content/about.json"
         fields:
           - { label: "History Title (English)", name: "history_title_en", widget: "string" }
@@ -58,13 +60,8 @@ collections:
     create: true
     slug: "{{title_en}}"
     fields:
-      - { label: "Title (English)", name: "title_en", widget: "string" }
-      - { label: "Title (Hindi)", name: "title_hi", widget: "string" }
+      - { label: "Program Name (English)", name: "title_en", widget: "string" }
+      - { label: "Program Name (Hindi)", name: "title_hi", widget: "string" }
       - { label: "Description (English)", name: "desc_en", widget: "text" }
       - { label: "Description (Hindi)", name: "desc_hi", widget: "text" }
-      - { 
-          label: "Icon", 
-          name: "icon", 
-          widget: "select", 
-          options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] 
-        }
+      - { label: "Icon", name: "icon", widget: "select", options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] }

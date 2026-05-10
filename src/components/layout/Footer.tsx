@@ -55,7 +55,7 @@ export function Footer() {
                     src={settings.favicon} 
                     alt="Logo" 
                     fill 
-                    className="object-contain p-1.5"
+                    className="object-contain p-1.5 z-10"
                     onError={() => setLogoError(true)}
                   />
                 ) : (

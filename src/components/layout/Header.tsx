@@ -212,7 +212,7 @@ export function Header() {
           <div className="h-6 w-px bg-border/60" />
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {adminDoc && (
                 <Link href="/management">
                   <Button 
@@ -242,7 +242,7 @@ export function Header() {
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3">
             {adminDoc && (
               <Link href="/management">
                 <Button 
