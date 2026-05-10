@@ -8,10 +8,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import TempleIcon from "@/components/icons/TempleIcon";
 
-/**
- * Global Footer component.
- * Displays site branding, quick links, and social media with CMS synchronization.
- */
 export function Footer() {
   const { t, language } = useLanguage();
   const [settings, setSettings] = React.useState<any>(null);

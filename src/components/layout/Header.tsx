@@ -34,7 +34,6 @@ export function Header() {
   const [settings, setSettings] = React.useState<any>(null);
   const [logoError, setLogoError] = React.useState(false);
 
-  // Fetch global settings via the dedicated API route
   React.useEffect(() => {
     fetch('/api/settings')
       .then(res => res.json())

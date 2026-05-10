@@ -10,7 +10,9 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy:vercel": "vercel deploy --prod",
+    "deploy:netlify": "netlify deploy --prod"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",
@@ -69,6 +71,8 @@
     "genkit-cli": "^1.20.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vercel": "^37.0.0",
+    "netlify-cli": "^17.0.0"
   }
 }
