@@ -117,9 +117,9 @@ export function Header() {
     )}>
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Branding - Strict Layout Logic */}
-        <Link href="/" className="flex items-center min-w-0 flex-shrink group mr-4">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-xl bg-amber-50/80 px-2 py-1.5 shadow-sm border border-primary/10 max-w-full">
+        {/* Branding - Strict Layout Logic to prevent overlap */}
+        <Link href="/" className="flex items-center min-w-0 flex-shrink group mr-4 max-w-[50%] xs:max-w-[60%] sm:max-w-none">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-xl bg-amber-50/80 px-2 py-1.5 shadow-sm border border-primary/10 w-full">
             <div className="relative h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/5">
               {settings?.favicon && !logoError ? (
                 <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1" onError={() => setLogoError(true)} />
@@ -172,9 +172,11 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile Nav Toggle */}
-        <div className="flex lg:hidden items-center gap-2 shrink-0">
-          <LanguageSwitcher />
+        {/* Mobile Nav Toggle - Shrink-0 ensures it stays on screen */}
+        <div className="flex lg:hidden items-center gap-1 sm:gap-2 shrink-0">
+          <div className="hidden xs:block">
+            <LanguageSwitcher />
+          </div>
           <AuthButton isMobile />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -192,6 +194,9 @@ export function Header() {
                     {item.label}
                   </Link>
                 ))}
+                <div className="xs:hidden py-4 border-b border-border/50">
+                  <LanguageSwitcher />
+                </div>
                 {adminDoc && (
                   <Link href="/management" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 py-4 text-lg font-bold text-primary border-b border-border/50">
                     <ShieldCheck className="h-5 w-5" /> Management

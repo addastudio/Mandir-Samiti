@@ -32,7 +32,7 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12 sm:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-12">
           
-          {/* Branding - Strict Containment */}
+          {/* Branding - Strict Containment to prevent overlap */}
           <div className="md:col-span-5 space-y-6">
             <div className="flex items-center gap-4 min-w-0">
               <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex shrink-0 items-center justify-center shadow-sm">
