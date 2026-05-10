@@ -12,6 +12,7 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import TempleIcon from "@/components/icons/TempleIcon";
@@ -189,7 +190,7 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="right" className="flex flex-col p-0">
               <div className="h-20 flex items-center px-6 border-b bg-amber-50">
-                <span className="font-bold text-lg truncate">{siteName}</span>
+                <SheetTitle className="font-bold text-lg truncate text-left">{siteName}</SheetTitle>
               </div>
               <div className="flex-1 overflow-y-auto py-6 px-6">
                 {navItems.map((item) => (
