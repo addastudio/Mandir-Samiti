@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -49,14 +48,7 @@ const ContactSection = dynamic(() => import("@/components/sections/ContactSectio
   loading: () => <div className="h-96 bg-muted/5 animate-pulse rounded-xl m-4" /> 
 });
 
-export default function Home(props: {
-  params: Promise<any>;
-  searchParams: Promise<any>;
-}) {
-  // Next.js 15: params and searchParams are Promises
-  const params = React.use(props.params);
-  const searchParams = React.use(props.searchParams);
-
+export default function Home() {
   const { isLangLoading, language } = useLanguage();
 
   return (

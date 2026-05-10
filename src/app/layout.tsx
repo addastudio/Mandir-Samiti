@@ -10,8 +10,6 @@ import { BackToTop } from '@/components/layout/BackToTop';
 import Script from 'next/script';
 import { getLocalCmsContent } from '@/lib/cms';
 
-export const revalidate = 0;
-
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -45,9 +43,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout(props: {
+export default function RootLayout({
+  children,
+}: {
   children: React.ReactNode;
-  params: Promise<any>;
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -73,7 +72,7 @@ export default function RootLayout(props: {
             />
             
             <a href="#main-content" className="skip-link">Skip to main content</a>
-            {props.children}
+            {children}
             <BackToTop />
             <Toaster />
 
