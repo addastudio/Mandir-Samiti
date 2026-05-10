@@ -31,7 +31,7 @@ export function Footer() {
           {/* Branding - Fixed Spacing */}
           <div className="md:col-span-5 space-y-6">
             <div className="flex items-center gap-4">
-              <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex flex-shrink-0 items-center justify-center shadow-sm">
+              <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex shrink-0 items-center justify-center shadow-sm">
                 {settings?.favicon && !logoError ? (
                   <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1.5" onError={() => setLogoError(true)} />
                 ) : (
@@ -79,7 +79,7 @@ export function Footer() {
             </div>
             <div className="pt-6 border-t border-border/40">
               <p className="text-[10px] text-muted-foreground italic flex items-center gap-2">
-                <MapPin className="h-3 w-3" /> {t.contactAddress.replace('पता: ', '')}
+                <MapPin className="h-3 w-3 shrink-0" /> {t.contactAddress.replace('पता: ', '')}
               </p>
             </div>
           </div>

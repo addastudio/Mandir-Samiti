@@ -14,7 +14,6 @@ import {
   SheetTrigger,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import TempleIcon from "@/components/icons/TempleIcon";
@@ -86,10 +85,10 @@ export function Header() {
     : (settings?.site_title_en || "Mandir Samiti Bahpura");
 
   const AuthButton = ({ isMobile = false }: { isMobile?: boolean }) => {
-    if (isUserLoading) return <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />;
+    if (isUserLoading) return <div className="h-9 w-9 animate-pulse rounded-full bg-muted shrink-0" />;
     if (user) {
       return (
-        <Link href="/dashboard" onClick={() => isMobile && setIsMobileMenuOpen(false)}>
+        <Link href="/dashboard" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
           <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-105 transition-all">
             <AvatarImage src={user.photoURL || userProfile?.photoURL || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">
@@ -100,7 +99,7 @@ export function Header() {
       );
     }
     return (
-      <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)}>
+      <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
         <Button variant="ghost" size="sm" className="h-9 px-2 sm:px-4">
           <LogIn className="h-4 w-4 mr-2" />
           <span className={cn("text-xs sm:text-sm", language === "hi" && "font-hindi")}>Login</span>
@@ -117,20 +116,20 @@ export function Header() {
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         
         {/* Branding - Fixed Overlap Logic */}
-        <Link href="/" className="flex items-center gap-3 min-w-0 flex-shrink mr-4 group">
+        <Link href="/" className="flex items-center gap-3 min-w-0 flex-shrink mr-2 sm:mr-4 group">
           <div className="flex items-center gap-2 lg:gap-3 rounded-xl bg-amber-50/80 px-2 py-1.5 shadow-sm border border-primary/10">
-            <div className="relative h-9 w-9 sm:h-10 sm:w-10 overflow-hidden rounded-full bg-white flex-shrink-0 flex items-center justify-center border border-primary/5">
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/5">
               {settings?.favicon && !logoError ? (
                 <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1" onError={() => setLogoError(true)} />
               ) : (
-                <TempleIcon className="h-6 w-6 text-primary" />
+                <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               )}
             </div>
-            <div className="flex flex-col min-w-0 max-w-[140px] sm:max-w-[240px] lg:max-w-none">
-              <span className={cn("text-sm sm:text-base lg:text-lg font-bold truncate block leading-tight", language === "hi" ? "font-hindi" : "font-headline")}>
+            <div className="flex flex-col min-w-0 max-w-[120px] xs:max-w-[180px] sm:max-w-[240px] lg:max-w-none">
+              <span className={cn("text-xs sm:text-base lg:text-lg font-bold truncate block leading-tight", language === "hi" ? "font-hindi" : "font-headline")}>
                 {siteName}
               </span>
-              <span className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground font-black opacity-70 hidden xs:block">
+              <span className="text-[7px] sm:text-[9px] uppercase tracking-widest text-muted-foreground font-black opacity-70 hidden xs:block">
                 {language === 'hi' ? 'श्रद्धा और सेवा' : 'Faith and Service'}
               </span>
             </div>
@@ -169,13 +168,13 @@ export function Header() {
         </div>
 
         {/* Mobile Nav Toggle */}
-        <div className="flex lg:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-1.5 sm:gap-3">
           <LanguageSwitcher />
           <AuthButton isMobile />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-10 w-10">
-                <Menu className="h-6 w-6" />
+              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="flex flex-col p-0">
