@@ -238,17 +238,11 @@ export default function ManagementPage() {
 
     setIsProcessingRole(true);
     try {
-      if (type === 'resign') {
-        if (allAdmins && allAdmins.length <= 1) {
-          toast({ variant: "destructive", title: "Action Denied", description: "Cannot resign as you are the last administrator." });
-          setIsProcessingRole(false);
-          return;
-        }
-
-        // Verify password if using email provider
+      // Re-authentication for sensitive security changes
+      if (type === 'resign' || type === 'admin') {
         if (user.providerData.some(p => p.providerId === 'password')) {
           if (!resignPassword) {
-            toast({ variant: "destructive", title: "Password Required", description: "Please enter your password to confirm resignation." });
+            toast({ variant: "destructive", title: "Password Required", description: "Please enter your password to confirm this security change." });
             setIsProcessingRole(false);
             return;
           }
@@ -260,6 +254,14 @@ export default function ManagementPage() {
             setIsProcessingRole(false);
             return;
           }
+        }
+      }
+
+      if (type === 'resign') {
+        if (allAdmins && allAdmins.length <= 1) {
+          toast({ variant: "destructive", title: "Action Denied", description: "Cannot resign as you are the last administrator." });
+          setIsProcessingRole(false);
+          return;
         }
 
         await logActivity('RESIGN', 'roles_admin', name);
@@ -977,21 +979,21 @@ export default function ManagementPage() {
                 ? "CRITICAL: You are about to resign your administrative privileges. This action requires password verification for security. Continue?" 
                 : roleConfirm?.type === 'admin' 
                   ? allAdmins?.some(a => a.id === roleConfirm.userId)
-                    ? `You are about to REVOKE administrative access for ${roleConfirm.name}. They will no longer be able to manage temple operations. Proceed?`
-                    : `You are about to GRANT full administrative access to ${roleConfirm.name}. They will have complete control over temple data and permissions. Proceed?`
+                    ? `You are about to REVOKE administrative access for ${roleConfirm.name}. This action requires password verification for security. Proceed?`
+                    : `You are about to GRANT full administrative access to ${roleConfirm.name}. This action requires password verification for security. Proceed?`
                   : `Update the official temple role for ${roleConfirm?.name} to "${roleConfirm?.newRole}"?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           
-          {roleConfirm?.type === 'resign' && user?.providerData.some(p => p.providerId === 'password') && (
+          {(roleConfirm?.type === 'resign' || roleConfirm?.type === 'admin') && user?.providerData.some(p => p.providerId === 'password') && (
             <div className="space-y-2 py-4">
-              <Label htmlFor="resign-password">Verify Password</Label>
+              <Label htmlFor="verify-password">Verify Your Password</Label>
               <Input 
-                id="resign-password" 
+                id="verify-password" 
                 type="password" 
                 value={resignPassword} 
                 onChange={(e) => setResignPassword(e.target.value)} 
-                placeholder="Enter your password"
+                placeholder="Enter your account password"
                 className="border-primary/20"
               />
             </div>
@@ -1001,7 +1003,7 @@ export default function ManagementPage() {
             <AlertDialogCancel className="mt-0 h-11">Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleRoleAction} 
-              disabled={isProcessingRole || (roleConfirm?.type === 'resign' && !resignPassword && user?.providerData.some(p => p.providerId === 'password'))}
+              disabled={isProcessingRole || ((roleConfirm?.type === 'resign' || roleConfirm?.type === 'admin') && !resignPassword && user?.providerData.some(p => p.providerId === 'password'))}
               className={cn(
                 "h-11 shadow-lg font-bold min-w-[120px]", 
                 roleConfirm?.type === 'resign' || (roleConfirm?.type === 'admin' && allAdmins?.some(a => a.id === roleConfirm.userId)) 
