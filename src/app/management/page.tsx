@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, collectionGroup, query, serverTimestamp, setDoc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
+import { collection, doc, collectionGroup, query, setDoc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
 import { 
   Trash2, 
   Loader2, 
@@ -40,12 +40,10 @@ import {
   User as UserIcon,
   Activity,
   TrendingUp,
-  Video,
   IndianRupee,
-  ChevronRight
+  LogOut
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +91,7 @@ export default function ManagementPage() {
   const [userSort, setUserSort] = useState<string>("role");
   const [analyticsRange, setAnalyticsRange] = useState("7d");
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string, path?: string } | null>(null);
-  const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' } | null>(null);
+  const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' | 'resign' } | null>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [aiTopic, setAiTopic] = useState("");
 
@@ -173,16 +171,8 @@ export default function ManagementPage() {
     });
   }, [allDonations, language, analyticsRange, mounted]);
 
-  const totalRangeAmount = React.useMemo(() => chartData.reduce((acc, curr) => acc + curr.amount, 0), [chartData]);
-
-  /**
-   * Helper to log administrative actions.
-   * Returns a promise so it can be awaited for sensitive operations like role removal.
-   */
   const logActivity = async (action: string, entityType: string, title: string) => {
     if (!firestore || !user) return;
-    // We use standard addDoc instead of non-blocking for management logs 
-    // to ensure predictable execution order during permission revokes.
     try {
       await addDoc(collection(firestore, "admin_activity_logs"), {
         adminId: user.uid,
@@ -226,7 +216,6 @@ export default function ManagementPage() {
     const { col, id, title, path } = deleteConfirm;
     const ref = path ? doc(firestore, path) : doc(firestore, col, id);
     
-    // Log first to ensure admin has permission
     await logActivity('DELETE', col, title);
     await deleteDoc(ref);
     
@@ -235,24 +224,40 @@ export default function ManagementPage() {
   };
 
   const handleRoleAction = async () => {
-    if (!firestore || !roleConfirm) return;
+    if (!firestore || !roleConfirm || !user) return;
     const { userId, name, newRole, type } = roleConfirm;
+
     try {
+      if (type === 'resign') {
+        if (allAdmins && allAdmins.length <= 1) {
+          toast({ variant: "destructive", title: "Action Denied", description: "Cannot resign as you are the last administrator." });
+          return;
+        }
+        await logActivity('RESIGN', 'roles_admin', name);
+        await deleteDoc(doc(firestore, "roles_admin", userId));
+        toast({ title: "You have resigned as administrator" });
+        router.push("/dashboard");
+        return;
+      }
+
       if (type === 'admin') {
         const isAdminNow = allAdmins?.some(a => a.id === userId);
         if (isAdminNow) {
-          // LOG FIRST: user is currently an admin
+          if (userId === user.uid) {
+            toast({ variant: "destructive", title: "Use Resignation", description: "Please use the 'Resign' button to remove your own access." });
+            return;
+          }
           await logActivity('REMOVE_ADMIN', 'roles_admin', name);
           await deleteDoc(doc(firestore, "roles_admin", userId));
           toast({ title: "Admin Access Removed" });
         } else {
-          await setDoc(doc(firestore, "roles_admin", userId), { assignedAt: new Date().toISOString() });
           await logActivity('GRANT_ADMIN', 'roles_admin', name);
+          await setDoc(doc(firestore, "roles_admin", userId), { assignedAt: new Date().toISOString() });
           toast({ title: "Admin Access Granted" });
         }
       } else {
-        await updateDoc(doc(firestore, "users", userId), { role: newRole });
         await logActivity('UPDATE_ROLE', 'users', `${name} -> ${newRole}`);
+        await updateDoc(doc(firestore, "users", userId), { role: newRole });
         toast({ title: "Role Updated Successfully" });
       }
     } catch (err: any) {
@@ -301,6 +306,7 @@ export default function ManagementPage() {
       case 'GRANT_ADMIN': return { color: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: Crown };
       case 'REMOVE_ADMIN': return { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: UserMinus };
       case 'UPDATE_ROLE': return { color: 'bg-violet-50 text-indigo-700 border-violet-200', icon: UserCog };
+      case 'RESIGN': return { color: 'bg-orange-50 text-orange-700 border-orange-200', icon: LogOut };
       default: return { color: 'bg-slate-50 text-slate-700 border-slate-200', icon: History };
     }
   };
@@ -332,20 +338,21 @@ export default function ManagementPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 text-destructive hover:bg-destructive/10"
+              onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}
+            >
+              <LogOut className="h-4 w-4" />
+              {language === 'hi' ? 'इस्तीफा दें' : 'Resign as Admin'}
+            </Button>
             <Link href="/" className="flex-1 sm:flex-initial">
               <Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm">
                 <Globe className="h-4 w-4" />
                 <span className="hidden xs:inline">{language === 'hi' ? 'वेबसाइट' : 'Website'}</span>
               </Button>
             </Link>
-            {isLeadership && (
-              <Link href="/admin" className="flex-1 sm:flex-initial">
-                <Button variant="secondary" size="sm" className="w-full gap-2 text-xs sm:text-sm">
-                  <Settings className="h-4 w-4" />
-                  <span className="hidden xs:inline">{language === 'hi' ? 'CMS एडिटर' : 'CMS Editor'}</span>
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
 
@@ -407,19 +414,17 @@ export default function ManagementPage() {
                         </CardTitle>
                         <CardDescription className="text-xs">{language === 'hi' ? 'चयनित अवधि का योगदान' : 'Contributions for selected period'}</CardDescription>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Select value={analyticsRange} onValueChange={setAnalyticsRange}>
-                          <SelectTrigger className="w-32 h-8 text-[10px] font-black uppercase tracking-wider border-primary/10">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            <SelectItem value="7d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '७ दिन' : '7 Days'}</SelectItem>
-                            <SelectItem value="30d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '३० दिन' : '30 Days'}</SelectItem>
-                            <SelectItem value="90d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '९० दिन' : '90 Days'}</SelectItem>
-                            <SelectItem value="1y" className="text-[10px] font-bold uppercase">{language === 'hi' ? '१ साल' : '1 Year'}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <Select value={analyticsRange} onValueChange={setAnalyticsRange}>
+                        <SelectTrigger className="w-32 h-8 text-[10px] font-black uppercase tracking-wider border-primary/10">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="7d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '७ दिन' : '7 Days'}</SelectItem>
+                          <SelectItem value="30d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '३० दिन' : '30 Days'}</SelectItem>
+                          <SelectItem value="90d" className="text-[10px] font-bold uppercase">{language === 'hi' ? '९० दिन' : '90 Days'}</SelectItem>
+                          <SelectItem value="1y" className="text-[10px] font-bold uppercase">{language === 'hi' ? '१ साल' : '1 Year'}</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-6 h-[300px]">
@@ -484,7 +489,6 @@ export default function ManagementPage() {
                 <Card className="shadow-md border-primary/10">
                   <CardHeader className="bg-primary/5">
                     <CardTitle className="text-lg">Record Manual Donation</CardTitle>
-                    <CardDescription className="text-xs">Add cash or direct bank transfers received at the temple.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
                     <form onSubmit={async (e) => {
@@ -492,75 +496,60 @@ export default function ManagementPage() {
                       const fd = new FormData(e.currentTarget);
                       const amount = Number(fd.get('amount'));
                       const devoteeName = fd.get('devoteeName') as string;
-                      const mode = fd.get('mode') as string;
-                      const date = (fd.get('date') as string) || new Date().toISOString();
-
                       const manualRef = collection(firestore!, "donations");
                       await addDoc(manualRef, {
                         amount,
                         devoteeName,
-                        mode,
-                        date,
-                        status: 'completed',
-                        isManual: true
+                        mode: fd.get('mode') as string,
+                        date: (fd.get('date') as string) || new Date().toISOString(),
+                        status: 'completed'
                       });
-
-                      await logActivity('CREATE', 'donations', `Manual Donation: ₹${amount} from ${devoteeName}`);
+                      await logActivity('CREATE', 'donations', `Manual: ₹${amount} from ${devoteeName}`);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Donation Recorded" });
                     }} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Devotee Name</Label>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase font-bold opacity-60">Devotee Name</Label>
                         <Input name="devoteeName" placeholder="Full Name" required className="bg-secondary/30" />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Amount (₹)</Label>
-                        <Input name="amount" type="number" placeholder="501" required className="bg-secondary/30" />
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase font-bold opacity-60">Amount (₹)</Label>
+                        <Input name="amount" type="number" required className="bg-secondary/30" />
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Payment Mode</Label>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase font-bold opacity-60">Payment Mode</Label>
                         <Select name="mode" defaultValue="Cash">
-                          <SelectTrigger className="bg-secondary/30">
-                            <SelectValue />
-                          </SelectTrigger>
+                          <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Cash">Cash</SelectItem>
                             <SelectItem value="UPI (Manual)">Direct UPI</SelectItem>
-                            <SelectItem value="Cheque">Cheque</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Date</Label>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase font-bold opacity-60">Date</Label>
                         <Input name="date" type="datetime-local" className="bg-secondary/30" />
                       </div>
-                      <Button className="w-full shadow-lg gap-2">
-                        <CheckCircle className="h-4 w-4" /> Save Record
-                      </Button>
+                      <Button className="w-full shadow-lg gap-2">Save Record</Button>
                     </form>
                   </CardContent>
                 </Card>
               </div>
               <div className="lg:col-span-8">
                 <Card className="shadow-xl border-primary/10 overflow-hidden">
-                  <CardHeader className="flex flex-col sm:flex-row items-center justify-between py-6 px-6 bg-white border-b gap-4">
-                    <div className="space-y-1">
-                      <CardTitle className="text-xl font-bold flex items-center gap-2">
-                        <IndianRupee className="h-5 w-5 text-primary" />
-                        Donation Ledger
-                      </CardTitle>
-                      <CardDescription className="text-xs uppercase tracking-widest font-semibold opacity-60">Complete contribution history</CardDescription>
-                    </div>
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                      <div className="relative flex-1 sm:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          placeholder="Search..." 
-                          className="pl-10 h-10 text-sm bg-secondary/10" 
-                          value={donationSearch} 
-                          onChange={(e) => setDonationSearch(e.target.value)} 
-                        />
-                      </div>
+                  <CardHeader className="bg-white border-b py-4 flex flex-row items-center justify-between">
+                    <CardTitle className="text-xl font-bold flex items-center gap-2">
+                      <IndianRupee className="h-5 w-5 text-primary" />
+                      Donation Ledger
+                    </CardTitle>
+                    <div className="relative w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="Search..." 
+                        className="pl-10 h-10" 
+                        value={donationSearch} 
+                        onChange={(e) => setDonationSearch(e.target.value)} 
+                      />
                     </div>
                   </CardHeader>
                   <CardContent className="p-0 overflow-x-auto">
@@ -576,23 +565,10 @@ export default function ManagementPage() {
                       <TableBody>
                         {filteredDonations.map(d => (
                           <TableRow key={d.id} className="hover:bg-primary/5">
-                            <TableCell className="pl-6 py-4">
-                              <span className="font-bold text-sm">{d.devoteeName || 'Devotee'}</span>
-                            </TableCell>
+                            <TableCell className="pl-6 py-4 font-bold text-sm">{d.devoteeName || 'Devotee'}</TableCell>
                             <TableCell className="text-center font-black text-primary">₹{d.amount}</TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline" className="text-[9px] uppercase">
-                                {d.mode}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right pr-6">
-                              <Badge className={cn(
-                                "text-[9px] font-black uppercase",
-                                d.status === 'completed' ? "bg-emerald-500" : "bg-amber-500"
-                              )}>
-                                {d.status}
-                              </Badge>
-                            </TableCell>
+                            <TableCell className="text-center"><Badge variant="outline">{d.mode}</Badge></TableCell>
+                            <TableCell className="text-right pr-6"><Badge className={d.status === 'completed' ? "bg-emerald-500" : "bg-amber-500"}>{d.status}</Badge></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -609,27 +585,14 @@ export default function ManagementPage() {
                 <Card className="shadow-md border-primary/10">
                   <CardHeader className="bg-primary/5">
                     <CardTitle className="text-lg">Add New Event</CardTitle>
-                    <CardDescription className="text-xs">Schedule a puja or temple celebration.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Content Drafter</Label>
                       <div className="flex gap-2">
-                        <Input 
-                          placeholder="e.g. Holi 2025" 
-                          className="h-9 text-xs" 
-                          value={aiTopic} 
-                          onChange={(e) => setAiTopic(e.target.value)} 
-                        />
-                        <Button 
-                          size="sm" 
-                          variant="secondary" 
-                          className="shrink-0 h-9 gap-2"
-                          disabled={isAiGenerating}
-                          onClick={(e) => handleAiGenerate('event', (e.currentTarget.closest('form') || document.getElementById('event-form')) as HTMLFormElement)}
-                        >
-                          {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
-                          Draft
+                        <Input placeholder="e.g. Holi 2025" className="h-9 text-xs" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} />
+                        <Button size="sm" variant="secondary" className="shrink-0 h-9 gap-2" disabled={isAiGenerating} onClick={(e) => handleAiGenerate('event', (e.currentTarget.closest('form') || document.getElementById('event-form')) as HTMLFormElement)}>
+                          {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Draft
                         </Button>
                       </div>
                     </div>
@@ -648,25 +611,11 @@ export default function ManagementPage() {
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Event Published" });
                     }} className="space-y-4">
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Event Title</Label>
-                        <Input name="title" required className="bg-secondary/30" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Date & Time</Label>
-                        <Input name="date" type="datetime-local" required className="bg-secondary/30" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Description</Label>
-                        <Textarea name="description" rows={4} className="bg-secondary/30 resize-none" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Image URL (Optional)</Label>
-                        <Input name="image" placeholder="https://..." className="bg-secondary/30" />
-                      </div>
-                      <Button className="w-full shadow-lg gap-2">
-                        <Calendar className="h-4 w-4" /> Publish Event
-                      </Button>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Title</Label><Input name="title" required className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Date</Label><Input name="date" type="datetime-local" required className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Description</Label><Textarea name="description" rows={4} className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Image URL</Label><Input name="image" className="bg-secondary/30" /></div>
+                      <Button className="w-full shadow-lg gap-2"><Calendar className="h-4 w-4" /> Publish Event</Button>
                     </form>
                   </CardContent>
                 </Card>
@@ -674,29 +623,13 @@ export default function ManagementPage() {
               <div className="lg:col-span-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {events?.map(event => (
-                    <Card key={event.id} className="overflow-hidden group hover:shadow-md transition-all">
+                    <Card key={event.id} className="overflow-hidden">
                       <div className="flex items-stretch h-32">
-                        <div className="w-24 shrink-0 bg-muted relative overflow-hidden">
-                          {event.image ? (
-                            <img src={event.image} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center"><ImageIcon className="h-8 w-8 text-muted-foreground/30" /></div>
-                          )}
-                        </div>
+                        <div className="w-24 shrink-0 bg-muted">{event.image && <img src={event.image} className="h-full w-full object-cover" />}</div>
                         <div className="p-4 flex-1 min-w-0 flex flex-col justify-between">
-                          <div>
-                            <h4 className="font-bold text-sm truncate">{event.title}</h4>
-                            <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(event.date).toLocaleString()}</p>
-                            <p className="text-[10px] text-muted-foreground line-clamp-2 mt-2">{event.description}</p>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 w-fit text-destructive hover:bg-destructive/10 gap-2 text-[10px] font-bold"
-                            onClick={() => setDeleteConfirm({ col: 'events', id: event.id, title: event.title })}
-                          >
-                            <Trash2 className="h-3 w-3" /> Remove
-                          </Button>
+                          <h4 className="font-bold text-sm truncate">{event.title}</h4>
+                          <p className="text-[10px] text-muted-foreground line-clamp-2">{event.description}</p>
+                          <Button variant="ghost" size="sm" className="h-7 w-fit text-destructive text-[10px]" onClick={() => setDeleteConfirm({ col: 'events', id: event.id, title: event.title })}>Remove</Button>
                         </div>
                       </div>
                     </Card>
@@ -712,27 +645,14 @@ export default function ManagementPage() {
                 <Card className="shadow-md border-primary/10">
                   <CardHeader className="bg-primary/5">
                     <CardTitle className="text-lg">Post Official Notice</CardTitle>
-                    <CardDescription className="text-xs">Broadcast urgent announcements to all devotees.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Announcement Drafter</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Drafter</Label>
                       <div className="flex gap-2">
-                        <Input 
-                          placeholder="e.g. Bhandara Postponed" 
-                          className="h-9 text-xs" 
-                          value={aiTopic} 
-                          onChange={(e) => setAiTopic(e.target.value)} 
-                        />
-                        <Button 
-                          size="sm" 
-                          variant="secondary" 
-                          className="shrink-0 h-9 gap-2"
-                          disabled={isAiGenerating}
-                          onClick={(e) => handleAiGenerate('notice', (e.currentTarget.closest('form') || document.getElementById('notice-form')) as HTMLFormElement)}
-                        >
-                          {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
-                          Draft
+                        <Input placeholder="e.g. Schedule change" className="h-9 text-xs" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} />
+                        <Button size="sm" variant="secondary" className="shrink-0 h-9 gap-2" disabled={isAiGenerating} onClick={(e) => handleAiGenerate('notice', (e.currentTarget.closest('form') || document.getElementById('notice-form')) as HTMLFormElement)}>
+                          {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Draft
                         </Button>
                       </div>
                     </div>
@@ -750,29 +670,15 @@ export default function ManagementPage() {
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Notice Posted" });
                     }} className="space-y-4">
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Headline</Label>
-                        <Input name="title" required className="bg-secondary/30" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Priority Level</Label>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Headline</Label><Input name="title" required className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Priority</Label>
                         <Select name="importance" defaultValue="normal">
-                          <SelectTrigger className="bg-secondary/30">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="urgent">Urgent Announcement</SelectItem>
-                          </SelectContent>
+                          <SelectTrigger className="bg-secondary/30"><SelectValue /></SelectTrigger>
+                          <SelectContent><SelectItem value="normal">Normal</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Notice Content</Label>
-                        <Textarea name="content" rows={5} className="bg-secondary/30 resize-none" />
-                      </div>
-                      <Button className="w-full shadow-lg gap-2">
-                        <Bell className="h-4 w-4" /> Broadcast Notice
-                      </Button>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Content</Label><Textarea name="content" rows={5} className="bg-secondary/30" /></div>
+                      <Button className="w-full shadow-lg gap-2"><Bell className="h-4 w-4" /> Broadcast Notice</Button>
                     </form>
                   </CardContent>
                 </Card>
@@ -780,24 +686,13 @@ export default function ManagementPage() {
               <div className="lg:col-span-8">
                 <div className="space-y-4">
                   {notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(notice => (
-                    <Card key={notice.id} className={cn("border-l-4 overflow-hidden", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
-                      <div className="p-4 flex items-start justify-between gap-4">
+                    <Card key={notice.id} className={cn("border-l-4", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
+                      <div className="p-4 flex justify-between">
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-sm truncate">{notice.title}</h4>
-                            {notice.importance === 'urgent' && <Badge variant="destructive" className="h-4 text-[8px] font-black uppercase">Urgent</Badge>}
-                          </div>
-                          <p className="text-xs text-muted-foreground mb-2">{new Date(notice.createdAt).toLocaleDateString()}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-3">{notice.content}</p>
+                          <h4 className="font-bold text-sm truncate">{notice.title}</h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{notice.content}</p>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => setDeleteConfirm({ col: 'notices', id: notice.id, title: notice.title })}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm({ col: 'notices', id: notice.id, title: notice.title })}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </Card>
                   ))}
@@ -810,10 +705,7 @@ export default function ManagementPage() {
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5">
-                    <CardTitle className="text-lg">Add Media to Gallery</CardTitle>
-                    <CardDescription className="text-xs">Upload links for photos or YouTube videos.</CardDescription>
-                  </CardHeader>
+                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add Media</CardTitle></CardHeader>
                   <CardContent className="pt-6">
                     <form onSubmit={async (e) => {
                       e.preventDefault();
@@ -828,18 +720,9 @@ export default function ManagementPage() {
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Media Added" });
                     }} className="space-y-4">
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Caption</Label>
-                        <Input name="caption" required className="bg-secondary/30" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Media URL</Label>
-                        <Input name="url" placeholder="Image URL or YouTube link" required className="bg-secondary/30" />
-                        <p className="text-[9px] text-muted-foreground mt-1">Supports Direct Images, Google Drive, and YouTube.</p>
-                      </div>
-                      <Button className="w-full shadow-lg gap-2">
-                        <Plus className="h-4 w-4" /> Add to Gallery
-                      </Button>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Caption</Label><Input name="caption" required className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">URL</Label><Input name="url" placeholder="Image or YouTube" required className="bg-secondary/30" /></div>
+                      <Button className="w-full shadow-lg"><Plus className="h-4 w-4 mr-2" /> Add Media</Button>
                     </form>
                   </CardContent>
                 </Card>
@@ -847,18 +730,11 @@ export default function ManagementPage() {
               <div className="lg:col-span-8">
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
                   {gallery?.map(item => (
-                    <div key={item.id} className="group relative aspect-[4/3] bg-muted rounded-xl overflow-hidden border border-primary/5">
+                    <div key={item.id} className="group relative aspect-[4/3] bg-muted rounded-xl overflow-hidden">
                       <img src={item.imageURL} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-between items-end">
-                        <Button 
-                          variant="destructive" 
-                          size="icon" 
-                          className="h-7 w-7"
-                          onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption })}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <p className="text-[9px] text-white text-center w-full truncate font-medium">{item.caption}</p>
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col justify-between p-2">
+                        <Button variant="destructive" size="icon" className="h-7 w-7 ml-auto" onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption })}><Trash2 className="h-4 w-4" /></Button>
+                        <p className="text-[9px] text-white truncate text-center">{item.caption}</p>
                       </div>
                     </div>
                   ))}
@@ -869,19 +745,13 @@ export default function ManagementPage() {
 
           <TabsContent value="requests" className="space-y-6 animate-in fade-in duration-300">
             <Card className="shadow-xl border-primary/10 overflow-hidden">
-               <CardHeader className="bg-white border-b py-4">
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-primary" />
-                  Devotee Requests
-                </CardTitle>
-              </CardHeader>
+              <CardHeader className="bg-white border-b py-4"><CardTitle className="text-xl font-bold">Devotee Requests</CardTitle></CardHeader>
               <CardContent className="p-0 overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-muted/30">
                     <TableRow>
                       <TableHead className="text-[10px] uppercase font-black pl-6">Devotee</TableHead>
                       <TableHead className="text-[10px] uppercase font-black">Type</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black">Message</TableHead>
                       <TableHead className="text-[10px] uppercase font-black text-center">Status</TableHead>
                       <TableHead className="text-[10px] uppercase font-black text-right pr-6">Action</TableHead>
                     </TableRow>
@@ -889,47 +759,19 @@ export default function ManagementPage() {
                   <TableBody>
                     {requests?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(req => (
                       <TableRow key={req.id} className="hover:bg-primary/5">
-                        <TableCell className="pl-6">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-sm">{req.name}</span>
-                            <span className="text-[10px] text-muted-foreground">{req.phone || req.email}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-[9px] uppercase">{req.requestType}</Badge>
-                        </TableCell>
-                        <TableCell className="max-w-[200px]">
-                          <p className="text-xs text-muted-foreground line-clamp-1 italic">"{req.message}"</p>
-                        </TableCell>
+                        <TableCell className="pl-6"><div className="flex flex-col"><span className="font-bold text-sm">{req.name}</span><span className="text-[10px] text-muted-foreground">{req.phone || req.email}</span></div></TableCell>
+                        <TableCell><Badge variant="outline">{req.requestType}</Badge></TableCell>
                         <TableCell className="text-center">
-                          <Select 
-                            defaultValue={req.status} 
-                            onValueChange={async (val) => {
-                              await updateDoc(doc(firestore!, "prayer_requests", req.id), { status: val });
-                              await logActivity('UPDATE', 'prayer_requests', `Status ${req.name}: ${val}`);
-                              toast({ title: "Status Updated" });
-                            }}
-                          >
-                            <SelectTrigger className="h-7 w-28 text-[9px] font-black uppercase border-0 bg-secondary/50">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="viewed">Viewed</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
-                            </SelectContent>
+                          <Select defaultValue={req.status} onValueChange={async (val) => {
+                            await logActivity('UPDATE', 'prayer_requests', `Status ${req.name}: ${val}`);
+                            await updateDoc(doc(firestore!, "prayer_requests", req.id), { status: val });
+                            toast({ title: "Status Updated" });
+                          }}>
+                            <SelectTrigger className="h-7 w-28 text-[9px] font-black uppercase border-0 bg-secondary/50"><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="pending">Pending</SelectItem><SelectItem value="viewed">Viewed</SelectItem><SelectItem value="completed">Completed</SelectItem></SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell className="text-right pr-6">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => setDeleteConfirm({ col: 'prayer_requests', id: req.id, title: `Request from ${req.name}` })}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+                        <TableCell className="text-right pr-6"><Button variant="ghost" size="icon" onClick={() => setDeleteConfirm({ col: 'prayer_requests', id: req.id, title: `Request: ${req.name}` })}><Trash2 className="h-4 w-4" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -942,40 +784,21 @@ export default function ManagementPage() {
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5">
-                    <CardTitle className="text-lg">Add Samiti Member</CardTitle>
-                    <CardDescription className="text-xs">Update the official committee directory.</CardDescription>
-                  </CardHeader>
+                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add Samiti Member</CardTitle></CardHeader>
                   <CardContent className="pt-6">
                     <form onSubmit={async (e) => {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
-                      const data = {
-                        name: fd.get('name') as string,
-                        role: fd.get('role') as string,
-                        displayOrder: Number(fd.get('order')),
-                        createdAt: new Date().toISOString()
-                      };
+                      const data = { name: fd.get('name') as string, role: fd.get('role') as string, displayOrder: Number(fd.get('order')), createdAt: new Date().toISOString() };
                       await addDoc(membersRef!, data);
                       await logActivity('CREATE', 'mandir_samiti_members', data.name);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Member Added" });
                     }} className="space-y-4">
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Full Name</Label>
-                        <Input name="name" required className="bg-secondary/30" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Official Role</Label>
-                        <Input name="role" placeholder="e.g. Treasurer" required className="bg-secondary/30" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Display Order</Label>
-                        <Input name="order" type="number" defaultValue={0} className="bg-secondary/30" />
-                      </div>
-                      <Button className="w-full shadow-lg gap-2">
-                        <UserPlus className="h-4 w-4" /> Save Member
-                      </Button>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Full Name</Label><Input name="name" required className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Role</Label><Input name="role" required className="bg-secondary/30" /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Order</Label><Input name="order" type="number" defaultValue={0} className="bg-secondary/30" /></div>
+                      <Button className="w-full shadow-lg"><UserPlus className="h-4 w-4 mr-2" /> Save Member</Button>
                     </form>
                   </CardContent>
                 </Card>
@@ -985,22 +808,10 @@ export default function ManagementPage() {
                   {members?.sort((a,b) => a.displayOrder - b.displayOrder).map(member => (
                     <Card key={member.id} className="p-4 flex items-center justify-between group">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-secondary rounded-full flex items-center justify-center text-primary font-bold">
-                          {member.name.charAt(0)}
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-sm">{member.name}</h4>
-                          <p className="text-[10px] text-primary uppercase font-black tracking-widest">{member.role}</p>
-                        </div>
+                        <div className="h-10 w-10 bg-secondary rounded-full flex items-center justify-center text-primary font-bold">{member.name.charAt(0)}</div>
+                        <div><h4 className="font-bold text-sm">{member.name}</h4><p className="text-[10px] text-primary uppercase font-black">{member.role}</p></div>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => setDeleteConfirm({ col: 'mandir_samiti_members', id: member.id, title: member.name })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100" onClick={() => setDeleteConfirm({ col: 'mandir_samiti_members', id: member.id, title: member.name })}><Trash2 className="h-4 w-4" /></Button>
                     </Card>
                   ))}
                 </div>
@@ -1010,35 +821,17 @@ export default function ManagementPage() {
 
           <TabsContent value="users" className="space-y-6 animate-in fade-in duration-300">
              <Card className="shadow-xl border-primary/10 overflow-hidden">
-               <CardHeader className="flex flex-col sm:flex-row items-center justify-between py-6 px-6 bg-white border-b gap-4">
-                <div className="space-y-1">
-                  <CardTitle className="text-xl font-bold flex items-center gap-2">
-                    <UserCog className="h-5 w-5 text-primary" />
-                    Devotee Management
-                  </CardTitle>
-                  <CardDescription className="text-xs">Update roles and global administrator permissions.</CardDescription>
-                </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search devotees..." 
-                      className="pl-10 h-10 text-sm bg-secondary/10" 
-                      value={userSearch} 
-                      onChange={(e) => setUserSearch(e.target.value)} 
-                    />
+               <CardHeader className="bg-white border-b py-6 px-6 flex flex-row items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-xl font-bold flex items-center gap-2"><UserCog className="h-5 w-5 text-primary" />Devotee Management</CardTitle>
+                    <CardDescription className="text-xs uppercase tracking-widest font-semibold opacity-60">Control roles and system access</CardDescription>
                   </div>
-                  <Select value={userSort} onValueChange={setUserSort}>
-                    <SelectTrigger className="w-32 h-10 text-[10px] font-black uppercase">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="role">By Role</SelectItem>
-                      <SelectItem value="name-asc">Name A-Z</SelectItem>
-                      <SelectItem value="name-desc">Name Z-A</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="Search devotees..." className="pl-10 h-10" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+                    </div>
+                  </div>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
                 <Table>
@@ -1053,6 +846,7 @@ export default function ManagementPage() {
                   <TableBody>
                     {sortedUsers.map(u => {
                       const isAdminNow = allAdmins?.some(a => a.id === u.id);
+                      const isMe = u.id === user?.uid;
                       return (
                         <TableRow key={u.id} className="hover:bg-primary/5">
                           <TableCell className="pl-6 py-4">
@@ -1061,7 +855,7 @@ export default function ManagementPage() {
                                 {u.photoURL ? <img src={u.photoURL} /> : u.name?.charAt(0) || <UserIcon className="h-4 w-4 opacity-30" />}
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <span className="font-bold text-sm truncate">{u.name || 'Devotee'}</span>
+                                <span className="font-bold text-sm truncate">{u.name || 'Devotee'} {isMe && <Badge className="ml-1 bg-primary/20 text-primary border-0 h-4 text-[8px]">YOU</Badge>}</span>
                                 <span className="text-[10px] text-muted-foreground truncate">{u.email}</span>
                               </div>
                             </div>
@@ -1071,9 +865,7 @@ export default function ManagementPage() {
                               defaultValue={u.role || 'devotee'} 
                               onValueChange={(val) => setRoleConfirm({ userId: u.id, name: u.name, newRole: val, type: 'role' })}
                             >
-                              <SelectTrigger className="h-8 w-32 text-[10px] font-black uppercase bg-secondary/50 border-0">
-                                <SelectValue />
-                              </SelectTrigger>
+                              <SelectTrigger className="h-8 w-32 text-[10px] font-black uppercase bg-secondary/50 border-0"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="devotee">Devotee</SelectItem>
                                 <SelectItem value="member">Samiti Member</SelectItem>
@@ -1083,22 +875,23 @@ export default function ManagementPage() {
                             </Select>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Button 
-                              variant={isAdminNow ? "default" : "outline"} 
-                              size="sm" 
-                              className={cn(
-                                "h-8 px-4 text-[10px] font-black uppercase gap-2",
-                                isAdminNow ? "bg-primary shadow-md" : "border-primary/20 text-primary hover:bg-primary/5"
-                              )}
-                              onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}
-                            >
-                              {isAdminNow ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
-                              {isAdminNow ? 'Full Admin' : 'Grant Admin'}
-                            </Button>
+                            {isMe ? (
+                              <Button variant="outline" size="sm" className="h-8 px-4 text-[10px] font-black uppercase gap-2 text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}>
+                                <LogOut className="h-3 w-3" /> Resign
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant={isAdminNow ? "default" : "outline"} 
+                                size="sm" 
+                                className={cn("h-8 px-4 text-[10px] font-black uppercase gap-2", isAdminNow ? "bg-primary" : "border-primary/20 text-primary")}
+                                onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}
+                              >
+                                {isAdminNow ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
+                                {isAdminNow ? 'Admin' : 'Grant Admin'}
+                              </Button>
+                            )}
                           </TableCell>
-                          <TableCell className="text-right pr-6">
-                            <span className="text-[9px] font-mono text-muted-foreground opacity-40 uppercase">{u.id.slice(0, 12)}</span>
-                          </TableCell>
+                          <TableCell className="text-right pr-6"><span className="text-[9px] font-mono text-muted-foreground opacity-40 uppercase">{u.id.slice(0, 12)}</span></TableCell>
                         </TableRow>
                       );
                     })}
@@ -1111,11 +904,8 @@ export default function ManagementPage() {
           <TabsContent value="logs" className="space-y-6 animate-in fade-in duration-300">
              <Card className="shadow-xl border-primary/10 overflow-hidden">
                <CardHeader className="bg-white border-b py-4">
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary" />
-                  Administrative Logs
-                </CardTitle>
-                <CardDescription className="text-xs">Security audit trail of all manual system modifications.</CardDescription>
+                <CardTitle className="text-xl font-bold flex items-center gap-2"><Activity className="h-5 w-5 text-primary" />Administrative Logs</CardTitle>
+                <CardDescription className="text-xs">Security audit trail of system modifications</CardDescription>
               </CardHeader>
               <CardContent className="p-0 overflow-x-auto">
                 <Table>
@@ -1133,33 +923,10 @@ export default function ManagementPage() {
                       const ActionIcon = details.icon;
                       return (
                         <TableRow key={log.id} className="hover:bg-muted/10 transition-colors">
-                          <TableCell className="pl-6 py-4">
-                            <div className="flex items-center gap-3">
-                               <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center"><UserIcon className="h-4 w-4 text-muted-foreground" /></div>
-                               <div className="flex flex-col">
-                                 <span className="font-bold text-xs">{log.adminName}</span>
-                                 <span className="text-[9px] text-muted-foreground uppercase">{log.adminId.slice(0, 6)}</span>
-                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider", details.color)}>
-                              <ActionIcon className="h-3 w-3" />
-                              {log.actionType.replace('_', ' ')}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-black uppercase text-primary tracking-tighter">{log.entityType}</span>
-                              <span className="text-xs font-medium text-foreground line-clamp-1">{log.entityTitle}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right pr-6">
-                            <div className="flex flex-col items-end">
-                              <span className="text-xs font-bold">{new Date(log.timestamp).toLocaleDateString()}</span>
-                              <span className="text-[10px] text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString()}</span>
-                            </div>
-                          </TableCell>
+                          <TableCell className="pl-6 py-4"><div className="flex items-center gap-3"><div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center"><UserIcon className="h-4 w-4 text-muted-foreground" /></div><div className="flex flex-col"><span className="font-bold text-xs">{log.adminName}</span><span className="text-[9px] text-muted-foreground uppercase">{log.adminId.slice(0, 6)}</span></div></div></TableCell>
+                          <TableCell className="text-center"><div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider", details.color)}><ActionIcon className="h-3 w-3" />{log.actionType.replace('_', ' ')}</div></TableCell>
+                          <TableCell><div className="flex flex-col"><span className="text-[10px] font-black uppercase text-primary tracking-tighter">{log.entityType}</span><span className="text-xs font-medium line-clamp-1">{log.entityTitle}</span></div></TableCell>
+                          <TableCell className="text-right pr-6"><div className="flex flex-col items-end"><span className="text-xs font-bold">{new Date(log.timestamp).toLocaleDateString()}</span><span className="text-[10px] text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString()}</span></div></TableCell>
                         </TableRow>
                       );
                     })}
@@ -1172,15 +939,10 @@ export default function ManagementPage() {
       </main>
 
       <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
-        <AlertDialogContent className="w-[95%] max-w-md mx-auto rounded-2xl">
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="text-destructive h-5 w-5" /> 
-              Confirm Deletion
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
-              Are you sure you want to remove "{deleteConfirm?.title}" from {deleteConfirm?.col}? This action is permanent and cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive h-5 w-5" /> Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">Are you sure you want to remove "{deleteConfirm?.title}" from {deleteConfirm?.col}? This action is permanent.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
             <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
@@ -1190,16 +952,15 @@ export default function ManagementPage() {
       </AlertDialog>
 
       <AlertDialog open={!!roleConfirm} onOpenChange={(o) => !o && setRoleConfirm(null)}>
-        <AlertDialogContent className="w-[95%] max-w-md mx-auto rounded-2xl">
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="text-primary h-5 w-5" /> 
-              Confirm Access Change
-            </AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2"><ShieldAlert className="text-primary h-5 w-5" /> Confirm Access Change</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
-              {roleConfirm?.type === 'admin' 
-                ? `Are you sure you want to toggle Global Admin permissions for ${roleConfirm.name}?` 
-                : `Are you sure you want to change ${roleConfirm?.name}'s official role to "${roleConfirm?.newRole}"?`}
+              {roleConfirm?.type === 'resign' 
+                ? "Are you sure you want to resign your administrator status? You will lose access to this panel immediately." 
+                : roleConfirm?.type === 'admin' 
+                  ? `Are you sure you want to toggle Global Admin permissions for ${roleConfirm.name}?` 
+                  : `Are you sure you want to change ${roleConfirm?.name}'s official role to "${roleConfirm?.newRole}"?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
