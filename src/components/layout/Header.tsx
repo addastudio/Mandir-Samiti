@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogIn, Heart, User as UserIcon, ShieldCheck } from "lucide-react";
+import { Menu, LogIn, Heart, User as UserIcon, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -113,8 +113,7 @@ export function Header() {
     )}>
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* BRANDING: Strict containment to prevent overlap with Nav/Icons */}
-        <Link href="/" className="flex items-center min-w-0 max-w-[50%] xs:max-w-[60%] sm:max-w-none group shrink-0">
+        <Link href="/" className="flex items-center min-w-0 group shrink-0">
           <div className="flex items-center gap-2 lg:gap-3 rounded-xl bg-amber-50/80 px-2 py-1.5 shadow-sm border border-primary/10 overflow-hidden">
             <div className="relative h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/5">
               {settings?.favicon && !logoError ? (
@@ -153,8 +152,9 @@ export function Header() {
             <LanguageSwitcher />
             {adminDoc && (
               <Link href="/management">
-                <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-primary/20 text-primary hover:bg-primary/5 shadow-sm">
+                <Button variant="outline" size="sm" className="h-9 gap-2 border-primary/20 text-primary hover:bg-primary/5 shadow-sm font-bold">
                   <ShieldCheck className="h-4 w-4" />
+                  <span className="text-xs">{language === 'hi' ? 'प्रबंधन' : 'Management'}</span>
                 </Button>
               </Link>
             )}
@@ -168,7 +168,7 @@ export function Header() {
           </div>
         </div>
 
-        {/* MOBILE CONTROLS: Strictly separated from Branding */}
+        {/* Mobile Controls */}
         <div className="flex lg:hidden items-center gap-1.5 sm:gap-3 shrink-0 ml-2">
           <div className="hidden xs:block">
             <LanguageSwitcher />
@@ -195,7 +195,7 @@ export function Header() {
                 </div>
                 {adminDoc && (
                   <Link href="/management" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 py-4 text-lg font-bold text-primary border-b border-border/50">
-                    <ShieldCheck className="h-5 w-5" /> Management
+                    <ShieldCheck className="h-5 w-5" /> Management Panel
                   </Link>
                 )}
               </div>

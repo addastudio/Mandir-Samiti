@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -7,13 +6,23 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, LayoutDashboard, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
 
 export function HeroSection() {
   const { t, language } = useLanguage();
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [cmsHero, setCmsHero] = useState<any>(null);
   const heroImage = PlaceHolderImages.find((img) => img.id === "hero-background");
+
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "roles_admin", user.uid);
+  }, [firestore, user]);
+  const { data: adminDoc } = useDoc(adminRoleRef);
 
   useEffect(() => {
     fetch('/api/content/hero')
@@ -86,7 +95,21 @@ export function HeroSection() {
             {subtitle}
           </p>
           
-          <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full sm:w-auto max-w-[280px] sm:max-w-none mx-auto">
+          <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full sm:w-auto max-w-[320px] sm:max-w-none mx-auto">
+            {adminDoc && (
+              <Link href="/management" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className={cn(
+                    "w-full bg-white text-primary hover:bg-white/90 text-base sm:text-lg transition-all hover:scale-105 h-12 sm:h-16 px-8 font-bold rounded-xl shadow-2xl gap-2",
+                    language === "hi" ? "font-hindi text-xl" : ""
+                  )}
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                  {language === 'hi' ? 'प्रबंधन पैनल' : 'Management'}
+                </Button>
+              </Link>
+            )}
             <Link href="/donate" className="w-full sm:w-auto">
               <Button
                 size="lg"
