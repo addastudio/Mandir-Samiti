@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, useAuth } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, collectionGroup, query, setDoc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
+import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { 
   Trash2, 
   Loader2, 
@@ -80,10 +81,10 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 /**
  * MANDIR MANAGEMENT PANEL
  * The central command center for Mandir Samiti Bahpura.
- * Features: Analytics, CRUD for Content, Role Management, and Security Audit Logs.
  */
 export default function ManagementPage() {
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -100,6 +101,8 @@ export default function ManagementPage() {
   // Interaction States
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string, path?: string } | null>(null);
   const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' | 'resign' } | null>(null);
+  const [resignPassword, setResignPassword] = useState("");
+  const [isProcessingRole, setIsProcessingRole] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [aiTopic, setAiTopic] = useState("");
 
@@ -148,7 +151,6 @@ export default function ManagementPage() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, isProfileLoading, router, mounted]);
 
-  // Analytics Calculation
   const chartData = React.useMemo(() => {
     if (!mounted || !allDonations) return [];
     const now = new Date();
@@ -182,10 +184,6 @@ export default function ManagementPage() {
     });
   }, [allDonations, language, analyticsRange, mounted]);
 
-  /**
-   * Logs administrative actions for audit trails.
-   * Crucial: This must be called BEFORE permission removal if possible.
-   */
   const logActivity = async (action: string, entityType: string, title: string) => {
     if (!firestore || !user) return;
     try {
@@ -202,7 +200,6 @@ export default function ManagementPage() {
     }
   };
 
-  // AI Integration for Content Generation
   const handleAiGenerate = async (type: 'event' | 'notice', formRef: HTMLFormElement) => {
     if (!aiTopic) {
       toast({ variant: "destructive", title: "Topic Required", description: "Please enter a keyword or topic first." });
@@ -213,11 +210,9 @@ export default function ManagementPage() {
       const result = await generateTempleContent({ topic: aiTopic, type, language: language as 'hi' | 'en' });
       const titleInput = formRef.querySelector('[name="title"]') as HTMLInputElement;
       const contentTextarea = formRef.querySelector('[name="content"]') as HTMLTextAreaElement;
-      const descTextarea = formRef.querySelector('[name="description"]') as HTMLTextAreaElement;
       
       if (titleInput) titleInput.value = result.title;
       if (contentTextarea) contentTextarea.value = result.content;
-      if (descTextarea) descTextarea.value = result.content;
       
       toast({ title: "AI Generation Success", description: "Content has been drafted below." });
     } catch (err) {
@@ -227,39 +222,47 @@ export default function ManagementPage() {
     }
   };
 
-  // Core Mutation Handlers
   const confirmDelete = async () => {
     if (!firestore || !deleteConfirm) return;
     const { col, id, title, path } = deleteConfirm;
-    
-    // Log before action to ensure permission exists
     await logActivity('DELETE', col, title);
-    
     const ref = path ? doc(firestore, path) : doc(firestore, col, id);
     await deleteDoc(ref);
-    
     toast({ title: "Deleted Successfully" });
     setDeleteConfirm(null);
   };
 
-  /**
-   * BUSINESS RULES FOR ROLES:
-   * 1. Cannot resign if last admin.
-   * 2. Must log action before committing sensitive permission removal.
-   */
   const handleRoleAction = async () => {
-    if (!firestore || !roleConfirm || !user) return;
+    if (!firestore || !roleConfirm || !user || !auth) return;
     const { userId, name, newRole, type } = roleConfirm;
 
+    setIsProcessingRole(true);
     try {
       if (type === 'resign') {
         if (allAdmins && allAdmins.length <= 1) {
           toast({ variant: "destructive", title: "Action Denied", description: "Cannot resign as you are the last administrator." });
+          setIsProcessingRole(false);
           return;
         }
-        // Log first
+
+        // Verify password if using email provider
+        if (user.providerData.some(p => p.providerId === 'password')) {
+          if (!resignPassword) {
+            toast({ variant: "destructive", title: "Password Required", description: "Please enter your password to confirm resignation." });
+            setIsProcessingRole(false);
+            return;
+          }
+          try {
+            const credential = EmailAuthProvider.credential(user.email!, resignPassword);
+            await reauthenticateWithCredential(user, credential);
+          } catch (err: any) {
+            toast({ variant: "destructive", title: "Authentication Failed", description: "Incorrect password. Please try again." });
+            setIsProcessingRole(false);
+            return;
+          }
+        }
+
         await logActivity('RESIGN', 'roles_admin', name);
-        // Then delete
         await deleteDoc(doc(firestore, "roles_admin", userId));
         toast({ title: "You have resigned as administrator" });
         router.push("/dashboard");
@@ -271,10 +274,12 @@ export default function ManagementPage() {
         if (isAdminNow) {
           if (userId === user.uid) {
             toast({ variant: "destructive", title: "Use Resignation", description: "Please use the 'Resign' button to remove your own access." });
+            setIsProcessingRole(false);
             return;
           }
           if (allAdmins && allAdmins.length <= 1) {
              toast({ variant: "destructive", title: "Action Denied", description: "Cannot remove the last administrator." });
+             setIsProcessingRole(false);
              return;
           }
           await logActivity('REMOVE_ADMIN', 'roles_admin', name);
@@ -293,11 +298,12 @@ export default function ManagementPage() {
     } catch (err: any) {
       toast({ variant: "destructive", title: "Action Failed", description: err.message });
     } finally {
+      setIsProcessingRole(false);
       setRoleConfirm(null);
+      setResignPassword("");
     }
   };
 
-  // Sorting Logic for User Table
   const sortedUsers = React.useMemo(() => {
     if (!allUsers) return [];
     const filtered = allUsers.filter(u => 
@@ -418,7 +424,7 @@ export default function ManagementPage() {
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { label: t.mgmtStatTotalCollection, value: `₹${totalDonationsCount.toLocaleString()}`, color: 'bg-primary/10 border-primary/20', icon: HandCoins },
@@ -518,7 +524,7 @@ export default function ManagementPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="donations" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="donations" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <Card className="shadow-md border-primary/10">
@@ -531,9 +537,7 @@ export default function ManagementPage() {
                       const fd = new FormData(e.currentTarget);
                       const amount = Number(fd.get('amount'));
                       const devoteeName = fd.get('devoteeName') as string;
-                      
                       await logActivity('CREATE', 'donations', `Manual: ₹${amount} from ${devoteeName}`);
-                      
                       const manualRef = collection(firestore!, "donations");
                       await addDoc(manualRef, {
                         amount,
@@ -542,26 +546,15 @@ export default function ManagementPage() {
                         date: (fd.get('date') as string) || new Date().toISOString(),
                         status: 'completed'
                       });
-                      
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Donation Recorded" });
                     }} className="space-y-4">
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Devotee Name</Label>
-                        <Input name="devoteeName" placeholder="Full Name" required />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Amount (₹)</Label>
-                        <Input name="amount" type="number" required />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold opacity-60">Payment Mode</Label>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Devotee Name</Label><Input name="devoteeName" placeholder="Full Name" required /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Amount (₹)</Label><Input name="amount" type="number" required /></div>
+                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Payment Mode</Label>
                         <Select name="mode" defaultValue="Cash">
                           <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Cash">Cash</SelectItem>
-                            <SelectItem value="UPI (Manual)">Direct UPI</SelectItem>
-                          </SelectContent>
+                          <SelectContent><SelectItem value="Cash">Cash</SelectItem><SelectItem value="UPI (Manual)">Direct UPI</SelectItem></SelectContent>
                         </Select>
                       </div>
                       <Button className="w-full shadow-lg gap-2">Save Record</Button>
@@ -572,18 +565,10 @@ export default function ManagementPage() {
               <div className="lg:col-span-8">
                 <Card className="shadow-xl border-primary/10 overflow-hidden">
                   <CardHeader className="bg-white border-b py-4 flex flex-row items-center justify-between">
-                    <CardTitle className="text-xl font-bold flex items-center gap-2">
-                      <IndianRupee className="h-5 w-5 text-primary" />
-                      Donation Ledger
-                    </CardTitle>
+                    <CardTitle className="text-xl font-bold flex items-center gap-2"><IndianRupee className="h-5 w-5 text-primary" />Donation Ledger</CardTitle>
                     <div className="relative w-64">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        placeholder="Search..." 
-                        className="pl-10 h-10" 
-                        value={donationSearch} 
-                        onChange={(e) => setDonationSearch(e.target.value)} 
-                      />
+                      <Input placeholder="Search..." className="pl-10 h-10" value={donationSearch} onChange={(e) => setDonationSearch(e.target.value)} />
                     </div>
                   </CardHeader>
                   <CardContent className="p-0 overflow-x-auto">
@@ -613,13 +598,11 @@ export default function ManagementPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="events" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="events" className="space-y-6">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5">
-                    <CardTitle className="text-lg">Add New Event</CardTitle>
-                  </CardHeader>
+                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add New Event</CardTitle></CardHeader>
                   <CardContent className="pt-6">
                     <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Content Drafter</Label>
@@ -633,13 +616,7 @@ export default function ManagementPage() {
                     <form id="event-form" onSubmit={async (e) => {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
-                      const data = {
-                        title: fd.get('title') as string,
-                        description: fd.get('description') as string,
-                        date: fd.get('date') as string,
-                        image: fd.get('image') as string,
-                        createdAt: new Date().toISOString()
-                      };
+                      const data = { title: fd.get('title') as string, description: fd.get('description') as string, date: fd.get('date') as string, image: fd.get('image') as string, createdAt: new Date().toISOString() };
                       await logActivity('CREATE', 'events', data.title);
                       await addDoc(eventsRef!, data);
                       (e.target as HTMLFormElement).reset();
@@ -673,13 +650,11 @@ export default function ManagementPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="notices" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="notices" className="space-y-6">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5">
-                    <CardTitle className="text-lg">Post Official Notice</CardTitle>
-                  </CardHeader>
+                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Post Official Notice</CardTitle></CardHeader>
                   <CardContent className="pt-6">
                     <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Drafter</Label>
@@ -693,12 +668,7 @@ export default function ManagementPage() {
                     <form id="notice-form" onSubmit={async (e) => {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
-                      const data = {
-                        title: fd.get('title') as string,
-                        content: fd.get('content') as string,
-                        importance: fd.get('importance') as string,
-                        createdAt: new Date().toISOString()
-                      };
+                      const data = { title: fd.get('title') as string, content: fd.get('content') as string, importance: fd.get('importance') as string, createdAt: new Date().toISOString() };
                       await logActivity('CREATE', 'notices', data.title);
                       await addDoc(noticesRef!, data);
                       (e.target as HTMLFormElement).reset();
@@ -735,7 +705,7 @@ export default function ManagementPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="gallery" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="gallery" className="space-y-6">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <Card className="shadow-md border-primary/10">
@@ -744,11 +714,7 @@ export default function ManagementPage() {
                     <form onSubmit={async (e) => {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
-                      const data = {
-                        caption: fd.get('caption') as string,
-                        imageURL: fd.get('url') as string,
-                        createdAt: new Date().toISOString()
-                      };
+                      const data = { caption: fd.get('caption') as string, imageURL: fd.get('url') as string, createdAt: new Date().toISOString() };
                       await logActivity('CREATE', 'gallery', data.caption);
                       await addDoc(galleryRef!, data);
                       (e.target as HTMLFormElement).reset();
@@ -777,7 +743,7 @@ export default function ManagementPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="requests" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="requests" className="space-y-6">
             <Card className="shadow-xl border-primary/10 overflow-hidden">
               <CardHeader className="bg-white border-b py-4"><CardTitle className="text-xl font-bold">Devotee Requests</CardTitle></CardHeader>
               <CardContent className="p-0 overflow-x-auto">
@@ -814,7 +780,7 @@ export default function ManagementPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="members" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="members" className="space-y-6">
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4">
                 <Card className="shadow-md border-primary/10">
@@ -853,7 +819,7 @@ export default function ManagementPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="users" className="space-y-6">
              <Card className="shadow-xl border-primary/10 overflow-hidden">
                <CardHeader className="bg-white border-b py-6 px-6 flex flex-row items-center justify-between">
                   <div className="space-y-1">
@@ -948,7 +914,7 @@ export default function ManagementPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="logs" className="space-y-6 animate-in fade-in duration-300">
+          <TabsContent value="logs" className="space-y-6">
              <Card className="shadow-xl border-primary/10 overflow-hidden">
                <CardHeader className="bg-white border-b py-4">
                 <CardTitle className="text-xl font-bold flex items-center gap-2"><Activity className="h-5 w-5 text-primary" />Administrative Logs</CardTitle>
@@ -999,7 +965,7 @@ export default function ManagementPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!roleConfirm} onOpenChange={(o) => !o && setRoleConfirm(null)}>
+      <AlertDialog open={!!roleConfirm} onOpenChange={(o) => { if(!o) { setRoleConfirm(null); setResignPassword(""); } }}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto border-2 border-primary/20">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-xl font-bold">
@@ -1008,7 +974,7 @@ export default function ManagementPage() {
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm font-medium py-2">
               {roleConfirm?.type === 'resign' 
-                ? "CRITICAL: You are about to resign your administrative privileges. You will lose all access to this panel immediately and will not be able to undo this action yourself. Continue?" 
+                ? "CRITICAL: You are about to resign your administrative privileges. This action requires password verification for security. Continue?" 
                 : roleConfirm?.type === 'admin' 
                   ? allAdmins?.some(a => a.id === roleConfirm.userId)
                     ? `You are about to REVOKE administrative access for ${roleConfirm.name}. They will no longer be able to manage temple operations. Proceed?`
@@ -1016,18 +982,34 @@ export default function ManagementPage() {
                   : `Update the official temple role for ${roleConfirm?.name} to "${roleConfirm?.newRole}"?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {roleConfirm?.type === 'resign' && user?.providerData.some(p => p.providerId === 'password') && (
+            <div className="space-y-2 py-4">
+              <Label htmlFor="resign-password">Verify Password</Label>
+              <Input 
+                id="resign-password" 
+                type="password" 
+                value={resignPassword} 
+                onChange={(e) => setResignPassword(e.target.value)} 
+                placeholder="Enter your password"
+                className="border-primary/20"
+              />
+            </div>
+          )}
+
           <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-3 mt-6">
             <AlertDialogCancel className="mt-0 h-11">Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleRoleAction} 
+              disabled={isProcessingRole || (roleConfirm?.type === 'resign' && !resignPassword && user?.providerData.some(p => p.providerId === 'password'))}
               className={cn(
-                "h-11 shadow-lg font-bold", 
+                "h-11 shadow-lg font-bold min-w-[120px]", 
                 roleConfirm?.type === 'resign' || (roleConfirm?.type === 'admin' && allAdmins?.some(a => a.id === roleConfirm.userId)) 
                   ? "bg-destructive hover:bg-destructive/90 text-white" 
                   : "bg-primary hover:bg-primary/90"
               )}
             >
-              Confirm Security Change
+              {isProcessingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Security Change"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
