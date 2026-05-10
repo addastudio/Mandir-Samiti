@@ -60,7 +60,7 @@ export function Footer() {
                   <TempleIcon className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
                 )}
               </div>
-              <div className="flex flex-col min-w-0 overflow-hidden">
+              <div className="flex flex-col min-w-0">
                 <span
                   className={cn(
                     "text-lg sm:text-xl font-bold text-foreground leading-tight truncate block w-full",
@@ -69,7 +69,7 @@ export function Footer() {
                 >
                   {siteName}
                 </span>
-                <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black opacity-70 whitespace-nowrap overflow-hidden">
+                <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black opacity-70 whitespace-nowrap">
                   {siteSubtitle}
                 </span>
               </div>
