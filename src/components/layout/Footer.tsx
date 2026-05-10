@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Facebook, Instagram, Youtube } from "lucide-react";
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import TempleIcon from "@/components/icons/TempleIcon";
@@ -44,9 +44,10 @@ export function Footer() {
     <footer className="bg-secondary border-t border-border/50">
       <div className="container mx-auto px-4 py-12 sm:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
+          {/* Branding Section - Solved Overlap */}
           <div className="space-y-6">
-            <div className="flex items-center gap-4 group">
-              <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex items-center justify-center shadow-sm shrink-0">
+            <div className="flex items-center gap-4 group min-w-0">
+              <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex items-center justify-center shadow-sm shrink-0">
                 {settings?.favicon && !logoError ? (
                   <Image 
                     src={settings.favicon} 
@@ -56,19 +57,19 @@ export function Footer() {
                     onError={() => setLogoError(true)}
                   />
                 ) : (
-                  <TempleIcon className="h-8 w-8 text-primary" />
+                  <TempleIcon className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
                 )}
               </div>
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 overflow-hidden">
                 <span
                   className={cn(
-                    "text-xl font-bold text-foreground leading-tight truncate",
+                    "text-lg sm:text-xl font-bold text-foreground leading-tight truncate",
                     language === "hi" ? "font-hindi" : "font-headline"
                   )}
                 >
                   {siteName}
                 </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black opacity-70 whitespace-nowrap">
+                <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black opacity-70 whitespace-nowrap overflow-hidden">
                   {siteSubtitle}
                 </span>
               </div>
@@ -81,36 +82,61 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="md:pl-10">
-            <h3
-              className={cn(
-                "text-sm font-black uppercase tracking-widest text-foreground",
-                language === "hi" ? "font-hindi" : ""
-              )}
-            >
-              {t.footerQuickLinks}
-            </h3>
-            <ul className="mt-6 space-y-4">
-              {navItems.map((item) => (
-                <li key={item.label}>
+          <div className="md:pl-10 grid grid-cols-2 gap-8 md:block md:space-y-12">
+            <div>
+              <h3
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-widest text-foreground opacity-60",
+                  language === "hi" ? "font-hindi" : ""
+                )}
+              >
+                {t.footerQuickLinks}
+              </h3>
+              <ul className="mt-6 space-y-4">
+                {navItems.map((item) => (
+                  <li key={item.label}>
+                    <a
+                      href={item.href}
+                      className={cn(
+                        "text-sm text-muted-foreground transition-all hover:text-primary hover:translate-x-1 inline-block",
+                        language === "hi" ? "font-hindi" : ""
+                      )}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="md:hidden">
+               <h3
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-widest text-foreground opacity-60",
+                  language === "hi" ? "font-hindi" : ""
+                )}
+              >
+                {t.contactFollow}
+              </h3>
+              <div className="mt-6 flex items-center gap-3">
+                {socialIcons.map((social, index) => (
                   <a
-                    href={item.href}
-                    className={cn(
-                      "text-sm text-muted-foreground transition-all hover:text-primary hover:translate-x-1 inline-block",
-                      language === "hi" ? "font-hindi" : ""
-                    )}
+                    key={index}
+                    href={social.href}
+                    className="h-9 w-9 flex items-center justify-center rounded-full bg-white border border-border/50 text-muted-foreground transition-all hover:bg-primary hover:text-primary-foreground shadow-sm"
+                    aria-label={`Follow us on ${social.name}`}
                   >
-                    {item.label}
+                    <social.icon className="h-4 w-4" />
                   </a>
-                </li>
-              ))}
-            </ul>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div>
+          <div className="hidden md:block">
             <h3
               className={cn(
-                "text-sm font-black uppercase tracking-widest text-foreground",
+                "text-[10px] font-black uppercase tracking-widest text-foreground opacity-60",
                 language === "hi" ? "font-hindi" : ""
               )}
             >
@@ -129,10 +155,10 @@ export function Footer() {
               ))}
             </div>
             <div className="mt-8 pt-8 border-t border-border/40">
-              <p className="text-[10px] text-muted-foreground italic">
+              <p className="text-[10px] text-muted-foreground italic leading-relaxed">
                 {language === 'hi' 
-                  ? 'मंदिर के विकास में अपनी सहभागिता सुनिश्चित करें।' 
-                  : 'Ensure your participation in the temple\'s development.'}
+                  ? 'मंदिर के विकास में अपनी सहभागिता सुनिश्चित करें। आपका सहयोग हमारे समुदाय की नींव है।' 
+                  : 'Ensure your participation in the temple\'s development. Your support is our community\'s foundation.'}
               </p>
             </div>
           </div>

@@ -96,15 +96,15 @@ export function Header() {
 
   const AuthButton = ({ className, isMobile = false }: { className?: string; isMobile?: boolean }) => {
     if (isUserLoading) {
-      return <div className={cn("h-10 w-10 animate-pulse rounded-full bg-muted", className)} />;
+      return <div className={cn("h-9 w-9 sm:h-10 sm:w-10 animate-pulse rounded-full bg-muted", className)} />;
     }
     if (user) {
       return (
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-          <Avatar className="h-9 w-9 sm:h-10 sm:w-10 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer ring-2 ring-white ring-offset-1">
+          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer ring-2 ring-white ring-offset-1">
             <AvatarImage src={user.photoURL || userProfile?.photoURL || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-              <UserIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+              <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </AvatarFallback>
           </Avatar>
         </Link>
@@ -112,9 +112,9 @@ export function Header() {
     }
     return (
       <Link href="/login" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-        <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:justify-center h-10">
+        <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:justify-center h-9 sm:h-10">
           <LogIn className="h-4 w-4" />
-          <span className={cn(language === "hi" ? "font-hindi" : "")}>
+          <span className={cn("text-xs sm:text-sm", language === "hi" ? "font-hindi" : "")}>
             {language === "hi" ? "लॉग इन" : "Login"}
           </span>
         </Button>
@@ -143,7 +143,7 @@ export function Header() {
             href={item.href}
             onClick={() => setIsMobileMenuOpen(false)}
             className={cn(
-              "relative px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
+              "relative px-3 py-2 text-[13px] font-medium transition-colors hover:text-primary",
               isActive ? "text-primary" : "text-muted-foreground",
               isMobile && "w-full py-4 text-lg border-b border-border/50",
               itemClassName,
@@ -176,61 +176,63 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink-0 min-w-0">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 max-w-full">
-            <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner shrink-0">
+        {/* Branding Section - Defined width to prevent overlap */}
+        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink-0 min-w-0 max-w-[60%] sm:max-w-[40%]">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 min-w-0 w-full">
+            <div className="relative h-7 w-7 sm:h-9 sm:w-9 lg:h-11 lg:w-11 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner shrink-0">
               {settings?.favicon && !logoError ? (
                 <Image 
                   src={settings.favicon} 
                   alt="Logo" 
                   fill 
-                  className="object-contain p-1 z-10"
+                  className="object-contain p-0.5 z-10"
                   onError={() => setLogoError(true)}
                 />
               ) : (
-                <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-primary" />
+                <TempleIcon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-7 lg:w-7 text-primary" />
               )}
             </div>
-            <div className="flex flex-col items-start leading-tight min-w-0">
+            <div className="flex flex-col items-start leading-tight min-w-0 overflow-hidden">
               <span
                 className={cn(
-                  "text-sm sm:text-base lg:text-xl font-bold text-foreground truncate w-full",
+                  "text-xs sm:text-base lg:text-lg font-bold text-foreground truncate w-full",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
                 {siteName}
               </span>
-              <span className="text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-bold opacity-80 whitespace-nowrap">
+              <span className="text-[7px] sm:text-[8px] lg:text-[9px] uppercase tracking-widest text-muted-foreground font-black opacity-80 whitespace-nowrap overflow-hidden">
                 {siteSubtitle}
               </span>
             </div>
           </div>
         </Link>
 
-        <div className="hidden items-center gap-6 lg:flex">
+        {/* Desktop Navigation */}
+        <div className="hidden items-center gap-4 lg:flex">
           <NavLinks />
-          <div className="h-6 w-px bg-border/60" />
-          <div className="flex items-center gap-6">
+          <div className="h-6 w-px bg-border/60 mx-2" />
+          <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {adminDoc && (
                 <Link href="/management">
                   <Button 
                     variant="default" 
                     size="icon" 
-                    className="bg-primary text-primary-foreground h-10 w-10 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white ring-2 ring-primary/10" 
+                    className="bg-primary text-primary-foreground h-9 w-9 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white ring-2 ring-primary/10" 
                     title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                   >
-                    <ShieldCheck className="h-5 w-5 stroke-[2.5px]" />
+                    <ShieldCheck className="h-4 w-4 stroke-[2.5px]" />
                   </Button>
                 </Link>
               )}
               <AuthButton />
             </div>
             <Link href="/donate">
-              <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm">
+              <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm h-9 px-4">
                 <Heart className="h-4 w-4 fill-current" />
-                <span className={cn(language === "hi" ? "font-hindi" : "")}>
+                <span className={cn("font-bold text-xs", language === "hi" ? "font-hindi" : "")}>
                   {t.navDonate}
                 </span>
               </Button>
@@ -238,20 +240,21 @@ export function Header() {
           </div>
         </div>
 
+        {/* Mobile Actions - Defined spacing to avoid overlap */}
         <div className="flex items-center gap-2 sm:gap-4 lg:hidden shrink-0">
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {adminDoc && (
               <Link href="/management">
                 <Button 
                   variant="default" 
                   size="icon" 
-                  className="bg-primary text-primary-foreground h-9 w-9 sm:h-10 sm:w-10 rounded-full shadow-md active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
+                  className="bg-primary text-primary-foreground h-8 w-8 sm:h-9 sm:w-9 rounded-full shadow-md active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
                   title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                 >
-                  <ShieldCheck className="h-5 w-5 stroke-[2.5px]" />
+                  <ShieldCheck className="h-4 w-4 stroke-[2.5px]" />
                 </Button>
               </Link>
             )}
@@ -259,8 +262,8 @@ export function Header() {
           </div>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-10 w-10">
-                <Menu className="h-6 w-6" />
+              <Button variant="ghost" size="icon" className="relative h-9 w-9 sm:h-10 sm:w-10">
+                <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
@@ -319,9 +322,9 @@ export function Header() {
                   <LanguageSwitcher />
                 </div>
                 <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)} className="block">
-                  <Button className="w-full gap-2 bg-accent text-accent-foreground h-12">
-                    <Heart className="h-4 w-4 fill-current" />
-                    {t.navDonate}
+                  <Button className="w-full gap-2 bg-accent text-accent-foreground h-12 shadow-lg">
+                    <Heart className="h-5 w-5 fill-current" />
+                    <span className="font-bold">{t.navDonate}</span>
                   </Button>
                 </Link>
               </div>
