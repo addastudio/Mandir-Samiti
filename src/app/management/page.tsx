@@ -175,16 +175,26 @@ export default function ManagementPage() {
 
   const totalRangeAmount = React.useMemo(() => chartData.reduce((acc, curr) => acc + curr.amount, 0), [chartData]);
 
-  const logActivity = (action: string, entityType: string, title: string) => {
-    if (!logsRef || !user) return;
-    addDocumentNonBlocking(logsRef, {
-      adminId: user.uid,
-      adminName: user.displayName || user.email,
-      actionType: action,
-      entityType,
-      entityTitle: title,
-      timestamp: new Date().toISOString()
-    });
+  /**
+   * Helper to log administrative actions.
+   * Returns a promise so it can be awaited for sensitive operations like role removal.
+   */
+  const logActivity = async (action: string, entityType: string, title: string) => {
+    if (!firestore || !user) return;
+    // We use standard addDoc instead of non-blocking for management logs 
+    // to ensure predictable execution order during permission revokes.
+    try {
+      await addDoc(collection(firestore, "admin_activity_logs"), {
+        adminId: user.uid,
+        adminName: user.displayName || user.email,
+        actionType: action,
+        entityType,
+        entityTitle: title,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Audit log failed:", e);
+    }
   };
 
   const handleAiGenerate = async (type: 'event' | 'notice', formRef: HTMLFormElement) => {
@@ -211,11 +221,15 @@ export default function ManagementPage() {
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!firestore || !deleteConfirm) return;
-    const ref = deleteConfirm.path ? doc(firestore, deleteConfirm.path) : doc(firestore, deleteConfirm.col, deleteConfirm.id);
-    deleteDocumentNonBlocking(ref);
-    logActivity('DELETE', deleteConfirm.col, deleteConfirm.title);
+    const { col, id, title, path } = deleteConfirm;
+    const ref = path ? doc(firestore, path) : doc(firestore, col, id);
+    
+    // Log first to ensure admin has permission
+    await logActivity('DELETE', col, title);
+    await deleteDoc(ref);
+    
     toast({ title: "Deleted Successfully" });
     setDeleteConfirm(null);
   };
@@ -225,19 +239,20 @@ export default function ManagementPage() {
     const { userId, name, newRole, type } = roleConfirm;
     try {
       if (type === 'admin') {
-        const isAdmin = allAdmins?.some(a => a.id === userId);
-        if (isAdmin) {
+        const isAdminNow = allAdmins?.some(a => a.id === userId);
+        if (isAdminNow) {
+          // LOG FIRST: user is currently an admin
+          await logActivity('REMOVE_ADMIN', 'roles_admin', name);
           await deleteDoc(doc(firestore, "roles_admin", userId));
-          logActivity('REMOVE_ADMIN', 'roles_admin', name);
           toast({ title: "Admin Access Removed" });
         } else {
           await setDoc(doc(firestore, "roles_admin", userId), { assignedAt: new Date().toISOString() });
-          logActivity('GRANT_ADMIN', 'roles_admin', name);
+          await logActivity('GRANT_ADMIN', 'roles_admin', name);
           toast({ title: "Admin Access Granted" });
         }
       } else {
         await updateDoc(doc(firestore, "users", userId), { role: newRole });
-        logActivity('UPDATE_ROLE', 'users', `${name} -> ${newRole}`);
+        await logActivity('UPDATE_ROLE', 'users', `${name} -> ${newRole}`);
         toast({ title: "Role Updated Successfully" });
       }
     } catch (err: any) {
@@ -472,7 +487,7 @@ export default function ManagementPage() {
                     <CardDescription className="text-xs">Add cash or direct bank transfers received at the temple.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
-                    <form onSubmit={(e) => {
+                    <form onSubmit={async (e) => {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
                       const amount = Number(fd.get('amount'));
@@ -481,7 +496,7 @@ export default function ManagementPage() {
                       const date = (fd.get('date') as string) || new Date().toISOString();
 
                       const manualRef = collection(firestore!, "donations");
-                      addDoc(manualRef, {
+                      await addDoc(manualRef, {
                         amount,
                         devoteeName,
                         mode,
@@ -490,7 +505,7 @@ export default function ManagementPage() {
                         isManual: true
                       });
 
-                      logActivity('CREATE', 'donations', `Manual Donation: ₹${amount} from ${devoteeName}`);
+                      await logActivity('CREATE', 'donations', `Manual Donation: ₹${amount} from ${devoteeName}`);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Donation Recorded" });
                     }} className="space-y-4">
@@ -629,7 +644,7 @@ export default function ManagementPage() {
                         createdAt: new Date().toISOString()
                       };
                       await addDoc(eventsRef!, data);
-                      logActivity('CREATE', 'events', data.title);
+                      await logActivity('CREATE', 'events', data.title);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Event Published" });
                     }} className="space-y-4">
@@ -731,7 +746,7 @@ export default function ManagementPage() {
                         createdAt: new Date().toISOString()
                       };
                       await addDoc(noticesRef!, data);
-                      logActivity('CREATE', 'notices', data.title);
+                      await logActivity('CREATE', 'notices', data.title);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Notice Posted" });
                     }} className="space-y-4">
@@ -809,7 +824,7 @@ export default function ManagementPage() {
                         createdAt: new Date().toISOString()
                       };
                       await addDoc(galleryRef!, data);
-                      logActivity('CREATE', 'gallery', data.caption);
+                      await logActivity('CREATE', 'gallery', data.caption);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Media Added" });
                     }} className="space-y-4">
@@ -891,7 +906,7 @@ export default function ManagementPage() {
                             defaultValue={req.status} 
                             onValueChange={async (val) => {
                               await updateDoc(doc(firestore!, "prayer_requests", req.id), { status: val });
-                              logActivity('UPDATE', 'prayer_requests', `Status ${req.name}: ${val}`);
+                              await logActivity('UPDATE', 'prayer_requests', `Status ${req.name}: ${val}`);
                               toast({ title: "Status Updated" });
                             }}
                           >
@@ -942,7 +957,7 @@ export default function ManagementPage() {
                         createdAt: new Date().toISOString()
                       };
                       await addDoc(membersRef!, data);
-                      logActivity('CREATE', 'mandir_samiti_members', data.name);
+                      await logActivity('CREATE', 'mandir_samiti_members', data.name);
                       (e.target as HTMLFormElement).reset();
                       toast({ title: "Member Added" });
                     }} className="space-y-4">
@@ -1037,7 +1052,7 @@ export default function ManagementPage() {
                   </TableHeader>
                   <TableBody>
                     {sortedUsers.map(u => {
-                      const isAdmin = allAdmins?.some(a => a.id === u.id);
+                      const isAdminNow = allAdmins?.some(a => a.id === u.id);
                       return (
                         <TableRow key={u.id} className="hover:bg-primary/5">
                           <TableCell className="pl-6 py-4">
@@ -1069,16 +1084,16 @@ export default function ManagementPage() {
                           </TableCell>
                           <TableCell className="text-center">
                             <Button 
-                              variant={isAdmin ? "default" : "outline"} 
+                              variant={isAdminNow ? "default" : "outline"} 
                               size="sm" 
                               className={cn(
                                 "h-8 px-4 text-[10px] font-black uppercase gap-2",
-                                isAdmin ? "bg-primary shadow-md" : "border-primary/20 text-primary hover:bg-primary/5"
+                                isAdminNow ? "bg-primary shadow-md" : "border-primary/20 text-primary hover:bg-primary/5"
                               )}
                               onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}
                             >
-                              {isAdmin ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
-                              {isAdmin ? 'Full Admin' : 'Grant Admin'}
+                              {isAdminNow ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
+                              {isAdminNow ? 'Full Admin' : 'Grant Admin'}
                             </Button>
                           </TableCell>
                           <TableCell className="text-right pr-6">
