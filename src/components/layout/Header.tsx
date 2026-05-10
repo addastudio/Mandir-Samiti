@@ -87,7 +87,7 @@ export function Header() {
     if (user) {
       return (
         <Link href="/dashboard" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
-          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-105 transition-all">
+          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-110 transition-all duration-300">
             <AvatarImage src={user.photoURL || userProfile?.photoURL || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">
               <UserIcon className="h-4 w-4" />
@@ -102,6 +102,19 @@ export function Header() {
           <LogIn className="h-4 w-4 sm:mr-2" />
           <span className={cn("hidden sm:inline text-xs sm:text-sm", language === "hi" && "font-hindi")}>Login</span>
         </Button>
+      </Link>
+    );
+  };
+
+  const AdminButton = ({ isMobile = false }: { isMobile?: boolean }) => {
+    if (!adminDoc) return null;
+    return (
+      <Link href="/management" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
+        <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-accent shadow-sm hover:scale-110 transition-all duration-300">
+          <AvatarFallback className="bg-accent text-accent-foreground font-bold text-xs">
+            <ShieldCheck className="h-4 w-4" />
+          </AvatarFallback>
+        </Avatar>
       </Link>
     );
   };
@@ -150,14 +163,7 @@ export function Header() {
           </nav>
           <div className="flex items-center gap-4 border-l pl-6">
             <LanguageSwitcher />
-            {adminDoc && (
-              <Link href="/management">
-                <Button variant="outline" size="sm" className="h-9 gap-2 border-primary/20 text-primary hover:bg-primary/5 shadow-sm font-bold">
-                  <ShieldCheck className="h-4 w-4" />
-                  <span className="text-xs">{language === 'hi' ? 'प्रबंधन' : 'Management'}</span>
-                </Button>
-              </Link>
-            )}
+            <AdminButton />
             <AuthButton />
             <Link href="/donate">
               <Button size="sm" className="bg-accent text-accent-foreground font-bold h-9 px-4 shadow-sm hover:scale-105 transition-transform">
@@ -173,6 +179,7 @@ export function Header() {
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
+          <AdminButton isMobile />
           <AuthButton isMobile />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -193,13 +200,8 @@ export function Header() {
                 <div className="xs:hidden py-4 border-b border-border/50">
                   <LanguageSwitcher />
                 </div>
-                {adminDoc && (
-                  <Link href="/management" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 py-4 text-lg font-bold text-primary border-b border-border/50">
-                    <ShieldCheck className="h-5 w-5" /> Management Panel
-                  </Link>
-                )}
               </div>
-              <div className="p-6 border-t bg-secondary/30">
+              <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">
                 <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>
                   <Button className="w-full h-12 bg-accent text-accent-foreground font-bold shadow-lg">
                     <Heart className="h-5 w-5 mr-2 fill-current" /> {t.navDonate}
