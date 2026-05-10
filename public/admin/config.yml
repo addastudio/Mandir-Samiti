@@ -1,71 +1,60 @@
-
 backend:
   name: git-gateway
   branch: main
+  # This allows Decap CMS to use your Netlify Identity instance even on Vercel
+  site_domain: mandir-bahpura.netlify.app
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
 collections:
   - name: "settings"
-    label: "General Settings"
-    delete: false
-    editor:
-      preview: false
+    label: "Site Identity"
     files:
-      - name: "identity"
-        label: "Site Identity"
-        file: "content/settings.json"
+      - file: "content/settings.json"
+        label: "General Settings"
+        name: "general"
         fields:
           - { label: "Site Title (English)", name: "site_title_en", widget: "string" }
           - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
-          - { label: "Favicon/Logo", name: "favicon", widget: "image", choose_url: false }
+          - { label: "Favicon / Logo", name: "favicon", widget: "image" }
 
-  - name: "hero"
-    label: "Hero Section"
-    delete: false
-    editor:
-      preview: false
+  - name: "pages"
+    label: "Pages"
     files:
-      - name: "hero_content"
-        label: "Hero Content"
-        file: "content/hero.json"
+      - file: "content/hero.json"
+        label: "Hero Section"
+        name: "hero"
         fields:
           - { label: "Headline (English)", name: "headline_en", widget: "string" }
           - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
           - { label: "Subtitle (English)", name: "subtitle_en", widget: "string" }
           - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "string" }
-          - { label: "Background Video URL", name: "video_url", widget: "string", hint: "Direct MP4 link from Mixkit or Dropbox" }
-          - { label: "Fallback Background Image", name: "fallback_image", widget: "image" }
+          - { label: "Background Video URL", name: "video_url", widget: "string" }
+          - { label: "Fallback Image", name: "fallback_image", widget: "image" }
 
-  - name: "about"
-    label: "About Us"
-    delete: false
-    editor:
-      preview: false
-    files:
-      - name: "about_details"
-        label: "About Details"
-        file: "content/about.json"
+      - file: "content/about.json"
+        label: "About Us"
+        name: "about"
         fields:
           - { label: "History Title (English)", name: "history_title_en", widget: "string" }
           - { label: "History Title (Hindi)", name: "history_title_hi", widget: "string" }
-          - { label: "History (English)", name: "history_en", widget: "markdown" }
-          - { label: "History (Hindi)", name: "history_hi", widget: "markdown" }
+          - { label: "History Content (English)", name: "history_en", widget: "markdown" }
+          - { label: "History Content (Hindi)", name: "history_hi", widget: "markdown" }
           - { label: "Mission Title (English)", name: "mission_title_en", widget: "string" }
           - { label: "Mission Title (Hindi)", name: "mission_title_hi", widget: "string" }
-          - { label: "Mission (English)", name: "mission_en", widget: "markdown" }
-          - { label: "Mission (Hindi)", name: "mission_hi", widget: "markdown" }
+          - { label: "Mission Content (English)", name: "mission_en", widget: "markdown" }
+          - { label: "Mission Content (Hindi)", name: "mission_hi", widget: "markdown" }
           - { label: "Featured Image", name: "featured_image", widget: "image" }
 
   - name: "seva"
     label: "Seva Programs"
     folder: "content/seva"
     create: true
-    slug: "{{slug}}"
+    slug: "{{title_en}}"
     fields:
-      - { label: "Title (English)", name: "title_en", widget: "string" }
-      - { label: "Title (Hindi)", name: "title_hi", widget: "string" }
+      - { label: "Program Title (English)", name: "title_en", widget: "string" }
+      - { label: "Program Title (Hindi)", name: "title_hi", widget: "string" }
       - { label: "Description (English)", name: "desc_en", widget: "text" }
       - { label: "Description (Hindi)", name: "desc_hi", widget: "text" }
       - { label: "Icon", name: "icon", widget: "select", options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] }
