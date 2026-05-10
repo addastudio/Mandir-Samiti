@@ -903,18 +903,31 @@ export default function ManagementPage() {
                           </TableCell>
                           <TableCell className="text-center">
                             {isMe ? (
-                              <Button variant="outline" size="sm" className="h-8 px-4 text-[10px] font-black uppercase gap-2 text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}>
-                                <LogOut className="h-3 w-3" /> Resign
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="h-9 px-4 text-xs font-bold gap-2 shadow-sm" 
+                                onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}
+                              >
+                                <LogOut className="h-4 w-4" /> Resign Access
+                              </Button>
+                            ) : isAdminNow ? (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-9 px-4 text-xs font-bold gap-2 text-destructive border-destructive/20 hover:bg-destructive/5 shadow-sm"
+                                onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}
+                              >
+                                <ShieldAlert className="h-4 w-4" /> Revoke Access
                               </Button>
                             ) : (
                               <Button 
-                                variant={isAdminNow ? "default" : "outline"} 
+                                variant="default" 
                                 size="sm" 
-                                className={cn("h-8 px-4 text-[10px] font-black uppercase gap-2", isAdminNow ? "bg-primary" : "border-primary/20 text-primary")}
+                                className="h-9 px-4 text-xs font-bold gap-2 bg-primary text-primary-foreground shadow-md hover:scale-105 transition-transform"
                                 onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}
                               >
-                                {isAdminNow ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
-                                {isAdminNow ? 'Admin' : 'Grant Admin'}
+                                <ShieldCheck className="h-4 w-4" /> Make Admin
                               </Button>
                             )}
                           </TableCell>
@@ -980,20 +993,35 @@ export default function ManagementPage() {
       </AlertDialog>
 
       <AlertDialog open={!!roleConfirm} onOpenChange={(o) => !o && setRoleConfirm(null)}>
-        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
+        <AlertDialogContent className="w-[95%] max-w-md mx-auto border-2 border-primary/20">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2"><ShieldAlert className="text-primary h-5 w-5" /> Confirm Access Change</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
+            <AlertDialogTitle className="flex items-center gap-2 text-xl font-bold">
+              {roleConfirm?.type === 'resign' ? <LogOut className="text-destructive h-6 w-6" /> : <ShieldAlert className="text-primary h-6 w-6" />}
+              Security Confirmation
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm font-medium py-2">
               {roleConfirm?.type === 'resign' 
-                ? "Are you sure you want to resign your administrator status? You will lose access to this panel immediately." 
+                ? "CRITICAL: You are about to resign your administrative privileges. You will lose all access to this panel immediately and will not be able to undo this action yourself. Continue?" 
                 : roleConfirm?.type === 'admin' 
-                  ? `Are you sure you want to toggle Global Admin permissions for ${roleConfirm.name}?` 
-                  : `Are you sure you want to change ${roleConfirm?.name}'s official role to "${roleConfirm?.newRole}"?`}
+                  ? allAdmins?.some(a => a.id === roleConfirm.userId)
+                    ? `You are about to REVOKE administrative access for ${roleConfirm.name}. They will no longer be able to manage temple operations. Proceed?`
+                    : `You are about to GRANT full administrative access to ${roleConfirm.name}. They will have complete control over temple data and permissions. Proceed?`
+                  : `Update the official temple role for ${roleConfirm?.name} to "${roleConfirm?.newRole}"?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
-            <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRoleAction} className="bg-primary hover:bg-primary/90 shadow-lg">Confirm Update</AlertDialogAction>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-3 mt-6">
+            <AlertDialogCancel className="mt-0 h-11">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRoleAction} 
+              className={cn(
+                "h-11 shadow-lg font-bold", 
+                roleConfirm?.type === 'resign' || (roleConfirm?.type === 'admin' && allAdmins?.some(a => a.id === roleConfirm.userId)) 
+                  ? "bg-destructive hover:bg-destructive/90 text-white" 
+                  : "bg-primary hover:bg-primary/90"
+              )}
+            >
+              Confirm Security Change
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
