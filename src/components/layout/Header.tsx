@@ -175,10 +175,10 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
-        {/* Branding Section - No Overlap */}
-        <Link href="/" className="flex-1 flex items-center gap-2 transition-transform hover:scale-[1.02] active:scale-95 group min-w-0">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 min-w-0 max-w-full">
-            <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-11 lg:w-11 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner shrink-0">
+        {/* Branding Section - Refined for No Overlap */}
+        <Link href="/" className="flex flex-shrink min-w-0 items-center gap-2 transition-transform hover:scale-[1.02] active:scale-95 group">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 min-w-0">
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-11 lg:w-11 overflow-hidden rounded-full border border-primary/20 bg-white flex flex-shrink-0 items-center justify-center shadow-inner">
               {settings?.favicon && !logoError ? (
                 <Image 
                   src={settings.favicon} 
@@ -194,13 +194,13 @@ export function Header() {
             <div className="flex flex-col items-start leading-tight min-w-0">
               <span
                 className={cn(
-                  "text-xs sm:text-base lg:text-lg font-bold text-foreground truncate block w-full",
+                  "text-xs sm:text-base lg:text-lg font-bold text-foreground truncate block w-full max-w-[120px] sm:max-w-[200px] lg:max-w-none",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
                 {siteName}
               </span>
-              <span className="text-[7px] sm:text-[8px] lg:text-[9px] uppercase tracking-widest text-muted-foreground font-black opacity-80 whitespace-nowrap">
+              <span className="text-[7px] sm:text-[8px] lg:text-[9px] uppercase tracking-widest text-muted-foreground font-black opacity-80 whitespace-nowrap hidden xs:block">
                 {siteSubtitle}
               </span>
             </div>
@@ -208,12 +208,12 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden items-center gap-2 lg:flex shrink-0">
+        <div className="hidden items-center gap-2 lg:flex flex-shrink-0">
           <NavLinks className="gap-0.5" />
           <div className="h-6 w-px bg-border/60 mx-1" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <LanguageSwitcher />
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {adminDoc && (
                 <Link href="/management" className="shrink-0">
                   <Button 
@@ -228,7 +228,7 @@ export function Header() {
               )}
               <AuthButton />
             </div>
-            <Link href="/donate" className="shrink-0 ml-2">
+            <Link href="/donate" className="shrink-0">
               <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm h-9 px-4">
                 <Heart className="h-4 w-4 fill-current" />
                 <span className={cn("font-bold text-xs", language === "hi" ? "font-hindi" : "")}>
@@ -239,12 +239,12 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile Actions - Shrink-0 prevents overlap */}
-        <div className="flex items-center gap-2 sm:gap-4 lg:hidden shrink-0">
+        {/* Mobile Actions */}
+        <div className="flex items-center gap-2 sm:gap-4 lg:hidden flex-shrink-0">
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3 sm:gap-4">
             {adminDoc && (
               <Link href="/management" className="shrink-0">
                 <Button 
@@ -261,7 +261,7 @@ export function Header() {
           </div>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 shrink-0">
+              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
                 <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
                 <span className="sr-only">Open menu</span>
               </Button>
@@ -274,7 +274,7 @@ export function Header() {
               
               <div className="flex h-20 items-center border-b px-6 bg-amber-50">
                 <Link href="/" className="flex items-center gap-2 min-w-0" onClick={() => setIsMobileMenuOpen(false)}>
-                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shrink-0">
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white flex flex-shrink-0 items-center justify-center">
                     {settings?.favicon && !logoError ? (
                       <Image 
                         src={settings.favicon} 

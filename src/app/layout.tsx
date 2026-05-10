@@ -106,6 +106,12 @@ export default function RootLayout(props: {
                       });
                     }
                   });
+                  // For Vercel deployments using Netlify Identity for CMS
+                  const netlifySiteUrl = process.env.NEXT_PUBLIC_NETLIFY_SITE_URL;
+                  if (netlifySiteUrl && window.location.hostname !== new URL(netlifySiteUrl).hostname) {
+                    console.log("Setting Netlify Identity site URL for cross-domain auth");
+                    localStorage.setItem("netlifySiteURL", netlifySiteUrl);
+                  }
                 }
               `}
             </Script>

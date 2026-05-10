@@ -1,19 +1,19 @@
 backend:
   name: git-gateway
   branch: main
-  # This allows Decap CMS to use your Netlify Identity instance even on Vercel
-  site_domain: mandir-bahpura.netlify.app
+  identity_url: "https://your-mandir-site.netlify.app/.netlify/identity"
+  gateway_url: "https://your-mandir-site.netlify.app/.netlify/git"
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
 collections:
   - name: "settings"
-    label: "Site Identity"
+    label: "Site Settings"
     files:
-      - file: "content/settings.json"
-        label: "General Settings"
+      - label: "General Settings"
         name: "general"
+        file: "content/settings.json"
         fields:
           - { label: "Site Title (English)", name: "site_title_en", widget: "string" }
           - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
@@ -22,9 +22,9 @@ collections:
   - name: "pages"
     label: "Pages"
     files:
-      - file: "content/hero.json"
-        label: "Hero Section"
+      - label: "Hero Section"
         name: "hero"
+        file: "content/hero.json"
         fields:
           - { label: "Headline (English)", name: "headline_en", widget: "string" }
           - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
@@ -33,9 +33,9 @@ collections:
           - { label: "Background Video URL", name: "video_url", widget: "string" }
           - { label: "Fallback Image", name: "fallback_image", widget: "image" }
 
-      - file: "content/about.json"
-        label: "About Us"
+      - label: "About Us"
         name: "about"
+        file: "content/about.json"
         fields:
           - { label: "History Title (English)", name: "history_title_en", widget: "string" }
           - { label: "History Title (Hindi)", name: "history_title_hi", widget: "string" }
@@ -53,8 +53,13 @@ collections:
     create: true
     slug: "{{title_en}}"
     fields:
-      - { label: "Program Title (English)", name: "title_en", widget: "string" }
-      - { label: "Program Title (Hindi)", name: "title_hi", widget: "string" }
+      - { label: "Title (English)", name: "title_en", widget: "string" }
+      - { label: "Title (Hindi)", name: "title_hi", widget: "string" }
       - { label: "Description (English)", name: "desc_en", widget: "text" }
       - { label: "Description (Hindi)", name: "desc_hi", widget: "text" }
-      - { label: "Icon", name: "icon", widget: "select", options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] }
+      - { 
+          label: "Icon", 
+          name: "icon", 
+          widget: "select", 
+          options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] 
+        }
