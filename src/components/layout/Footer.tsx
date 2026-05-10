@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -48,8 +49,8 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12 sm:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
           <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex items-center justify-center shadow-sm">
+            <div className="flex items-center gap-4 group">
+              <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex items-center justify-center shadow-sm shrink-0">
                 {settings?.favicon && !logoError ? (
                   <Image 
                     src={settings.favicon} 
@@ -62,16 +63,16 @@ export function Footer() {
                   <TempleIcon className="h-8 w-8 text-primary" />
                 )}
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 <span
                   className={cn(
-                    "text-xl font-bold text-foreground",
+                    "text-xl font-bold text-foreground leading-tight truncate",
                     language === "hi" ? "font-hindi" : "font-headline"
                   )}
                 >
                   {siteName}
                 </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black opacity-70">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black opacity-70 whitespace-nowrap">
                   {siteSubtitle}
                 </span>
               </div>

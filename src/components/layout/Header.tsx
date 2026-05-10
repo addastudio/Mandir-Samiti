@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -176,8 +177,8 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink-0">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100">
+        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink-0 min-w-0">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 max-w-full">
             <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner shrink-0">
               {settings?.favicon && !logoError ? (
                 <Image 
@@ -191,16 +192,16 @@ export function Header() {
                 <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-primary" />
               )}
             </div>
-            <div className="flex flex-col items-start leading-tight">
+            <div className="flex flex-col items-start leading-tight min-w-0">
               <span
                 className={cn(
-                  "text-sm sm:text-base lg:text-xl font-bold text-foreground",
+                  "text-sm sm:text-base lg:text-xl font-bold text-foreground truncate w-full",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
                 {siteName}
               </span>
-              <span className="text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-bold opacity-80">
+              <span className="text-[8px] sm:text-[9px] lg:text-[10px] uppercase tracking-widest text-muted-foreground font-bold opacity-80 whitespace-nowrap">
                 {siteSubtitle}
               </span>
             </div>
@@ -210,7 +211,7 @@ export function Header() {
         <div className="hidden items-center gap-6 lg:flex">
           <NavLinks />
           <div className="h-6 w-px bg-border/60" />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <LanguageSwitcher />
             <div className="flex items-center gap-4">
               {adminDoc && (
@@ -238,7 +239,7 @@ export function Header() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
+        <div className="flex items-center gap-2 sm:gap-4 lg:hidden shrink-0">
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
@@ -271,8 +272,8 @@ export function Header() {
               </SheetHeader>
               
               <div className="flex h-20 items-center border-b px-6 bg-amber-50">
-                <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center">
+                <Link href="/" className="flex items-center gap-2 min-w-0" onClick={() => setIsMobileMenuOpen(false)}>
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shrink-0">
                     {settings?.favicon && !logoError ? (
                       <Image 
                         src={settings.favicon} 
@@ -285,7 +286,7 @@ export function Header() {
                       <TempleIcon className="h-5 w-5 text-primary" />
                     )}
                   </div>
-                  <span className={cn("text-base font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+                  <span className={cn("text-base font-bold truncate", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                     {siteName}
                   </span>
                 </Link>

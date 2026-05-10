@@ -1,3 +1,4 @@
+
 # Netlify Configuration for Next.js and Decap CMS
 [build]
   command = "npm run build"
