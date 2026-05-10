@@ -19,10 +19,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
-/**
- * Enhanced Header with strict branding constraints to prevent visual overlap.
- * Uses min-w-0 and shrink-0 to ensure logo and title are always legible.
- */
 export function Header() {
   const { t, language } = useLanguage();
   const { user, isUserLoading } = useUser();
@@ -41,17 +37,17 @@ export function Header() {
       .catch(() => setSettings(null));
   }, []);
 
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, "roles_admin", user.uid);
-  }, [firestore, user]);
-  const { data: adminDoc } = useDoc(adminRoleRef);
-
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
   }, [firestore, user]);
   const { data: userProfile } = useDoc(userDocRef);
+
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "roles_admin", user.uid);
+  }, [firestore, user]);
+  const { data: adminDoc } = useDoc(adminRoleRef);
 
   const navItems = [
     { href: "/#home", label: t.navHome, isAnchor: true },
@@ -90,7 +86,7 @@ export function Header() {
     if (isUserLoading) return <div className="h-9 w-9 animate-pulse rounded-full bg-muted shrink-0" />;
     if (user) {
       return (
-        <Link href="/dashboard" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0 ml-1">
+        <Link href="/dashboard" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
           <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-105 transition-all">
             <AvatarImage src={user.photoURL || userProfile?.photoURL || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">
@@ -101,7 +97,7 @@ export function Header() {
       );
     }
     return (
-      <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0 ml-1">
+      <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
         <Button variant="ghost" size="sm" className="h-9 px-2 sm:px-4">
           <LogIn className="h-4 w-4 sm:mr-2" />
           <span className={cn("hidden sm:inline text-xs sm:text-sm", language === "hi" && "font-hindi")}>Login</span>
@@ -117,9 +113,9 @@ export function Header() {
     )}>
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Branding - Strict Layout Logic to prevent overlap */}
-        <Link href="/" className="flex items-center min-w-0 flex-shrink group mr-4 max-w-[50%] xs:max-w-[60%] sm:max-w-none">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-xl bg-amber-50/80 px-2 py-1.5 shadow-sm border border-primary/10 w-full">
+        {/* BRANDING: Strict containment to prevent overlap with Nav/Icons */}
+        <Link href="/" className="flex items-center min-w-0 max-w-[50%] xs:max-w-[60%] sm:max-w-none group shrink-0">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-xl bg-amber-50/80 px-2 py-1.5 shadow-sm border border-primary/10 overflow-hidden">
             <div className="relative h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/5">
               {settings?.favicon && !logoError ? (
                 <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1" onError={() => setLogoError(true)} />
@@ -172,8 +168,8 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile Nav Toggle - Shrink-0 ensures it stays on screen */}
-        <div className="flex lg:hidden items-center gap-1 sm:gap-2 shrink-0">
+        {/* MOBILE CONTROLS: Strictly separated from Branding */}
+        <div className="flex lg:hidden items-center gap-1.5 sm:gap-3 shrink-0 ml-2">
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
