@@ -1,26 +1,27 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Content Manager | Mandir Samiti Bahpura</title>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-</head>
-<body>
-  <!-- Include the script that builds the page and powers Decap CMS -->
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-  <script>
-    // Essential for Vercel deployments using Netlify Identity
-    // This allows the identity widget to find the Netlify backend from a different domain
-    const netlifySiteUrl = window.location.origin.includes('vercel.app') 
-      ? localStorage.getItem("netlifySiteURL") 
-      : null;
-
-    if (netlifySiteUrl && window.netlifyIdentity) {
-      window.netlifyIdentity.on("init", () => {
-        console.log("CMS: cross-domain identity initialized via " + netlifySiteUrl);
-      });
-    }
-  </script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mandir Admin Panel | Decap CMS</title>
+    <!-- Include Netlify Identity for Authentication -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  </head>
+  <body>
+    <!-- Decap CMS Loading target -->
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    
+    <script>
+      // CROSS-DOMAIN IDENTITY BRIDGE
+      // Allows logging into Netlify Identity even when hosted on Vercel or other domains.
+      const netlifySiteURL = localStorage.getItem("netlifySiteURL");
+      if (netlifySiteURL && window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", () => {
+          if (!window.netlifyIdentity.currentUser()) {
+            window.netlifyIdentity.open();
+          }
+        });
+      }
+    </script>
+  </body>
 </html>

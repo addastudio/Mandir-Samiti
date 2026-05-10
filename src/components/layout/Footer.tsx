@@ -7,6 +7,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import TempleIcon from "@/components/icons/TempleIcon";
 
+/**
+ * Footer component with professional layout constraints.
+ * Ensures the branding identity (Logo + Name) is clearly separated from navigation.
+ */
 export function Footer() {
   const { t, language } = useLanguage();
   const [settings, setSettings] = React.useState<any>(null);
@@ -28,9 +32,9 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12 sm:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-12">
           
-          {/* Branding - Fixed Spacing */}
+          {/* Branding - Strict Containment */}
           <div className="md:col-span-5 space-y-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex shrink-0 items-center justify-center shadow-sm">
                 {settings?.favicon && !logoError ? (
                   <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1.5" onError={() => setLogoError(true)} />
@@ -39,10 +43,13 @@ export function Footer() {
                 )}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className={cn("text-lg sm:text-xl font-bold truncate block leading-tight", language === "hi" ? "font-hindi" : "font-headline")}>
+                <span className={cn(
+                  "text-lg sm:text-xl font-bold truncate block leading-tight", 
+                  language === "hi" ? "font-hindi" : "font-headline"
+                )}>
                   {siteName}
                 </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-70">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-70 truncate">
                   {language === 'hi' ? 'श्रद्धा और सेवा' : 'Faith and Service'}
                 </span>
               </div>

@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD): Mandir Samiti Mobile App
+# Product Requirements Document (PRD): Mandir Samiti Bahpura Mobile
 
 ## 1. Project Overview
 **Project Name:** Mandir Samiti Bahpura Mobile
