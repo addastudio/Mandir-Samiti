@@ -176,8 +176,8 @@ export function Header() {
       )}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
-        {/* Branding Section - Strict spacing to avoid overlap */}
-        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink min-w-0 max-w-[45%]">
+        {/* Branding Section - Strict Spacing */}
+        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink-0 max-w-[50%] min-w-0">
           <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 min-w-0">
             <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-11 lg:w-11 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner shrink-0">
               {settings?.favicon && !logoError ? (
@@ -214,7 +214,7 @@ export function Header() {
           <div className="h-6 w-px bg-border/60 mx-1" />
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {adminDoc && (
                 <Link href="/management">
                   <Button 
@@ -229,7 +229,7 @@ export function Header() {
               )}
               <AuthButton />
             </div>
-            <Link href="/donate" className="shrink-0">
+            <Link href="/donate" className="shrink-0 ml-2">
               <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm h-9 px-4">
                 <Heart className="h-4 w-4 fill-current" />
                 <span className={cn("font-bold text-xs", language === "hi" ? "font-hindi" : "")}>
@@ -245,7 +245,7 @@ export function Header() {
           <div className="hidden xs:block">
             <LanguageSwitcher />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3 sm:gap-4">
             {adminDoc && (
               <Link href="/management">
                 <Button 

@@ -44,9 +44,9 @@ export function Footer() {
     <footer className="bg-secondary border-t border-border/50">
       <div className="container mx-auto px-4 py-12 sm:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
-          {/* Branding Section - Strict containment */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 group min-w-0 overflow-hidden">
+          {/* Branding Section - No Overlap */}
+          <div className="space-y-6 min-w-0">
+            <div className="flex items-center gap-4 group min-w-0">
               <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex items-center justify-center shadow-sm shrink-0">
                 {settings?.favicon && !logoError ? (
                   <Image 
