@@ -101,7 +101,7 @@ export function Header() {
     if (user) {
       return (
         <Link href="/dashboard" className={className} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer ring-2 ring-white ring-offset-1">
+          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-2 border-primary shadow-sm hover:scale-110 transition-all cursor-pointer ring-2 ring-white ring-offset-1 shrink-0">
             <AvatarImage src={user.photoURL || userProfile?.photoURL || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground font-bold">
               <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -143,7 +143,7 @@ export function Header() {
             href={item.href}
             onClick={() => setIsMobileMenuOpen(false)}
             className={cn(
-              "relative px-3 py-2 text-[13px] font-medium transition-colors hover:text-primary",
+              "relative px-3 py-2 text-[13px] font-medium transition-colors hover:text-primary whitespace-nowrap",
               isActive ? "text-primary" : "text-muted-foreground",
               isMobile && "w-full py-4 text-lg border-b border-border/50",
               itemClassName,
@@ -175,11 +175,11 @@ export function Header() {
           : "bg-transparent"
       )}
     >
-      <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Branding Section - Defined width to prevent overlap */}
-        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink-0 min-w-0 max-w-[60%] sm:max-w-[40%]">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 min-w-0 w-full">
-            <div className="relative h-7 w-7 sm:h-9 sm:w-9 lg:h-11 lg:w-11 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner shrink-0">
+      <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
+        {/* Branding Section - Strict spacing to avoid overlap */}
+        <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105 active:scale-95 group shrink min-w-0 max-w-[45%]">
+          <div className="flex items-center gap-2 lg:gap-3 rounded-lg lg:rounded-xl bg-amber-50/90 px-2 py-1.5 sm:px-3 lg:px-4 lg:py-2.5 shadow-md ring-1 ring-primary/20 backdrop-blur-sm transition-colors group-hover:bg-amber-100 min-w-0">
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 lg:h-11 lg:w-11 overflow-hidden rounded-full border border-primary/20 bg-white flex items-center justify-center shadow-inner shrink-0">
               {settings?.favicon && !logoError ? (
                 <Image 
                   src={settings.favicon} 
@@ -189,13 +189,13 @@ export function Header() {
                   onError={() => setLogoError(true)}
                 />
               ) : (
-                <TempleIcon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-7 lg:w-7 text-primary" />
+                <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-primary" />
               )}
             </div>
             <div className="flex flex-col items-start leading-tight min-w-0 overflow-hidden">
               <span
                 className={cn(
-                  "text-xs sm:text-base lg:text-lg font-bold text-foreground truncate w-full",
+                  "text-xs sm:text-base lg:text-lg font-bold text-foreground truncate block w-full",
                   language === "hi" ? "font-hindi" : "font-headline"
                 )}
               >
@@ -209,18 +209,18 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden items-center gap-4 lg:flex">
-          <NavLinks />
-          <div className="h-6 w-px bg-border/60 mx-2" />
+        <div className="hidden items-center gap-2 lg:flex shrink-0">
+          <NavLinks className="gap-0.5" />
+          <div className="h-6 w-px bg-border/60 mx-1" />
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {adminDoc && (
                 <Link href="/management">
                   <Button 
                     variant="default" 
                     size="icon" 
-                    className="bg-primary text-primary-foreground h-9 w-9 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white ring-2 ring-primary/10" 
+                    className="bg-primary text-primary-foreground h-9 w-9 rounded-full shadow-lg hover:scale-110 hover:bg-primary/90 transition-all border-2 border-white ring-2 ring-primary/10 shrink-0" 
                     title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                   >
                     <ShieldCheck className="h-4 w-4 stroke-[2.5px]" />
@@ -229,7 +229,7 @@ export function Header() {
               )}
               <AuthButton />
             </div>
-            <Link href="/donate">
+            <Link href="/donate" className="shrink-0">
               <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm h-9 px-4">
                 <Heart className="h-4 w-4 fill-current" />
                 <span className={cn("font-bold text-xs", language === "hi" ? "font-hindi" : "")}>
@@ -240,7 +240,7 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile Actions - Defined spacing to avoid overlap */}
+        {/* Mobile Actions */}
         <div className="flex items-center gap-2 sm:gap-4 lg:hidden shrink-0">
           <div className="hidden xs:block">
             <LanguageSwitcher />
@@ -251,7 +251,7 @@ export function Header() {
                 <Button 
                   variant="default" 
                   size="icon" 
-                  className="bg-primary text-primary-foreground h-8 w-8 sm:h-9 sm:w-9 rounded-full shadow-md active:scale-95 hover:bg-primary/90 transition-all border-2 border-white" 
+                  className="bg-primary text-primary-foreground h-8 w-8 sm:h-9 sm:w-9 rounded-full shadow-md active:scale-95 hover:bg-primary/90 transition-all border-2 border-white shrink-0" 
                   title={language === 'hi' ? 'प्रबंधन पैनल' : 'Management Panel'}
                 >
                   <ShieldCheck className="h-4 w-4 stroke-[2.5px]" />
@@ -262,7 +262,7 @@ export function Header() {
           </div>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 sm:h-10 sm:w-10">
+              <Button variant="ghost" size="icon" className="relative h-9 w-9 sm:h-10 sm:w-10 shrink-0">
                 <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
                 <span className="sr-only">Open menu</span>
               </Button>

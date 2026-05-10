@@ -44,9 +44,9 @@ export function Footer() {
     <footer className="bg-secondary border-t border-border/50">
       <div className="container mx-auto px-4 py-12 sm:py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
-          {/* Branding Section - Solved Overlap */}
+          {/* Branding Section - Strict containment */}
           <div className="space-y-6">
-            <div className="flex items-center gap-4 group min-w-0">
+            <div className="flex items-center gap-4 group min-w-0 overflow-hidden">
               <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex items-center justify-center shadow-sm shrink-0">
                 {settings?.favicon && !logoError ? (
                   <Image 
@@ -63,7 +63,7 @@ export function Footer() {
               <div className="flex flex-col min-w-0 overflow-hidden">
                 <span
                   className={cn(
-                    "text-lg sm:text-xl font-bold text-foreground leading-tight truncate",
+                    "text-lg sm:text-xl font-bold text-foreground leading-tight truncate block w-full",
                     language === "hi" ? "font-hindi" : "font-headline"
                   )}
                 >
