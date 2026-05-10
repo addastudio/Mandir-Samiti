@@ -40,7 +40,8 @@ import {
   Activity,
   TrendingUp,
   IndianRupee,
-  LogOut
+  LogOut,
+  LayoutDashboard
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -376,6 +377,12 @@ export default function ManagementPage() {
               <LogOut className="h-4 w-4" />
               {language === 'hi' ? 'इस्तीफा दें' : 'Resign as Admin'}
             </Button>
+            <Link href="/dashboard" className="flex-1 sm:flex-initial">
+              <Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm">
+                <LayoutDashboard className="h-4 w-4" />
+                {language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}
+              </Button>
+            </Link>
             <Link href="/" className="flex-1 sm:flex-initial">
               <Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm">
                 <Globe className="h-4 w-4" />
