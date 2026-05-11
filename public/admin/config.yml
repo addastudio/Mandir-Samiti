@@ -1,56 +1,65 @@
 backend:
   name: git-gateway
-  branch: main # Ensure this matches your production branch
+  branch: main
+  site_domain: mandirsamiti.netlify.app
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
 collections:
+  - name: "pages"
+    label: "Pages"
+    files:
+      - name: "about"
+        label: "About Page"
+        file: "content/pages/about.md"
+        fields:
+          - { label: "Template", name: "template", widget: "hidden", default: "about" }
+          - { label: "Hindi History Title", name: "history_title_hi", widget: "string" }
+          - { label: "English History Title", name: "history_title_en", widget: "string" }
+          - { label: "Hindi History", name: "history_hi", widget: "markdown" }
+          - { label: "English History", name: "history_en", widget: "markdown" }
+          - { label: "Hindi Mission Title", name: "mission_title_hi", widget: "string" }
+          - { label: "English Mission Title", name: "mission_title_en", widget: "string" }
+          - { label: "Hindi Mission", name: "mission_hi", widget: "markdown" }
+          - { label: "English Mission", name: "mission_en", widget: "markdown" }
+          - { label: "Featured Image", name: "featured_image", widget: "image" }
+
   - name: "settings"
     label: "Global Settings"
     delete: false
     editor:
       preview: false
     files:
-      - name: "general"
-        label: "Site Settings"
+      - name: "site_config"
+        label: "Site Configuration"
         file: "content/settings.json"
         fields:
-          - { label: "Site Title (English)", name: "site_title_en", widget: "string" }
-          - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
-          - { label: "Favicon/Logo", name: "favicon", widget: "image" }
-
-  - name: "hero"
-    label: "Hero Section"
-    delete: false
-    files:
-      - name: "hero_content"
-        label: "Hero Content"
+          - { label: "English Site Title", name: "site_title_en", widget: "string" }
+          - { label: "Hindi Site Title", name: "site_title_hi", widget: "string" }
+          - { label: "Favicon / Logo", name: "favicon", widget: "image" }
+      - name: "hero"
+        label: "Hero Section"
         file: "content/hero.json"
         fields:
-          - { label: "Headline (English)", name: "headline_en", widget: "string" }
-          - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
-          - { label: "Subtitle (English)", name: "subtitle_en", widget: "text" }
-          - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "text" }
-          - { label: "Video URL", name: "video_url", widget: "string", hint: "YouTube or direct MP4 link" }
+          - { label: "English Headline", name: "headline_en", widget: "string" }
+          - { label: "Hindi Headline", name: "headline_hi", widget: "string" }
+          - { label: "English Subtitle", name: "subtitle_en", widget: "string" }
+          - { label: "Hindi Subtitle", name: "subtitle_hi", widget: "string" }
+          - { label: "Video URL", name: "video_url", widget: "string" }
           - { label: "Fallback Image", name: "fallback_image", widget: "image" }
-
-  - name: "about"
-    label: "About Us"
-    delete: false
-    files:
-      - name: "about_content"
-        label: "About Content"
+      - name: "about_json"
+        label: "About Us (Data)"
         file: "content/about.json"
         fields:
-          - { label: "History Title (English)", name: "history_title_en", widget: "string" }
-          - { label: "History Title (Hindi)", name: "history_title_hi", widget: "string" }
-          - { label: "History Text (English)", name: "history_en", widget: "markdown" }
-          - { label: "History Text (Hindi)", name: "history_hi", widget: "markdown" }
-          - { label: "Mission Title (English)", name: "mission_title_en", widget: "string" }
-          - { label: "Mission Title (Hindi)", name: "mission_title_hi", widget: "string" }
-          - { label: "Mission Text (English)", name: "mission_en", widget: "markdown" }
-          - { label: "Mission Text (Hindi)", name: "mission_hi", widget: "markdown" }
+          - { label: "Hindi History Title", name: "history_title_hi", widget: "string" }
+          - { label: "English History Title", name: "history_title_en", widget: "string" }
+          - { label: "Hindi History", name: "history_hi", widget: "text" }
+          - { label: "English History", name: "history_en", widget: "text" }
+          - { label: "Hindi Mission Title", name: "mission_title_hi", widget: "string" }
+          - { label: "English Mission Title", name: "mission_title_en", widget: "string" }
+          - { label: "Hindi Mission", name: "mission_hi", widget: "text" }
+          - { label: "English Mission", name: "mission_en", widget: "text" }
           - { label: "Featured Image", name: "featured_image", widget: "image" }
 
   - name: "seva"
@@ -59,8 +68,8 @@ collections:
     create: true
     slug: "{{title_en}}"
     fields:
-      - { label: "Title (English)", name: "title_en", widget: "string" }
-      - { label: "Title (Hindi)", name: "title_hi", widget: "string" }
-      - { label: "Description (English)", name: "desc_en", widget: "text" }
-      - { label: "Description (Hindi)", name: "desc_hi", widget: "text" }
+      - { label: "English Title", name: "title_en", widget: "string" }
+      - { label: "Hindi Title", name: "title_hi", widget: "string" }
+      - { label: "English Description", name: "desc_en", widget: "text" }
+      - { label: "Hindi Description", name: "desc_hi", widget: "text" }
       - { label: "Icon", name: "icon", widget: "select", options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] }

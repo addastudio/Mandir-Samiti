@@ -87,8 +87,9 @@ export default function RootLayout({
                     }
                   });
                   // Cross-domain fix for Vercel/Netlify CMS authentication
-                  const netlifyUrl = "${process.env.NEXT_PUBLIC_NETLIFY_SITE_URL || ''}";
-                  if (netlifyUrl && window.location.hostname !== new URL(netlifyUrl).hostname) {
+                  // Force the identity instance to point to the primary Netlify domain
+                  const netlifyUrl = "https://mandirsamiti.netlify.app";
+                  if (window.location.hostname !== new URL(netlifyUrl).hostname) {
                     console.log("Setting Netlify Identity URL for cross-domain auth:", netlifyUrl);
                     localStorage.setItem("netlifySiteURL", netlifyUrl);
                   }
