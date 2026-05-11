@@ -1,6 +1,6 @@
 backend:
   name: git-gateway
-  branch: main
+  branch: main # Ensure this matches your production branch
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
@@ -16,9 +16,9 @@ collections:
         label: "General Settings"
         file: "content/settings.json"
         fields:
-          - { label: "English Site Title", name: "site_title_en", widget: "string" }
-          - { label: "Hindi Site Title", name: "site_title_hi", widget: "string" }
-          - { label: "Favicon/Logo", name: "favicon", widget: "image" }
+          - { label: "Site Title (English)", name: "site_title_en", widget: "string" }
+          - { label: "Site Title (Hindi)", name: "site_title_hi", widget: "string" }
+          - { label: "Favicon / Logo", name: "favicon", widget: "image" }
 
   - name: "pages"
     label: "Pages"
@@ -27,37 +27,37 @@ collections:
         label: "Hero Section"
         file: "content/hero.json"
         fields:
-          - { label: "English Headline", name: "headline_en", widget: "string" }
-          - { label: "Hindi Headline", name: "headline_hi", widget: "string" }
-          - { label: "English Subtitle", name: "subtitle_en", widget: "string" }
-          - { label: "Hindi Subtitle", name: "subtitle_hi", widget: "string" }
-          - { label: "Background Video URL", name: "video_url", widget: "string" }
-          - { label: "Fallback Image", name: "fallback_image", widget: "image" }
-
+          - { label: "Headline (English)", name: "headline_en", widget: "string" }
+          - { label: "Headline (Hindi)", name: "headline_hi", widget: "string" }
+          - { label: "Subtitle (English)", name: "subtitle_en", widget: "text" }
+          - { label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "text" }
+          - { label: "Video URL (YouTube/Mixkit)", name: "video_url", widget: "string" }
+          - { label: "Fallback Background Image", name: "fallback_image", widget: "image" }
+      
       - name: "about"
-        label: "About Us"
+        label: "About Section"
         file: "content/about.json"
         fields:
-          - { label: "English History Title", name: "history_title_en", widget: "string" }
-          - { label: "Hindi History Title", name: "history_title_hi", widget: "string" }
-          - { label: "English History Text", name: "history_en", widget: "text" }
-          - { label: "Hindi History Text", name: "history_hi", widget: "text" }
-          - { label: "English Mission Title", name: "mission_title_en", widget: "string" }
-          - { label: "Hindi Mission Title", name: "mission_title_hi", widget: "string" }
-          - { label: "English Mission Text", name: "mission_en", widget: "text" }
-          - { label: "Hindi Mission Text", name: "mission_hi", widget: "text" }
+          - { label: "History Title (English)", name: "history_title_en", widget: "string" }
+          - { label: "History Title (Hindi)", name: "history_title_hi", widget: "string" }
+          - { label: "History Content (English)", name: "history_en", widget: "markdown" }
+          - { label: "History Content (Hindi)", name: "history_hi", widget: "markdown" }
+          - { label: "Mission Title (English)", name: "mission_title_en", widget: "string" }
+          - { label: "Mission Title (Hindi)", name: "mission_title_hi", widget: "string" }
+          - { label: "Mission Content (English)", name: "mission_en", widget: "markdown" }
+          - { label: "Mission Content (Hindi)", name: "mission_hi", widget: "markdown" }
           - { label: "Featured Image", name: "featured_image", widget: "image" }
 
   - name: "seva"
     label: "Seva Programs"
     folder: "content/seva"
     create: true
-    slug: "{{slug}}"
+    slug: "{{title_en}}"
     fields:
-      - { label: "English Title", name: "title_en", widget: "string" }
-      - { label: "Hindi Title", name: "title_hi", widget: "string" }
-      - { label: "English Description", name: "desc_en", widget: "text" }
-      - { label: "Hindi Description", name: "desc_hi", widget: "text" }
+      - { label: "Program Title (English)", name: "title_en", widget: "string" }
+      - { label: "Program Title (Hindi)", name: "title_hi", widget: "string" }
+      - { label: "Description (English)", name: "desc_en", widget: "text" }
+      - { label: "Description (Hindi)", name: "desc_hi", widget: "text" }
       - { 
           label: "Icon", 
           name: "icon", 
