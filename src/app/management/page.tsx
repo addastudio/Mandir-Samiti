@@ -1020,57 +1020,88 @@ export default function ManagementPage() {
                   <CardContent className="pt-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {apiStatus ? (
-                        <>
-                          <div className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
+                        [
+                          { 
+                            label: apiStatus.backend.firebase.label, 
+                            sub: "Core Database", 
+                            active: apiStatus.backend.firebase.active, 
+                            icon: Globe, 
+                            activeLabel: "ACTIVE", 
+                            inactiveLabel: "OFFLINE",
+                            color: "text-primary",
+                            bg: "bg-primary/5"
+                          },
+                          { 
+                            label: apiStatus.backend.superbase.label, 
+                            sub: "Migration Layer", 
+                            active: apiStatus.backend.superbase.active, 
+                            icon: Activity, 
+                            activeLabel: "READY", 
+                            inactiveLabel: "OFFLINE",
+                            color: "text-blue-600",
+                            bg: "bg-blue-50"
+                          },
+                          { 
+                            label: apiStatus.backend.contentful.label, 
+                            sub: "Headless CMS", 
+                            active: apiStatus.backend.contentful.active, 
+                            icon: LayoutDashboard, 
+                            activeLabel: "CONNECTED", 
+                            inactiveLabel: "OFFLINE",
+                            color: "text-purple-600",
+                            bg: "bg-purple-50"
+                          },
+                          { 
+                            label: "Stripe Gateway", 
+                            sub: "International Payments", 
+                            active: apiStatus.payments.stripe, 
+                            icon: HandCoins, 
+                            activeLabel: "LIVE", 
+                            inactiveLabel: "DISABLED",
+                            color: "text-indigo-600",
+                            bg: "bg-indigo-50"
+                          },
+                          { 
+                            label: "Cashfree Gateway", 
+                            sub: "Domestic (India) Payments", 
+                            active: apiStatus.payments.cashfree, 
+                            icon: Zap, 
+                            activeLabel: "LIVE", 
+                            inactiveLabel: "DISABLED",
+                            color: "text-emerald-600",
+                            bg: "bg-emerald-50"
+                          },
+                          { 
+                            label: "Resend Service", 
+                            sub: "Email & OTP", 
+                            active: apiStatus.email.isLive, 
+                            icon: MessageSquare, 
+                            activeLabel: "LIVE", 
+                            inactiveLabel: "SIMULATED",
+                            color: "text-orange-600",
+                            bg: "bg-orange-50"
+                          }
+                        ].map((api, idx) => (
+                          <div key={idx} className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-primary/5 rounded-lg"><Globe className="h-4 w-4 text-primary" /></div>
+                              <div className={cn("p-2 rounded-lg", api.bg)}><api.icon className={cn("h-4 w-4", api.color)} /></div>
                               <div>
-                                <p className="text-xs font-bold">{apiStatus.backend.firebase.label}</p>
-                                <p className="text-[9px] text-muted-foreground uppercase font-black">Core Database</p>
+                                <p className="text-xs font-bold">{api.label}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-black">{api.sub}</p>
                               </div>
                             </div>
-                            <Badge className="bg-emerald-500/10 text-emerald-600 border-0 h-6">ACTIVE</Badge>
-                          </div>
-
-                          <div className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-blue-50 rounded-lg"><Activity className="h-4 w-4 text-blue-600" /></div>
-                              <div>
-                                <p className="text-xs font-bold">{apiStatus.backend.superbase.label}</p>
-                                <p className="text-[9px] text-muted-foreground uppercase font-black">Migration Layer</p>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className={cn("h-6 border-0 uppercase font-black text-[9px]", apiStatus.backend.superbase.active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
-                              {apiStatus.backend.superbase.active ? 'READY' : 'OFFLINE'}
+                            <Badge 
+                              variant="outline" 
+                              className={cn(
+                                "h-6 border-0 uppercase font-black text-[9px]", 
+                                api.active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600",
+                                !api.active && api.inactiveLabel === "SIMULATED" && "bg-amber-50 text-amber-600"
+                              )}
+                            >
+                              {api.active ? api.activeLabel : api.inactiveLabel}
                             </Badge>
                           </div>
-
-                          <div className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-indigo-50 rounded-lg"><HandCoins className="h-4 w-4 text-indigo-600" /></div>
-                              <div>
-                                <p className="text-xs font-bold">Stripe Gateway</p>
-                                <p className="text-[9px] text-muted-foreground uppercase font-black">Payments</p>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className={cn("h-6 border-0 uppercase font-black text-[9px]", apiStatus.payments.stripe ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
-                              {apiStatus.payments.stripe ? 'LIVE' : 'DISABLED'}
-                            </Badge>
-                          </div>
-
-                          <div className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-orange-50 rounded-lg"><MessageSquare className="h-4 w-4 text-orange-600" /></div>
-                              <div>
-                                <p className="text-xs font-bold">Resend Service</p>
-                                <p className="text-[9px] text-muted-foreground uppercase font-black">Email & OTP</p>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className={cn("h-6 border-0 uppercase font-black text-[9px]", apiStatus.email.isLive ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
-                              {apiStatus.email.isLive ? 'LIVE' : 'SIMULATED'}
-                            </Badge>
-                          </div>
-                        </>
+                        ))
                       ) : (
                         <div className="col-span-full py-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
                       )}
@@ -1095,7 +1126,7 @@ export default function ManagementPage() {
                     </div>
                     <div className="flex gap-2">
                       <div className="h-4 w-4 bg-primary/20 rounded shrink-0 flex items-center justify-center font-bold text-[10px]">3</div>
-                      <p>If the **Stripe** badge is red, online payments will be disabled for all devotees automatically.</p>
+                      <p>If the **Stripe** or **Cashfree** badge is red, online payments will be disabled for all devotees automatically.</p>
                     </div>
                   </CardContent>
                 </Card>
