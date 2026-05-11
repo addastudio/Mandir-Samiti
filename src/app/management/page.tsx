@@ -42,7 +42,11 @@ import {
   TrendingUp,
   IndianRupee,
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  Tv,
+  CheckCircle,
+  XCircle,
+  Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -77,6 +81,7 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis, Tooltip } from "recharts";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus } from "@/app/actions";
 
 /**
  * MANDIR MANAGEMENT PANEL
@@ -98,6 +103,11 @@ export default function ManagementPage() {
   const [userSort, setUserSort] = useState<string>("role");
   const [analyticsRange, setAnalyticsRange] = useState("7d");
 
+  // API Status States
+  const [apiStatus, setApiStatus] = useState<any>(null);
+  const [liveUrlInput, setLiveUrlInput] = useState("");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
   // Interaction States
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string, path?: string } | null>(null);
   const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' | 'resign' } | null>(null);
@@ -108,6 +118,14 @@ export default function ManagementPage() {
 
   useEffect(() => {
     setMounted(true);
+    // Fetch API statuses
+    Promise.all([
+      getBackendConnectionStatus(),
+      getPaymentGatewayStatus(),
+      getEmailServiceStatus()
+    ]).then(([backend, payments, email]) => {
+      setApiStatus({ backend, payments, email });
+    });
   }, []);
 
   // Admin Access Check
@@ -122,6 +140,18 @@ export default function ManagementPage() {
     return doc(firestore, "users", user.uid);
   }, [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+
+  const websiteSettingsRef = useMemoFirebase(() => {
+    if (!firestore || !adminDoc) return null;
+    return doc(firestore, "settings", "website");
+  }, [firestore, adminDoc]);
+  const { data: websiteSettings } = useDoc(websiteSettingsRef);
+
+  useEffect(() => {
+    if (websiteSettings?.liveAartiUrl) {
+      setLiveUrlInput(websiteSettings.liveAartiUrl);
+    }
+  }, [websiteSettings]);
 
   // Collection References
   const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "events"), [firestore, adminDoc]);
@@ -306,6 +336,20 @@ export default function ManagementPage() {
     }
   };
 
+  const handleUpdateWebsiteSettings = async () => {
+    if (!firestore || !websiteSettingsRef) return;
+    setIsSavingSettings(true);
+    try {
+      await setDoc(websiteSettingsRef, { liveAartiUrl: liveUrlInput }, { merge: true });
+      await logActivity('UPDATE', 'settings/website', 'Updated Live Aarti URL');
+      toast({ title: "Settings Updated", description: "The live link has been successfully saved." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: err.message });
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
   const sortedUsers = React.useMemo(() => {
     if (!allUsers) return [];
     const filtered = allUsers.filter(u => 
@@ -412,6 +456,7 @@ export default function ManagementPage() {
                 { value: 'requests', icon: MessageSquare, label: language === 'hi' ? 'निवेदन' : 'Requests' },
                 { value: 'members', icon: Users, label: language === 'hi' ? 'समिति' : 'Committee' },
                 { value: 'users', icon: UserCog, label: language === 'hi' ? 'भक्त प्रबंधन' : 'Roles' },
+                { value: 'settings', icon: Settings, label: language === 'hi' ? 'सेटिंग्स' : 'Settings' },
                 { value: 'logs', icon: Activity, label: language === 'hi' ? 'लॉग्स' : 'Logs' }
               ].map((tab) => (
                 <TabsTrigger 
@@ -914,6 +959,148 @@ export default function ManagementPage() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8 space-y-6">
+                <Card className="shadow-md border-primary/10 overflow-hidden">
+                  <CardHeader className="bg-primary/5 border-b">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Tv className="h-5 w-5 text-primary" />
+                      Live Stream Management
+                    </CardTitle>
+                    <CardDescription>Configure the Live Aarti broadcast shown on the homepage.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase opacity-60">YouTube Live URL</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="https://www.youtube.com/watch?v=..." 
+                          value={liveUrlInput} 
+                          onChange={(e) => setLiveUrlInput(e.target.value)} 
+                          className="flex-1"
+                        />
+                        <Button 
+                          onClick={handleUpdateWebsiteSettings} 
+                          disabled={isSavingSettings}
+                          className="gap-2 shrink-0"
+                        >
+                          {isSavingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                          Save Link
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">Note: Use a full YouTube link or a direct embed URL.</p>
+                    </div>
+
+                    {liveUrlInput && (
+                      <div className="mt-6 aspect-video bg-black rounded-xl overflow-hidden shadow-inner border-4 border-white/5">
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={liveUrlInput.includes('v=') ? `https://www.youtube.com/embed/${liveUrlInput.split('v=')[1]?.split('&')[0]}` : liveUrlInput}
+                          title="Preview"
+                          frameBorder="0"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-md border-primary/10 overflow-hidden">
+                  <CardHeader className="bg-secondary/30 border-b">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-primary" />
+                      API Status Settings
+                    </CardTitle>
+                    <CardDescription>Real-time health monitoring of integrated services.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {apiStatus ? (
+                        <>
+                          <div className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-primary/5 rounded-lg"><Globe className="h-4 w-4 text-primary" /></div>
+                              <div>
+                                <p className="text-xs font-bold">{apiStatus.backend.firebase.label}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-black">Core Database</p>
+                              </div>
+                            </div>
+                            <Badge className="bg-emerald-500/10 text-emerald-600 border-0 h-6">ACTIVE</Badge>
+                          </div>
+
+                          <div className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-50 rounded-lg"><Activity className="h-4 w-4 text-blue-600" /></div>
+                              <div>
+                                <p className="text-xs font-bold">{apiStatus.backend.superbase.label}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-black">Migration Layer</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className={cn("h-6 border-0 uppercase font-black text-[9px]", apiStatus.backend.superbase.active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
+                              {apiStatus.backend.superbase.active ? 'READY' : 'OFFLINE'}
+                            </Badge>
+                          </div>
+
+                          <div className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-indigo-50 rounded-lg"><HandCoins className="h-4 w-4 text-indigo-600" /></div>
+                              <div>
+                                <p className="text-xs font-bold">Stripe Gateway</p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-black">Payments</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className={cn("h-6 border-0 uppercase font-black text-[9px]", apiStatus.payments.stripe ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
+                              {apiStatus.payments.stripe ? 'LIVE' : 'DISABLED'}
+                            </Badge>
+                          </div>
+
+                          <div className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-orange-50 rounded-lg"><MessageSquare className="h-4 w-4 text-orange-600" /></div>
+                              <div>
+                                <p className="text-xs font-bold">Resend Service</p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-black">Email & OTP</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className={cn("h-6 border-0 uppercase font-black text-[9px]", apiStatus.email.isLive ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
+                              {apiStatus.email.isLive ? 'LIVE' : 'SIMULATED'}
+                            </Badge>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="col-span-full py-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="lg:col-span-4">
+                <Card className="bg-primary/5 border-dashed border-primary/20 h-full">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Quick Help</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-xs text-muted-foreground">
+                    <div className="flex gap-2">
+                      <div className="h-4 w-4 bg-primary/20 rounded shrink-0 flex items-center justify-center font-bold text-[10px]">1</div>
+                      <p>Updates to the **Live Link** are saved to Firestore and reflected on the home page instantly.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-4 w-4 bg-primary/20 rounded shrink-0 flex items-center justify-center font-bold text-[10px]">2</div>
+                      <p>**API Status** is read-only here. To change these, update the Environment Variables in Vercel/Netlify.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-4 w-4 bg-primary/20 rounded shrink-0 flex items-center justify-center font-bold text-[10px]">3</div>
+                      <p>If the **Stripe** badge is red, online payments will be disabled for all devotees automatically.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="logs" className="space-y-6">
