@@ -3,7 +3,6 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: 'export',
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -11,8 +10,8 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   async headers() {
-    // Note: custom headers are ignored by Next.js during static export (output: 'export').
-    // They are handled by the hosting provider (Vercel/Netlify) via vercel.json/netlify.toml.
+    // Note: custom headers are handled by the hosting provider (Vercel/Netlify) via vercel.json/netlify.toml.
+    // We keep them here for local development and standard Next.js deployment.
     return [
       {
         source: '/(.*)',
