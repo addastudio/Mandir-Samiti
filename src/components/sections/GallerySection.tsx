@@ -11,12 +11,6 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
@@ -181,35 +175,18 @@ export function GallerySection() {
                 </h3>
               </div>
               <div className="p-4 sm:p-6 md:p-10">
-                <Tabs defaultValue="youtube" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-8 sm:mb-10 max-w-sm mx-auto h-11 sm:h-12 bg-secondary p-1 rounded-xl">
-                    <TabsTrigger value="youtube" className="gap-2">
-                      <Youtube className="h-4 w-4" /> {t.galleryYoutubeVideo}
-                    </TabsTrigger>
-                    <TabsTrigger value="local" className="gap-2">
-                      <Play className="h-4 w-4" /> {t.galleryLocalVideo}
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="youtube" className="animate-in fade-in duration-500">
-                    <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl bg-black border-4 border-white">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        src={getYoutubeEmbedUrl(websiteSettings?.liveAartiUrl)}
-                        title="Mandir Live Darshan"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        className="border-0 w-full h-full"
-                      ></iframe>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="local" className="animate-in fade-in duration-500">
-                    <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl bg-black flex items-center justify-center border-4 border-white">
-                      <video controls className="w-full h-full object-contain"><source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" /></video>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl bg-black border-4 border-white">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={getYoutubeEmbedUrl(websiteSettings?.liveAartiUrl)}
+                    title="Mandir Live Darshan"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="border-0 w-full h-full"
+                  ></iframe>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -225,7 +202,6 @@ export function GallerySection() {
               <Button variant="ghost" size="icon" onClick={() => setLightboxOpen(false)} className="text-white hover:bg-white/20 rounded-full backdrop-blur-md bg-black/20"><X className="h-6 w-6" /></Button>
             </div>
             
-            {/* Added padding to prevent overlap with buttons */}
             <div className="flex-1 flex items-center justify-center p-8 sm:p-12 overflow-hidden">
               {currentItem && (
                 <div className="relative w-full h-full animate-in fade-in zoom-in-95 duration-300 flex items-center justify-center">
