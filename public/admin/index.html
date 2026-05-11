@@ -4,18 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Content Manager | Mandir Samiti Bahpura</title>
+    <!-- Netlify Identity Widget -->
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   </head>
   <body>
-    <!-- Include the script that builds the page and powers Decap CMS -->
+    <!-- Decap CMS -->
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
     <script>
-      // Force Identity to use the Netlify URL if we are on Vercel
-      var netlifyUrl = localStorage.getItem("netlifySiteURL");
-      if (netlifyUrl && window.netlifyIdentity) {
-        window.netlifyIdentity.on('init', () => {
-          if (!window.netlifyIdentity.currentUser()) {
-            console.log("Not logged in, ensuring correct Identity domain...");
+      // Extra logic to ensure the widget finds the Netlify site URL when hosted on Vercel
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", (user) => {
+          if (!user) {
+            window.netlifyIdentity.on("login", () => {
+              document.location.href = "/admin/";
+            });
           }
         });
       }
