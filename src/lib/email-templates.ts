@@ -49,3 +49,52 @@ export function getOtpEmailHtml(otp: string, language: 'hi' | 'en') {
     </html>
   `;
 }
+
+/**
+ * Branded Broadcast Email Template for general announcements and events.
+ */
+export function getBroadcastEmailHtml(subject: string, message: string, language: 'hi' | 'en') {
+  const isHi = language === 'hi';
+  const greeting = isHi ? 'नमस्ते,' : 'Namaste,';
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fcf6e5; padding: 20px; color: #1f2937; margin: 0; }
+        .wrapper { background-color: #ffffff; max-width: 600px; margin: 0 auto; border-radius: 20px; overflow: hidden; border: 1px solid #fde68a; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        .banner { background-color: #d97706; padding: 30px; text-align: center; }
+        .banner h1 { color: #ffffff; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+        .content { padding: 40px; line-height: 1.8; font-size: 16px; }
+        .footer { background-color: #fdf2f2; padding: 25px; text-align: center; border-top: 1px solid #fee2e2; }
+        .footer p { margin: 5px 0; font-size: 12px; color: #991b1b; font-weight: 600; }
+        .btn { display: inline-block; background-color: #7f1d1d; color: #ffffff; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="banner">
+          <h1>${isHi ? 'सूर्य मंदिर - बहपुरा' : 'Surya Mandir - Bahpura'}</h1>
+        </div>
+        <div class="content">
+          <p><strong>${greeting}</strong></p>
+          <h2 style="color: #7f1d1d; border-bottom: 2px solid #fef3c7; padding-bottom: 10px;">${subject}</h2>
+          <div style="white-space: pre-wrap;">${message}</div>
+          <p style="margin-top: 30px;">
+            ${isHi ? 'मंगल कामनाएं,' : 'Best Wishes,'}<br>
+            <strong>${isHi ? 'मंदिर समिति प्रबंधन' : 'Mandir Samiti Management'}</strong>
+          </p>
+        </div>
+        <div class="footer">
+          <p>© 2025 Mandir Samiti Bahpura</p>
+          <p>Bihta, Dist. Patna, Bihar</p>
+          <p><a href="https://www.suryamandir.online" style="color: #d97706;">www.suryamandir.online</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}

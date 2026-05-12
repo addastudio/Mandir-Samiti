@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -48,12 +47,15 @@ import {
   CheckCircle,
   XCircle,
   Zap,
-  Lock
+  Lock,
+  Mail,
+  Send
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -83,7 +85,7 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis, Tooltip } from "recharts";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus } from "@/app/actions";
+import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus, sendManualEmail } from "@/app/actions";
 
 /**
  * MANDIR MANAGEMENT PANEL
@@ -109,6 +111,13 @@ export default function ManagementPage() {
   const [apiStatus, setApiStatus] = useState<any>(null);
   const [liveUrlInput, setLiveUrlInput] = useState("");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Communication States
+  const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(['devotee', 'member', 'official', 'president']);
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [manualEmails, setManualEmails] = useState("");
 
   // Interaction States
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string, path?: string } | null>(null);
@@ -353,6 +362,59 @@ export default function ManagementPage() {
     }
   };
 
+  const handleSendBroadcast = async () => {
+    if (!broadcastSubject || !broadcastMessage) {
+      toast({ variant: "destructive", title: "Required Fields", description: "Please enter both subject and message." });
+      return;
+    }
+
+    setIsSendingBroadcast(true);
+    try {
+      // Collect emails
+      const emails: string[] = [];
+      
+      // Filter from Users collection based on selected roles
+      if (allUsers) {
+        allUsers.forEach(u => {
+          if (u.email && selectedRoles.includes(u.role || 'devotee')) {
+            emails.push(u.email);
+          }
+        });
+      }
+
+      // Add manual emails
+      if (manualEmails) {
+        const manualArr = manualEmails.split(',').map(e => e.trim()).filter(e => e.includes('@'));
+        emails.push(...manualArr);
+      }
+
+      // De-duplicate
+      const uniqueEmails = Array.from(new Set(emails));
+
+      if (uniqueEmails.length === 0) {
+        toast({ variant: "destructive", title: "No Recipients", description: "No valid email addresses found for the selected criteria." });
+        setIsSendingBroadcast(false);
+        return;
+      }
+
+      const result = await sendManualEmail(uniqueEmails, broadcastSubject, broadcastMessage, language as 'hi' | 'en');
+      
+      if (result.success) {
+        await logActivity('UPDATE', 'communications', `Broadcast Sent: ${broadcastSubject} to ${uniqueEmails.length} users`);
+        toast({ title: "Broadcast Sent", description: `Successfully queued emails for ${uniqueEmails.length} recipients.` });
+        setBroadcastSubject("");
+        setBroadcastMessage("");
+        setManualEmails("");
+      } else {
+        toast({ variant: "destructive", title: "Send Failed", description: result.message });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "System Error", description: err.message });
+    } finally {
+      setIsSendingBroadcast(false);
+    }
+  };
+
   const sortedUsers = React.useMemo(() => {
     if (!allUsers) return [];
     const filtered = allUsers.filter(u => 
@@ -457,6 +519,7 @@ export default function ManagementPage() {
                 { value: 'notices', icon: Bell, label: language === 'hi' ? 'सूचना' : 'Notices' },
                 { value: 'gallery', icon: ImageIcon, label: language === 'hi' ? 'गैलरी' : 'Gallery' },
                 { value: 'requests', icon: MessageSquare, label: language === 'hi' ? 'निवेदन' : 'Requests' },
+                { value: 'broadcast', icon: Mail, label: language === 'hi' ? 'प्रसारण' : 'Broadcast' },
                 { value: 'members', icon: Users, label: language === 'hi' ? 'समिति' : 'Committee' },
                 { value: 'users', icon: UserCog, label: language === 'hi' ? 'भक्त प्रबंधन' : 'Roles' },
                 { value: 'settings', icon: Settings, label: language === 'hi' ? 'सेटिंग्स' : 'Settings' },
@@ -828,6 +891,134 @@ export default function ManagementPage() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="broadcast" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8">
+                <Card className="shadow-md border-primary/10 overflow-hidden">
+                  <CardHeader className="bg-primary/5 border-b">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Mail className="h-5 w-5 text-primary" />
+                      Email Communication Center
+                    </CardTitle>
+                    <CardDescription>Send custom announcements and event invitations to devotees.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase opacity-60">Target Recipient Roles</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { id: 'devotee', label: 'Devotees' },
+                            { id: 'member', label: 'Members' },
+                            { id: 'official', label: 'Officials' },
+                            { id: 'president', label: 'Presidents' }
+                          ].map(role => (
+                            <div key={role.id} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`role-${role.id}`} 
+                                checked={selectedRoles.includes(role.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) setSelectedRoles([...selectedRoles, role.id]);
+                                  else setSelectedRoles(selectedRoles.filter(r => r !== role.id));
+                                }}
+                              />
+                              <label htmlFor={`role-${role.id}`} className="text-xs font-medium leading-none cursor-pointer">
+                                {role.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase opacity-60">Manual Email Addresses</Label>
+                        <Input 
+                          placeholder="email1@example.com, email2@example.com" 
+                          value={manualEmails}
+                          onChange={(e) => setManualEmails(e.target.value)}
+                        />
+                        <p className="text-[9px] text-muted-foreground italic">Comma-separated list of additional recipients.</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase opacity-60">Email Subject</Label>
+                        <Input 
+                          placeholder="e.g. Special Invitation: Holi Mahotsav 2025" 
+                          value={broadcastSubject}
+                          onChange={(e) => setBroadcastSubject(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase opacity-60">Message Content (HTML Supported)</Label>
+                        <Textarea 
+                          placeholder="Write your spiritual message here..." 
+                          rows={10} 
+                          value={broadcastMessage}
+                          onChange={(e) => setBroadcastMessage(e.target.value)}
+                        />
+                        <p className="text-[9px] text-muted-foreground italic">Branded template will be applied automatically around this content.</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 flex justify-end">
+                      <Button 
+                        size="lg" 
+                        className="gap-2 px-10 shadow-lg h-12" 
+                        onClick={handleSendBroadcast}
+                        disabled={isSendingBroadcast}
+                      >
+                        {isSendingBroadcast ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        Send Broadcast
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="lg:col-span-4 space-y-6">
+                <Card className="bg-amber-50 border-amber-200">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold flex items-center gap-2">
+                      <Info className="h-4 w-4 text-amber-600" />
+                      Sender Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 text-xs text-amber-900/80">
+                    <p>Emails will be sent from: <br /><strong>contact@suryamandir.online</strong></p>
+                    <p>To ensure high delivery, make sure your domain is verified in the Resend dashboard.</p>
+                    <div className="pt-2">
+                      <Label className="text-[10px] font-black uppercase opacity-60 mb-2 block">Recipient Count</Label>
+                      <Badge variant="outline" className="bg-white/50 border-amber-300">
+                        {(() => {
+                          let count = 0;
+                          if (allUsers) {
+                            allUsers.forEach(u => {
+                              if (u.email && selectedRoles.includes(u.role || 'devotee')) count++;
+                            });
+                          }
+                          const manuals = manualEmails.split(',').filter(e => e.trim().includes('@')).length;
+                          return count + manuals;
+                        })()} Active Recipients
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-dashed border-primary/20 bg-primary/5">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Email Tips</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-xs text-muted-foreground">
+                    <p>1. Use **bold** or *italic* markdown if needed.</p>
+                    <p>2. Keep subjects concise and inviting.</p>
+                    <p>3. Sending to many users at once may take a few seconds to queue.</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="members" className="space-y-6">

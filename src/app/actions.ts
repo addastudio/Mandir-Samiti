@@ -5,7 +5,7 @@ import { Resend } from 'resend';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
 import { getContentfulStatus } from '@/lib/contentful';
-import { getOtpEmailHtml } from '@/lib/email-templates';
+import { getOtpEmailHtml, getBroadcastEmailHtml } from '@/lib/email-templates';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -114,8 +114,8 @@ export async function submitContactForm(prevState: any, formData: FormData) {
   if (resend) {
     try {
       await resend.emails.send({
-        from: 'Mandir Samiti <noreply@suryamandir.online>',
-        to: 'contact@mandirbahpura.org',
+        from: 'Mandir Samiti <contact@suryamandir.online>',
+        to: 'contact@suryamandir.online',
         replyTo: email,
         subject: `New Message from Devotee: ${name}`,
         text: `You have received a new message from the website contact form.\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
@@ -127,7 +127,7 @@ export async function submitContactForm(prevState: any, formData: FormData) {
     }
   }
   
-  console.log(`[SIMULATED CONTACT EMAIL] To: contact@mandirbahpura.org, From: ${email}, Msg: ${message}`);
+  console.log(`[SIMULATED CONTACT EMAIL] To: contact@suryamandir.online, From: ${email}, Msg: ${message}`);
   return { message: "Success (Simulated)", success: true };
 }
 
@@ -145,7 +145,7 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
       await resend.emails.send({
         from: 'Mandir Samiti <verify@suryamandir.online>',
         to: email,
-        subject: language === 'hi' ? 'आपका सत्यापन कोड - मंदिर बहपुरा' : 'Your Verification Code - Mandir Bahpura',
+        subject: language === 'hi' ? 'आपका सत्यापन कोड - सूर्य मंदिर' : 'Your Verification Code - Surya Mandir',
         html: getOtpEmailHtml(otp, language),
       });
       return { success: true, isLive: true };
@@ -157,6 +157,27 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
   
   console.log(`[SIMULATED OTP EMAIL] To: ${email}, OTP: ${otp}, Lang: ${language}`);
   return { success: true, isLive: false };
+}
+
+/**
+ * Sends a broadcast or manual email to specific devotees.
+ */
+export async function sendManualEmail(emails: string[], subject: string, message: string, language: 'hi' | 'en' = 'hi') {
+  if (!resend) return { success: false, message: "Email service not configured" };
+  if (emails.length === 0) return { success: false, message: "No recipients selected" };
+
+  try {
+    await resend.emails.send({
+      from: 'Mandir Samiti <contact@suryamandir.online>',
+      to: emails,
+      subject: subject,
+      html: getBroadcastEmailHtml(subject, message, language),
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error("Resend Manual Email Error:", error);
+    return { success: false, message: error.message || "Failed to send broadcast" };
+  }
 }
 
 export async function createStripeCheckoutSession(amount: number, userEmail?: string) {
