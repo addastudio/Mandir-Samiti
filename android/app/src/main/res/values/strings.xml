@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">mandir-bahpura</string>
-    <string name="title_activity_main">mandir-bahpura</string>
+    <string name="app_name">Surya Mandir Bahpura</string>
+    <string name="title_activity_main">Surya Mandir Bahpura</string>
     <string name="package_name">online.suryamandir</string>
     <string name="custom_url_scheme">online.suryamandir</string>
 </resources>

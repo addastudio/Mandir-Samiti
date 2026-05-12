@@ -4,6 +4,14 @@ This document outlines the development lifecycle and the current "Golden State" 
 
 ---
 
+## 🌐 Production Status
+- **Live URL**: [www.suryamandir.online](https://www.suryamandir.online)
+- **Deployment Strategy**: 
+  - **Preview Branch**: All new features and fixes are deployed here first for testing.
+  - **Main Branch**: Only verified stable updates are merged to production.
+
+---
+
 ## ✅ Phase 1: UI/UX & Core Design
 - **Main Website**: Professional, bilingual (Hindi/English) landing page with smooth section navigation.
 - **Management Panel**: Advanced administrative command center with role-based visibility.
@@ -18,17 +26,16 @@ This document outlines the development lifecycle and the current "Golden State" 
 
 ## ✅ Phase 3: CMS & Content
 - **Decap CMS**: Local JSON-based content management for Hero, About, and Seva sections.
-- **Contentful Support**: Optional headless CMS integration for dynamic remote content.
+- **Cross-Domain Identity**: Hard-coded bridge to `mandirsamiti.netlify.app` for stable Vercel logins.
 - **Bilingual Translation Engine**: High-fidelity translation system supporting Devanagari script.
 
 ## ✅ Phase 4: Deployment & Optimization
 - **Hosting**: Pre-configured for Vercel and Netlify with optimized build settings.
 - **Performance**: Dynamic section loading, image optimization, and SSR-safe Firebase initialization.
 
-## 🚀 Ongoing: Phase 5 - API & Live Integration
-- [x] **API Status Dashboard**: Real-time monitoring of integrated services (Stripe, Cashfree, Resend).
-- [x] **Live Darshan Control**: In-app management of the YouTube Live Aarti URL.
-- [ ] **Webhook Integration**: Real-time payment verification handlers.
+## ✅ Phase 5: API & Live Integration
+- **API Status Dashboard**: Real-time monitoring of integrated services (Stripe, Cashfree, Resend, Contentful).
+- **Live Darshan Control**: In-app management of the YouTube Live Aarti URL.
 
 ## 🤖 Ongoing: Phase 6 - AI Integration (Genkit)
 - [x] **AI Content Drafter**: Integrated "Wand" tool for generating Event and Notice descriptions.
@@ -36,7 +43,8 @@ This document outlines the development lifecycle and the current "Golden State" 
 - [ ] **Smart Summaries**: Automated AI summaries for historical records.
 
 ## 📱 Ongoing: Phase 7 - Mobile Application
-- [x] **Capacitor Integration**: Core setup for Android and iOS builds.
+- [x] **Capacitor Integration**: Initial setup for Android and iOS builds.
+- [x] **App Identity**: Configured as `online.suryamandir` (Surya Mandir Bahpura).
 - [ ] **Native Features**: Push notifications for urgent notices.
 - [ ] **PWA Support**: Offline caching for temple timings and contact info.
 

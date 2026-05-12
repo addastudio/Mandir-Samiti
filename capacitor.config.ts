@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'online.suryamandir',
-  appName: 'mandir-bahpura',
+  appName: 'Surya Mandir Bahpura',
   webDir: 'out',
   server: {
     androidScheme: 'https'
