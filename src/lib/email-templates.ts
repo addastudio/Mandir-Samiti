@@ -42,7 +42,7 @@ export function getOtpEmailHtml(otp: string, language: 'hi' | 'en') {
         <p class="validity">${validMsg}</p>
         <div class="footer">
           <p>${footerMsg}</p>
-          <p>© 2025 Mandir Samiti Bahpura - Dist. Patna, Bihar</p>
+          <p>© 2025 Mandir Samiti Bahpura - Bihta Dist. Patna, Bihar</p>
         </div>
       </div>
     </body>
