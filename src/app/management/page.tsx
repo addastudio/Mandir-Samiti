@@ -49,7 +49,8 @@ import {
   Zap,
   Lock,
   Mail,
-  Send
+  Send,
+  Info
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
