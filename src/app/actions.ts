@@ -57,10 +57,14 @@ export async function getRecaptchaStatus() {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
   
+  // A standard v2 key usually starts with 6L...
+  const isV2 = siteKey?.startsWith('6L');
+
   return {
     isLive: !!(siteKey && secretKey),
     hasSiteKey: !!siteKey,
     hasSecretKey: !!secretKey,
+    isV2CorrectType: isV2,
   };
 }
 
@@ -83,8 +87,14 @@ async function verifyRecaptcha(token: string | null) {
       method: 'POST',
     });
     const data = await response.json();
+    
+    if (!data.success) {
+      console.error("reCAPTCHA Verification Failed:", data['error-codes']);
+    }
+    
     return data.success;
   } catch (error) {
+    console.error("reCAPTCHA Fetch Error:", error);
     return false;
   }
 }
