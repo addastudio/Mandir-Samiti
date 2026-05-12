@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -118,7 +117,7 @@ export default function LoginPage() {
         setStoredOtp(currentOtp);
         setIsVerificationStep(true);
         setResendCooldown(60);
-        await sendVerificationOtp(email, currentOtp, captchaToken);
+        await sendVerificationOtp(email, currentOtp, language as 'hi' | 'en', captchaToken);
         
         toast({
           title: language === 'hi' ? 'सत्यापन आवश्यक' : 'Verification Required',
@@ -154,7 +153,7 @@ export default function LoginPage() {
       const userDocRef = doc(firestore, "users", tempUserId);
       await updateDoc(userDocRef, { verificationOtp: newOtp });
       setStoredOtp(newOtp);
-      await sendVerificationOtp(email, newOtp, captchaToken);
+      await sendVerificationOtp(email, newOtp, language as 'hi' | 'en', captchaToken);
       
       toast({
         title: t.signupOtpSent,

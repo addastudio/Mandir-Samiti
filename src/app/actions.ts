@@ -1,4 +1,3 @@
-
 "use server";
 
 import { z } from "zod";
@@ -6,6 +5,7 @@ import { Resend } from 'resend';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
 import { getContentfulStatus } from '@/lib/contentful';
+import { getOtpEmailHtml } from '@/lib/email-templates';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -110,7 +110,7 @@ export async function submitContactForm(prevState: any, formData: FormData) {
 
   if (resend) {
     await resend.emails.send({
-      from: 'Mandir Samiti <onboarding@resend.dev>',
+      from: 'Mandir Samiti <noreply@suryamandir.online>',
       to: 'contact@mandirbahpura.org',
       subject: `New Message: ${name}`,
       text: message,
@@ -119,21 +119,28 @@ export async function submitContactForm(prevState: any, formData: FormData) {
   return { message: "Success", success: true };
 }
 
-export async function sendVerificationOtp(email: string, otp: string, captchaToken?: string) {
+export async function sendVerificationOtp(email: string, otp: string, language: 'hi' | 'en' = 'hi', captchaToken?: string) {
   if (captchaToken) {
     const isCaptchaValid = await verifyRecaptcha(captchaToken);
     if (!isCaptchaValid) return { success: false, message: "Captcha failed" };
   }
+  
   if (resend) {
-    await resend.emails.send({
-      from: 'Mandir Samiti <onboarding@resend.dev>',
-      to: email,
-      subject: 'Verification Code',
-      html: `<b>Your OTP is: ${otp}</b>`,
-    });
-    return { success: true, isLive: true };
+    try {
+      await resend.emails.send({
+        from: 'Mandir Samiti <verify@suryamandir.online>',
+        to: email,
+        subject: language === 'hi' ? 'आपका सत्यापन कोड - मंदिर बहपुरा' : 'Your Verification Code - Mandir Bahpura',
+        html: getOtpEmailHtml(otp, language),
+      });
+      return { success: true, isLive: true };
+    } catch (error: any) {
+      console.error("Resend Error:", error);
+      return { success: false, message: error.message || "Failed to send email" };
+    }
   }
-  console.log(`[SIMULATED EMAIL] To: ${email}, OTP: ${otp}`);
+  
+  console.log(`[SIMULATED EMAIL] To: ${email}, OTP: ${otp}, Lang: ${language}`);
   return { success: true, isLive: false };
 }
 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -99,7 +98,7 @@ export default function SignupPage() {
     try {
       const newOtp = generateRandomOtp();
       setGeneratedOtp(newOtp);
-      const res = await sendVerificationOtp(email, newOtp, captchaToken);
+      const res = await sendVerificationOtp(email, newOtp, language as 'hi' | 'en', captchaToken);
 
       if (res.success === false) {
         throw new Error(res.message || "Signup initiation failed.");
@@ -128,7 +127,7 @@ export default function SignupPage() {
     const newOtp = generateRandomOtp();
     try {
       setGeneratedOtp(newOtp);
-      await sendVerificationOtp(email, newOtp, captchaToken);
+      await sendVerificationOtp(email, newOtp, language as 'hi' | 'en', captchaToken);
       
       toast({
         title: t.signupOtpSent,
