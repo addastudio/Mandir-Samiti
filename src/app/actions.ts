@@ -7,7 +7,16 @@ import { headers } from 'next/headers';
 import { getContentfulStatus } from '@/lib/contentful';
 import { getOtpEmailHtml, getBroadcastEmailHtml } from '@/lib/email-templates';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Initialize two distinct Resend clients for separate routing
+// RESEND_OTP_API_KEY -> verify@suryamandir.online
+// RESEND_CONTACT_API_KEY -> contact@suryamandir.online
+const resendOtp = process.env.RESEND_OTP_API_KEY 
+  ? new Resend(process.env.RESEND_OTP_API_KEY) 
+  : (process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null);
+
+const resendContact = process.env.RESEND_CONTACT_API_KEY 
+  ? new Resend(process.env.RESEND_CONTACT_API_KEY) 
+  : (process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null);
 
 /**
  * Checks backend connection status for reporting in the Admin Panel.
@@ -45,8 +54,10 @@ export async function getPaymentGatewayStatus() {
  */
 export async function getEmailServiceStatus() {
   return {
-    isLive: !!process.env.RESEND_API_KEY,
-    provider: "Resend",
+    isLive: !!(resendOtp || resendContact),
+    hasOtpKey: !!process.env.RESEND_OTP_API_KEY,
+    hasContactKey: !!process.env.RESEND_CONTACT_API_KEY,
+    provider: "Resend (Dual Route)",
   };
 }
 
@@ -101,6 +112,7 @@ async function verifyRecaptcha(token: string | null) {
 
 /**
  * Submits the contact form and routes the notification via Resend.
+ * Uses the Contact API Key (contact@suryamandir.online).
  */
 export async function submitContactForm(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
@@ -111,9 +123,9 @@ export async function submitContactForm(prevState: any, formData: FormData) {
   const isCaptchaValid = await verifyRecaptcha(captchaToken);
   if (!isCaptchaValid) return { message: "Captcha failed", success: false };
 
-  if (resend) {
+  if (resendContact) {
     try {
-      await resend.emails.send({
+      await resendContact.emails.send({
         from: 'Mandir Samiti <contact@suryamandir.online>',
         to: 'contact@suryamandir.online',
         replyTo: email,
@@ -133,6 +145,7 @@ export async function submitContactForm(prevState: any, formData: FormData) {
 
 /**
  * Sends a verification OTP via Resend for user signup/login.
+ * Uses the OTP API Key (verify@suryamandir.online).
  */
 export async function sendVerificationOtp(email: string, otp: string, language: 'hi' | 'en' = 'hi', captchaToken?: string) {
   if (captchaToken) {
@@ -140,9 +153,9 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
     if (!isCaptchaValid) return { success: false, message: "Captcha failed" };
   }
   
-  if (resend) {
+  if (resendOtp) {
     try {
-      await resend.emails.send({
+      await resendOtp.emails.send({
         from: 'Mandir Samiti <verify@suryamandir.online>',
         to: email,
         subject: language === 'hi' ? 'आपका सत्यापन कोड - सूर्य मंदिर' : 'Your Verification Code - Surya Mandir',
@@ -161,13 +174,14 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
 
 /**
  * Sends a broadcast or manual email to specific devotees.
+ * Uses the Contact API Key (contact@suryamandir.online).
  */
 export async function sendManualEmail(emails: string[], subject: string, message: string, language: 'hi' | 'en' = 'hi') {
-  if (!resend) return { success: false, message: "Email service not configured" };
+  if (!resendContact) return { success: false, message: "Email service not configured" };
   if (emails.length === 0) return { success: false, message: "No recipients selected" };
 
   try {
-    await resend.emails.send({
+    await resendContact.emails.send({
       from: 'Mandir Samiti <contact@suryamandir.online>',
       to: emails,
       subject: subject,
