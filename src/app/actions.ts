@@ -99,6 +99,9 @@ async function verifyRecaptcha(token: string | null) {
   }
 }
 
+/**
+ * Submits the contact form and routes the notification via Resend.
+ */
 export async function submitContactForm(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -109,16 +112,28 @@ export async function submitContactForm(prevState: any, formData: FormData) {
   if (!isCaptchaValid) return { message: "Captcha failed", success: false };
 
   if (resend) {
-    await resend.emails.send({
-      from: 'Mandir Samiti <noreply@suryamandir.online>',
-      to: 'contact@mandirbahpura.org',
-      subject: `New Message: ${name}`,
-      text: message,
-    });
+    try {
+      await resend.emails.send({
+        from: 'Mandir Samiti <noreply@suryamandir.online>',
+        to: 'contact@mandirbahpura.org',
+        replyTo: email,
+        subject: `New Message from Devotee: ${name}`,
+        text: `You have received a new message from the website contact form.\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+      });
+      return { message: "Success", success: true };
+    } catch (error: any) {
+      console.error("Resend Contact Form Error:", error);
+      return { message: "Email routing failed", success: false };
+    }
   }
-  return { message: "Success", success: true };
+  
+  console.log(`[SIMULATED CONTACT EMAIL] To: contact@mandirbahpura.org, From: ${email}, Msg: ${message}`);
+  return { message: "Success (Simulated)", success: true };
 }
 
+/**
+ * Sends a verification OTP via Resend for user signup/login.
+ */
 export async function sendVerificationOtp(email: string, otp: string, language: 'hi' | 'en' = 'hi', captchaToken?: string) {
   if (captchaToken) {
     const isCaptchaValid = await verifyRecaptcha(captchaToken);
@@ -135,12 +150,12 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
       });
       return { success: true, isLive: true };
     } catch (error: any) {
-      console.error("Resend Error:", error);
+      console.error("Resend OTP Error:", error);
       return { success: false, message: error.message || "Failed to send email" };
     }
   }
   
-  console.log(`[SIMULATED EMAIL] To: ${email}, OTP: ${otp}, Lang: ${language}`);
+  console.log(`[SIMULATED OTP EMAIL] To: ${email}, OTP: ${otp}, Lang: ${language}`);
   return { success: true, isLive: false };
 }
 

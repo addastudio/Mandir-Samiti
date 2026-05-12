@@ -4,7 +4,7 @@
 
 export function getOtpEmailHtml(otp: string, language: 'hi' | 'en') {
   const isHi = language === 'hi';
-  const title = isHi ? 'आपका सत्यापन कोड' : 'Your Verification Code';
+  const title = isHi ? 'आपका सत्यापन कोड - सूर्य मंदिर ' : 'Your Verification Code - Surya Mandir';
   const greeting = isHi ? 'नमस्ते,' : 'Namaste,';
   const instruction = isHi 
     ? 'मंदिर समिति बहपुरा में आपका स्वागत है। अपने खाते को सत्यापित करने के लिए कृपया नीचे दिए गए कोड का उपयोग करें:' 
@@ -42,7 +42,7 @@ export function getOtpEmailHtml(otp: string, language: 'hi' | 'en') {
         <p class="validity">${validMsg}</p>
         <div class="footer">
           <p>${footerMsg}</p>
-          <p>© 2025 Mandir Samiti Bahpura - Dist. Agra, UP</p>
+          <p>© 2025 Mandir Samiti Bahpura - Dist. Patna, Bihar</p>
         </div>
       </div>
     </body>
