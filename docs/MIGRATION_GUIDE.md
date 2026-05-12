@@ -1,3 +1,4 @@
+
 # Mandir Bahpura - Migration & Deployment Guide
 
 This guide outlines the process for migrating to production and maintaining the site at **Zero Cost** using Netlify.
@@ -20,21 +21,32 @@ For community non-profits, we recommend this free-tier stack:
 
 ---
 
-## 3. Netlify Deployment (Production)
-1. **Connect:** Go to Netlify.com and select "Import from GitHub".
+## 3. Netlify/Vercel Deployment (Production)
+1. **Connect:** Go to Netlify.com or Vercel.com and select "Import from GitHub".
 2. **Configure:** Choose your repository and set the build command to `npm run build` and directory to `.next`.
 3. **Environment Variables:** Go to **Site Settings > Environment variables** and add:
    - `STRIPE_SECRET_KEY`
    - `CASHFREE_APP_ID` & `CASHFREE_SECRET_KEY`
    - `RESEND_API_KEY`
-   - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
-   - `RECAPTCHA_SECRET_KEY`
+   - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` (Get from Google reCAPTCHA Console)
+   - `RECAPTCHA_SECRET_KEY` (Get from Google reCAPTCHA Console)
    - `CONTENTFUL_SPACE_ID` & `CONTENTFUL_ACCESS_TOKEN` (if using CMS)
-4. **Deploy:** Netlify will automatically build and assign a `.netlify.app` URL.
+   - `NEXT_PUBLIC_NETLIFY_SITE_URL`: `https://mandirsamiti.netlify.app` (Required for CMS Login)
+4. **Deploy:** The platform will automatically build and assign a URL.
 
 ---
 
-## 4. Firebase Project Setup
+## 4. Setting up Production reCAPTCHA
+To remove the "Simulation" banner from `www.suryamandir.online`:
+1.  Go to [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin).
+2.  Register a new site of type **reCAPTCHA v2 ("I'm not a robot" Checkbox)**.
+3.  Add `suryamandir.online` to the list of authorized domains.
+4.  Copy the **Site Key** and **Secret Key**.
+5.  Add them as `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` and `RECAPTCHA_SECRET_KEY` in your Vercel/Netlify dashboard.
+
+---
+
+## 5. Firebase Project Setup
 1. **Console:** Visit console.firebase.google.com.
 2. **Provision:**
    - **Firestore:** Enable in Production mode.
@@ -43,7 +55,6 @@ For community non-profits, we recommend this free-tier stack:
 
 ---
 
-## 5. Domain Name
+## 6. Domain Name
 - **Recommendation:** Use a `.org` or `.in` domain (approx. ₹800/year).
-- **Mapping:** In Netlify, go to **Domain management > Add custom domain**. Update your DNS records at your registrar (GoDaddy, Namecheap, etc.) to point to Netlify's name servers.
-
+- **Mapping:** In Netlify/Vercel, go to **Domain management > Add custom domain**. Update your DNS records at your registrar to point to the hosting provider's name servers.

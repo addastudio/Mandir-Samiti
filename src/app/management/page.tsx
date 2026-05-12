@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -46,7 +47,8 @@ import {
   Tv,
   CheckCircle,
   XCircle,
-  Zap
+  Zap,
+  Lock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -81,7 +83,7 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis, Tooltip } from "recharts";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus } from "@/app/actions";
+import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus } from "@/app/actions";
 
 /**
  * MANDIR MANAGEMENT PANEL
@@ -122,9 +124,10 @@ export default function ManagementPage() {
     Promise.all([
       getBackendConnectionStatus(),
       getPaymentGatewayStatus(),
-      getEmailServiceStatus()
-    ]).then(([backend, payments, email]) => {
-      setApiStatus({ backend, payments, email });
+      getEmailServiceStatus(),
+      getRecaptchaStatus()
+    ]).then(([backend, payments, email, recaptcha]) => {
+      setApiStatus({ backend, payments, email, recaptcha });
     });
   }, []);
 
@@ -519,7 +522,7 @@ export default function ManagementPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
                         <defs>
-                          <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                          <linearGradient id="colorAmount" x1="0" x1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
                             <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                           </linearGradient>
@@ -1080,6 +1083,16 @@ export default function ManagementPage() {
                             inactiveLabel: "SIMULATED",
                             color: "text-orange-600",
                             bg: "bg-orange-50"
+                          },
+                          { 
+                            label: "reCAPTCHA", 
+                            sub: "Bot Protection", 
+                            active: apiStatus.recaptcha.isLive, 
+                            icon: Lock, 
+                            activeLabel: "LIVE", 
+                            inactiveLabel: "SIMULATION",
+                            color: "text-slate-600",
+                            bg: "bg-slate-50"
                           }
                         ].map((api, idx) => (
                           <div key={idx} className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
@@ -1095,7 +1108,7 @@ export default function ManagementPage() {
                               className={cn(
                                 "h-6 border-0 uppercase font-black text-[9px]", 
                                 api.active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600",
-                                !api.active && api.inactiveLabel === "SIMULATED" && "bg-amber-50 text-amber-600"
+                                !api.active && (api.inactiveLabel === "SIMULATED" || api.inactiveLabel === "SIMULATION") && "bg-amber-50 text-amber-600"
                               )}
                             >
                               {api.active ? api.activeLabel : api.inactiveLabel}
@@ -1126,7 +1139,7 @@ export default function ManagementPage() {
                     </div>
                     <div className="flex gap-2">
                       <div className="h-4 w-4 bg-primary/20 rounded shrink-0 flex items-center justify-center font-bold text-[10px]">3</div>
-                      <p>If the **Stripe** or **Cashfree** badge is red, online payments will be disabled for all devotees automatically.</p>
+                      <p>If the **reCAPTCHA** badge is yellow (SIMULATION), the site uses test keys that show a banner on your live domain.</p>
                     </div>
                   </CardContent>
                 </Card>
