@@ -1,9 +1,10 @@
+
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogIn, Heart, User as UserIcon, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { Menu, LogIn, Heart, User as UserIcon, ShieldCheck, LayoutDashboard, UserPlus } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -83,7 +84,7 @@ export function Header() {
     ? (settings?.site_title_hi || "मंदिर समिति बहपुरा")
     : (settings?.site_title_en || "Mandir Samiti Bahpura");
 
-  const AuthButton = ({ isMobile = false }: { isMobile?: boolean }) => {
+  const AuthButtons = ({ isMobile = false }: { isMobile?: boolean }) => {
     if (isUserLoading) return <div className="h-9 w-9 animate-pulse rounded-full bg-muted shrink-0" />;
     if (user) {
       return (
@@ -98,12 +99,20 @@ export function Header() {
       );
     }
     return (
-      <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
-        <Button variant="ghost" size="sm" className="h-9 px-2 sm:px-4">
-          <LogIn className="h-4 w-4 sm:mr-2" />
-          <span className={cn("hidden sm:inline text-xs sm:text-sm", language === "hi" && "font-hindi")}>Login</span>
-        </Button>
-      </Link>
+      <div className="flex items-center gap-1 sm:gap-2">
+        <Link href="/login" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
+          <Button variant="ghost" size="sm" className="h-9 px-2 sm:px-4">
+            <LogIn className="h-4 w-4 sm:mr-2" />
+            <span className={cn("hidden sm:inline text-xs sm:text-sm", language === "hi" && "font-hindi")}>{t.navLogin}</span>
+          </Button>
+        </Link>
+        <Link href="/signup" onClick={() => isMobile && setIsMobileMenuOpen(false)} className="shrink-0">
+          <Button variant="outline" size="sm" className="h-9 px-2 sm:px-4 border-primary/20 hover:bg-primary/5">
+            <UserPlus className="h-4 w-4 sm:mr-2 text-primary" />
+            <span className={cn("hidden sm:inline text-xs sm:text-sm", language === "hi" && "font-hindi")}>{t.navSignUp}</span>
+          </Button>
+        </Link>
+      </div>
     );
   };
 
@@ -165,7 +174,7 @@ export function Header() {
           <div className="flex items-center gap-4 border-l pl-6">
             <LanguageSwitcher />
             <AdminButton />
-            <AuthButton />
+            <AuthButtons />
             <Link href="/donate">
               <Button size="sm" className="bg-accent text-accent-foreground font-bold h-9 px-4 shadow-sm hover:scale-105 transition-transform">
                 <Heart className="h-4 w-4 mr-2 fill-current" />
@@ -181,7 +190,7 @@ export function Header() {
             <LanguageSwitcher />
           </div>
           <AdminButton isMobile />
-          <AuthButton isMobile />
+          <AuthButtons isMobile />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">

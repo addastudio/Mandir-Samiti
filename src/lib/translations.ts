@@ -14,6 +14,8 @@ export type TranslationKeys = {
   navGallery: string;
   navContact: string;
   navPrayer: string;
+  navSignUp: string;
+  navLogin: string;
   languageSwitcher: string;
 
   // Hero Section
@@ -21,6 +23,7 @@ export type TranslationKeys = {
   heroSubtitle: string;
   heroBtnDonate: string;
   heroBtnLearnMore: string;
+  heroBtnGetStarted: string;
 
   // About Section
   aboutTitle: string;
@@ -259,11 +262,14 @@ export const translations: { [key: string]: TranslationKeys } = {
     navGallery: 'गैलरी',
     navContact: 'संपर्क',
     navPrayer: 'प्रार्थना निवेदन',
+    navSignUp: 'साइन अप',
+    navLogin: 'लॉगिन',
     languageSwitcher: 'भाषा',
     heroHeadline: 'मंदिर समिति बहपुरा में आपका स्वागत है',
     heroSubtitle: 'आस्था का संरक्षण, समुदाय की सेवा।',
     heroBtnDonate: 'दान करें',
     heroBtnLearnMore: 'अधिक जानें',
+    heroBtnGetStarted: 'सुरू करें',
     aboutTitle: 'हमारे बारे में',
     aboutHistory: 'मंदिर का इतिहास',
     aboutHistoryP1: 'मंदिर समिति बहपुरा की स्थापना दशकों पहले हमारे पूर्वजों द्वारा की गई थी, जिसका उद्देश्य एक पवित्र स्थान बनाना था जहाँ समुदाय भक्ति और शांति के लिए एक साथ आ सके।',
@@ -466,11 +472,14 @@ export const translations: { [key: string]: TranslationKeys } = {
     navGallery: 'Gallery',
     navContact: 'Contact',
     navPrayer: 'Prayer Requests',
+    navSignUp: 'Sign Up',
+    navLogin: 'Login',
     languageSwitcher: 'Language',
     heroHeadline: 'Welcome to Mandir Samiti Bahpura',
     heroSubtitle: 'Preserving Faith, Serving Community.',
     heroBtnDonate: 'Donate Now',
     heroBtnLearnMore: 'Learn More',
+    heroBtnGetStarted: 'Get Started',
     aboutTitle: 'About Us',
     aboutHistory: 'History of the Temple',
     aboutHistoryP1: 'Mandir Samiti Bahpura was established decades ago by our ancestors with the vision of creating a sacred space where the community could come together for devotion and peace.',

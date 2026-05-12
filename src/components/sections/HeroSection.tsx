@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -6,7 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { ArrowDown, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { ArrowDown, LayoutDashboard, ShieldCheck, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -107,6 +108,20 @@ export function HeroSection() {
                 >
                   <LayoutDashboard className="h-5 w-5" />
                   {language === 'hi' ? 'प्रबंधन पैनल' : 'Management'}
+                </Button>
+              </Link>
+            )}
+            {!user && (
+              <Link href="/signup" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className={cn(
+                    "w-full bg-white text-primary hover:bg-white/90 text-base sm:text-lg transition-all hover:scale-105 h-12 sm:h-16 px-8 font-bold rounded-xl shadow-2xl gap-2",
+                    language === "hi" ? "font-hindi text-xl" : ""
+                  )}
+                >
+                  <UserPlus className="h-5 w-5" />
+                  {t.heroBtnGetStarted}
                 </Button>
               </Link>
             )}
