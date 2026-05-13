@@ -113,6 +113,7 @@ async function verifyRecaptcha(token: string | null) {
 /**
  * Submits the contact form and routes the notification via Resend.
  * Uses the Contact API Key (contact@suryamandir.online).
+ * Routing is designed to allow full analysis in the Resend dashboard.
  */
 export async function submitContactForm(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
@@ -131,6 +132,10 @@ export async function submitContactForm(prevState: any, formData: FormData) {
         replyTo: email,
         subject: `New Message from Devotee: ${name}`,
         text: `You have received a new message from the website contact form.\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+        tags: [
+          { name: 'category', value: 'contact_form' },
+          { name: 'user_name', value: name.substring(0, 20) }
+        ]
       });
       return { message: "Success", success: true };
     } catch (error: any) {
@@ -160,6 +165,7 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
         to: email,
         subject: language === 'hi' ? 'आपका सत्यापन कोड - सूर्य मंदिर' : 'Your Verification Code - Surya Mandir',
         html: getOtpEmailHtml(otp, language),
+        tags: [{ name: 'category', value: 'otp_verification' }]
       });
       return { success: true, isLive: true };
     } catch (error: any) {
@@ -186,6 +192,7 @@ export async function sendManualEmail(emails: string[], subject: string, message
       to: emails,
       subject: subject,
       html: getBroadcastEmailHtml(subject, message, language),
+      tags: [{ name: 'category', value: 'admin_broadcast' }]
     });
     return { success: true };
   } catch (error: any) {

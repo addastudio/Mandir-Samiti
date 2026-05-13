@@ -50,7 +50,8 @@ import {
   Lock,
   Mail,
   Send,
-  Info
+  Info,
+  BarChart
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -906,6 +907,13 @@ export default function ManagementPage() {
                     <CardDescription>Send custom announcements and event invitations to devotees.</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6 space-y-6">
+                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex gap-3">
+                      <BarChart className="h-5 w-5 text-amber-600 shrink-0" />
+                      <p className="text-xs text-amber-800">
+                        <strong>Tracking Enabled:</strong> All broadcasts sent from this panel are automatically tracked in your <strong>Resend Dashboard</strong>. You can view open rates, click rates, and delivery reports there.
+                      </p>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <Label className="text-[10px] font-black uppercase opacity-60">Target Recipient Roles</Label>
@@ -989,7 +997,7 @@ export default function ManagementPage() {
                   </CardHeader>
                   <CardContent className="space-y-4 text-xs text-amber-900/80">
                     <p>Emails will be sent from: <br /><strong>contact@suryamandir.online</strong></p>
-                    <p>To ensure high delivery, make sure your domain is verified in the Resend dashboard.</p>
+                    <p>Devotee replies will be routed to your Resend dashboard where you can analyze and manage them.</p>
                     <div className="pt-2">
                       <Label className="text-[10px] font-black uppercase opacity-60 mb-2 block">Recipient Count</Label>
                       <Badge variant="outline" className="bg-white/50 border-amber-300">
@@ -1014,7 +1022,7 @@ export default function ManagementPage() {
                   </CardHeader>
                   <CardContent className="space-y-3 text-xs text-muted-foreground">
                     <p>1. Use **bold** or *italic* markdown if needed.</p>
-                    <p>2. Keep subjects concise and inviting.</p>
+                    <p>2. To manage devotees directly from the Resend dashboard, ensure your MX records are configured as per the Migration Guide.</p>
                     <p>3. Sending to many users at once may take a few seconds to queue.</p>
                   </CardContent>
                 </Card>

@@ -27,7 +27,8 @@ For community non-profits, we recommend this free-tier stack:
 3. **Environment Variables:** Go to **Site Settings > Environment variables** and add:
    - `STRIPE_SECRET_KEY`
    - `CASHFREE_APP_ID` & `CASHFREE_SECRET_KEY`
-   - `RESEND_API_KEY`
+   - `RESEND_OTP_API_KEY` (For verify@suryamandir.online)
+   - `RESEND_CONTACT_API_KEY` (For contact@suryamandir.online)
    - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` (MUST use reCAPTCHA v2 Checkbox)
    - `RECAPTCHA_SECRET_KEY` (MUST use reCAPTCHA v2 Checkbox)
    - `CONTENTFUL_SPACE_ID` & `CONTENTFUL_ACCESS_TOKEN` (if using CMS)
@@ -50,7 +51,23 @@ To remove the "Simulation" banner from `www.suryamandir.online`:
 
 ---
 
-## 5. Firebase Project Setup
+## 5. Resend: Email Receiving & Routing
+To manage and analyze devotee replies directly in Resend:
+1.  **Add Domain**: In Resend Dashboard, go to **Domains** and add `suryamandir.online`.
+2.  **Verify DNS**: Add the provided `TXT` and `CNAME` records to your domain registrar (e.g., GoDaddy, Namecheap).
+3.  **Setup Receiving (MX)**: 
+    - Go to **Settings > Receiving** in Resend.
+    - Add the `MX` records provided by Resend to your domain's DNS.
+    - This allows emails sent TO `contact@suryamandir.online` to be routed through Resend.
+4.  **Configure Forwarding**: 
+    - In Resend, create a "Route".
+    - Pattern: `contact@suryamandir.online`
+    - Action: Forward to your personal email (e.g., `president@gmail.com`).
+    - Now you can read and reply to devotees, and all activity will be visible in the Resend dashboard.
+
+---
+
+## 6. Firebase Project Setup
 1. **Console:** Visit console.firebase.google.com.
 2. **Provision:**
    - **Firestore:** Enable in Production mode.
@@ -59,6 +76,6 @@ To remove the "Simulation" banner from `www.suryamandir.online`:
 
 ---
 
-## 6. Domain Name
+## 7. Domain Name
 - **Recommendation:** Use a `.org` or `.in` domain (approx. ₹800/year).
 - **Mapping:** In Netlify/Vercel, go to **Domain management > Add custom domain**. Update your DNS records at your registrar to point to the hosting provider's name servers.
