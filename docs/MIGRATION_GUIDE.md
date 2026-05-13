@@ -1,7 +1,7 @@
 
 # Mandir Bahpura - Migration & Deployment Guide
 
-This guide outlines the process for migrating to production and maintaining the site at **Zero Cost** using Netlify.
+This guide outlines the process for migrating to production and maintaining the site at **Zero Cost** using Netlify and Vercel.
 
 ---
 
@@ -14,68 +14,51 @@ For community non-profits, we recommend this free-tier stack:
 
 ---
 
-## 2. GitHub Setup
-1. **Initialize Git:** `git init`
-2. **Create Repository:** Create a new private repo on GitHub.
-3. **Push Code:** `git add . && git commit -m "Initial commit" && git push`
+## 2. Professional Subdomains & DNS (GoDaddy)
+To maintain a professional presence, the following subdomains are configured:
+
+1.  **Mail Tracking (`gmb.suryamandir.online`)**:
+    -   **Purpose**: Used by Resend to track link clicks and open rates in emails.
+    -   **Setup**: In GoDaddy, add a `CNAME` record pointing `gmb` to Resend's tracking domain (provided in Resend Dashboard > Settings > Domains > Tracking).
+
+2.  **Facebook (`facebook.suryamandir.online`)**:
+    -   **Purpose**: A memorable link for devotees.
+    -   **Setup**: In GoDaddy, use "Forwarding" to point this subdomain to your actual Facebook Page URL.
+
+3.  **YouTube (`youtube.suryamandir.online`)**:
+    -   **Purpose**: Direct access to the temple's video channel.
+    -   **Setup**: In GoDaddy, use "Forwarding" to point this subdomain to your YouTube Channel URL.
 
 ---
 
-## 3. Netlify/Vercel Deployment (Production)
-1. **Connect:** Go to Netlify.com or Vercel.com and select "Import from GitHub".
-2. **Configure:** Choose your repository and set the build command to `npm run build` and directory to `.next`.
-3. **Environment Variables:** Go to **Site Settings > Environment variables** and add:
-   - `STRIPE_SECRET_KEY`
-   - `CASHFREE_APP_ID` & `CASHFREE_SECRET_KEY`
-   - `RESEND_OTP_API_KEY` (For verify@suryamandir.online)
-   - `RESEND_CONTACT_API_KEY` (For contact@suryamandir.online)
-   - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` (MUST use reCAPTCHA v2 Checkbox)
-   - `RECAPTCHA_SECRET_KEY` (MUST use reCAPTCHA v2 Checkbox)
-   - `CONTENTFUL_SPACE_ID` & `CONTENTFUL_ACCESS_TOKEN` (if using CMS)
-   - `NEXT_PUBLIC_NETLIFY_SITE_URL`: `https://mandirsamiti.netlify.app` (Required for CMS Login)
-4. **Deploy:** The platform will automatically build and assign a URL.
+## 3. Resend: Email Receiving & Routing
+To manage and analyze devotee replies directly in Resend:
+1.  **Add Domain**: In Resend Dashboard, go to **Domains** and add `suryamandir.online`.
+2.  **Verify DNS**: Add the provided `TXT` and `CNAME` records to your GoDaddy DNS.
+3.  **Setup Tracking**: Add the `gmb` subdomain as your "Tracking Domain" in the Resend domain settings.
+4.  **Setup Receiving (MX)**: 
+    - Go to **Settings > Receiving** in Resend.
+    - Add the `MX` records provided by Resend to your GoDaddy DNS.
+    - This allows emails sent TO `contact@suryamandir.online` to be routed through Resend.
+5.  **Configure Forwarding**: 
+    - In Resend, create a "Route".
+    - Pattern: `contact@suryamandir.online`
+    - Action: Forward to your personal email.
 
 ---
 
-## 4. Setting up Production reCAPTCHA (IMPORTANT)
+## 4. Production reCAPTCHA (IMPORTANT)
 To remove the "Simulation" banner from `www.suryamandir.online`:
 1.  Go to [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin).
 2.  Register a new site.
-3.  **Label:** Surya Mandir Bahpura
-4.  **reCAPTCHA type:** Select **reCAPTCHA v2**.
-5.  **Sub-type:** Select **"I'm not a robot" Checkbox**. (Do NOT use v3 as it requires different code).
-6.  **Domains:** Add `suryamandir.online` and `mandirsamiti.netlify.app`.
-7.  Copy the **Site Key** and **Secret Key**.
-8.  Add them as `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` and `RECAPTCHA_SECRET_KEY` in your Vercel/Netlify dashboard.
-9.  **REDEPLOY:** In Vercel, go to the "Deployments" tab and click "Redeploy" on your latest build to apply these new environment variables.
+3.  **reCAPTCHA type**: Select **reCAPTCHA v2 ("I'm not a robot" Checkbox)**.
+4.  **Domains**: Add `suryamandir.online` and `mandirsamiti.netlify.app`.
+5.  Add the Site Key and Secret Key as Environment Variables in Vercel/Netlify.
+6.  **REDEPLOY**: You must redeploy for these keys to take effect.
 
 ---
 
-## 5. Resend: Email Receiving & Routing
-To manage and analyze devotee replies directly in Resend:
-1.  **Add Domain**: In Resend Dashboard, go to **Domains** and add `suryamandir.online`.
-2.  **Verify DNS**: Add the provided `TXT` and `CNAME` records to your domain registrar (e.g., GoDaddy, Namecheap).
-3.  **Setup Receiving (MX)**: 
-    - Go to **Settings > Receiving** in Resend.
-    - Add the `MX` records provided by Resend to your domain's DNS.
-    - This allows emails sent TO `contact@suryamandir.online` to be routed through Resend.
-4.  **Configure Forwarding**: 
-    - In Resend, create a "Route".
-    - Pattern: `contact@suryamandir.online`
-    - Action: Forward to your personal email (e.g., `president@gmail.com`).
-    - Now you can read and reply to devotees, and all activity will be visible in the Resend dashboard.
-
----
-
-## 6. Firebase Project Setup
-1. **Console:** Visit console.firebase.google.com.
-2. **Provision:**
-   - **Firestore:** Enable in Production mode.
-   - **Auth:** Enable Email/Password and Google providers.
-3. **Rules:** Deploy the provided `firestore.rules` from this repository.
-
----
-
-## 7. Domain Name
-- **Recommendation:** Use a `.org` or `.in` domain (approx. ₹800/year).
-- **Mapping:** In Netlify/Vercel, go to **Domain management > Add custom domain**. Update your DNS records at your registrar to point to the hosting provider's name servers.
+## 5. Firebase Project Setup
+1. **Auth**: Enable Email/Password and Google providers.
+2. **Rules**: Deploy the provided `firestore.rules`.
+3. **Roles**: Manually add your UID to the `roles_admin` collection in Firestore to grant yourself access to the Management Panel.

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
@@ -77,9 +76,9 @@ export function ContactSection() {
   }, [state, toast, t, language]);
 
   const socialLinks = [
-    { icon: Facebook, href: "#", name: "Facebook" },
+    { icon: Facebook, href: "https://facebook.suryamandir.online", name: "Facebook" },
     { icon: Instagram, href: "#", name: "Instagram" },
-    { icon: Youtube, href: "#", name: "Youtube" },
+    { icon: Youtube, href: "https://youtube.suryamandir.online", name: "Youtube" },
   ];
 
   const address = language === 'hi' 
@@ -138,7 +137,14 @@ export function ContactSection() {
                <h3 className={cn("font-bold text-base sm:text-lg mb-4", language === 'hi' ? 'font-hindi' : '')}>{t.contactFollow}</h3>
                <div className="flex space-x-3 sm:space-x-4">
                  {socialLinks.map(link => (
-                   <a key={link.name} href={link.href} aria-label={link.name} className="bg-secondary p-2.5 sm:p-3 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all">
+                   <a 
+                    key={link.name} 
+                    href={link.href} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={link.name} 
+                    className="bg-secondary p-2.5 sm:p-3 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                   >
                      <link.icon className="h-5 w-5 sm:h-6 sm:w-6"/>
                    </a>
                  ))}

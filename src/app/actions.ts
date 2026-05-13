@@ -8,8 +8,6 @@ import { getContentfulStatus } from '@/lib/contentful';
 import { getOtpEmailHtml, getBroadcastEmailHtml } from '@/lib/email-templates';
 
 // Initialize two distinct Resend clients for separate routing
-// RESEND_OTP_API_KEY -> verify@suryamandir.online
-// RESEND_CONTACT_API_KEY -> contact@suryamandir.online
 const resendOtp = process.env.RESEND_OTP_API_KEY 
   ? new Resend(process.env.RESEND_OTP_API_KEY) 
   : (process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null);
@@ -67,8 +65,6 @@ export async function getEmailServiceStatus() {
 export async function getRecaptchaStatus() {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-  
-  // A standard v2 key usually starts with 6L...
   const isV2 = siteKey?.startsWith('6L');
 
   return {
@@ -90,7 +86,7 @@ async function verifyRecaptcha(token: string | null) {
     if (process.env.NODE_ENV === 'production') {
       console.warn("CRITICAL: RECAPTCHA_SECRET_KEY is missing in production. Falling back to true (Simulation) to avoid lockout.");
     }
-    return true; // Allow simulation if key is missing
+    return true;
   }
 
   try {
@@ -98,11 +94,6 @@ async function verifyRecaptcha(token: string | null) {
       method: 'POST',
     });
     const data = await response.json();
-    
-    if (!data.success) {
-      console.error("reCAPTCHA Verification Failed:", data['error-codes']);
-    }
-    
     return data.success;
   } catch (error) {
     console.error("reCAPTCHA Fetch Error:", error);
@@ -112,8 +103,6 @@ async function verifyRecaptcha(token: string | null) {
 
 /**
  * Submits the contact form and routes the notification via Resend.
- * Uses the Contact API Key (contact@suryamandir.online).
- * Routing is designed to allow full analysis in the Resend dashboard.
  */
 export async function submitContactForm(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
@@ -132,9 +121,12 @@ export async function submitContactForm(prevState: any, formData: FormData) {
         replyTo: email,
         subject: `New Message from Devotee: ${name}`,
         text: `You have received a new message from the website contact form.\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+        headers: {
+          'X-Entity-Ref-ID': 'contact-form',
+        },
         tags: [
           { name: 'category', value: 'contact_form' },
-          { name: 'user_name', value: name.substring(0, 20) }
+          { name: 'tracking_domain', value: 'gmb.suryamandir.online' }
         ]
       });
       return { message: "Success", success: true };
@@ -144,13 +136,11 @@ export async function submitContactForm(prevState: any, formData: FormData) {
     }
   }
   
-  console.log(`[SIMULATED CONTACT EMAIL] To: contact@suryamandir.online, From: ${email}, Msg: ${message}`);
   return { message: "Success (Simulated)", success: true };
 }
 
 /**
- * Sends a verification OTP via Resend for user signup/login.
- * Uses the OTP API Key (verify@suryamandir.online).
+ * Sends a verification OTP via Resend.
  */
 export async function sendVerificationOtp(email: string, otp: string, language: 'hi' | 'en' = 'hi', captchaToken?: string) {
   if (captchaToken) {
@@ -165,7 +155,10 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
         to: email,
         subject: language === 'hi' ? 'आपका सत्यापन कोड - सूर्य मंदिर' : 'Your Verification Code - Surya Mandir',
         html: getOtpEmailHtml(otp, language),
-        tags: [{ name: 'category', value: 'otp_verification' }]
+        tags: [
+          { name: 'category', value: 'otp_verification' },
+          { name: 'tracking_domain', value: 'gmb.suryamandir.online' }
+        ]
       });
       return { success: true, isLive: true };
     } catch (error: any) {
@@ -174,13 +167,11 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
     }
   }
   
-  console.log(`[SIMULATED OTP EMAIL] To: ${email}, OTP: ${otp}, Lang: ${language}`);
   return { success: true, isLive: false };
 }
 
 /**
  * Sends a broadcast or manual email to specific devotees.
- * Uses the Contact API Key (contact@suryamandir.online).
  */
 export async function sendManualEmail(emails: string[], subject: string, message: string, language: 'hi' | 'en' = 'hi') {
   if (!resendContact) return { success: false, message: "Email service not configured" };
@@ -192,7 +183,10 @@ export async function sendManualEmail(emails: string[], subject: string, message
       to: emails,
       subject: subject,
       html: getBroadcastEmailHtml(subject, message, language),
-      tags: [{ name: 'category', value: 'admin_broadcast' }]
+      tags: [
+        { name: 'category', value: 'admin_broadcast' },
+        { name: 'tracking_domain', value: 'gmb.suryamandir.online' }
+      ]
     });
     return { success: true };
   } catch (error: any) {
@@ -223,6 +217,5 @@ export async function createStripeCheckoutSession(amount: number, userEmail?: st
 
 export async function createCashfreeOrder(amount: number, userEmail?: string, userId?: string) {
   if (!process.env.CASHFREE_APP_ID) return { success: false };
-  // Implementation for Cashfree API...
   return { success: false, message: "Service under maintenance" };
 }
