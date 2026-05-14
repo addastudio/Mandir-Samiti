@@ -8,16 +8,8 @@ import { cn } from "@/lib/utils";
 import TempleIcon from "@/components/icons/TempleIcon";
 
 export function Footer() {
-  const { t, language } = useLanguage();
-  const [settings, setSettings] = React.useState<any>(null);
+  const { t, language, settings } = useLanguage();
   const [logoError, setLogoError] = React.useState(false);
-
-  React.useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => setSettings(data))
-      .catch(() => setSettings(null));
-  }, []);
 
   const siteName = language === 'hi' 
     ? (settings?.site_title_hi || "मंदिर समिति बहपुरा")

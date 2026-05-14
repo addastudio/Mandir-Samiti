@@ -1,10 +1,9 @@
-
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, LogIn, Heart, User as UserIcon, ShieldCheck, LayoutDashboard, UserPlus } from "lucide-react";
+import { Menu, LogIn, Heart, User as UserIcon, ShieldCheck, UserPlus } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
@@ -22,22 +21,14 @@ import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
 export function Header() {
-  const { t, language, setLanguage } = useLanguage();
+  const { t, language, settings } = useLanguage();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
-  const [settings, setSettings] = React.useState<any>(null);
   const [logoError, setLogoError] = React.useState(false);
-
-  React.useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => setSettings(data))
-      .catch(() => setSettings(null));
-  }, []);
 
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -51,35 +42,55 @@ export function Header() {
   }, [firestore, user]);
   const { data: adminDoc } = useDoc(adminRoleRef);
 
-  const navItems = [
-    { href: "/#home", label: t.navHome, isAnchor: true },
-    { href: "/#notices", label: t.noticesTitle, isAnchor: true },
-    { href: "/about", label: t.navAbout, isAnchor: false },
-    { href: "/#events", label: t.navEvents, isAnchor: true },
-    { href: "/gallery", label: t.navGallery, isAnchor: false },
-    { href: "/#contact", label: t.navContact, isAnchor: true },
-  ];
+  const navItems = React.useMemo(() => [
+    { id: "home", href: "/#home", label: t.navHome, isAnchor: true },
+    { id: "notices", href: "/#notices", label: t.noticesTitle, isAnchor: true },
+    { id: "about", href: "/about", label: t.navAbout, isAnchor: false },
+    { id: "events", href: "/#events", label: t.navEvents, isAnchor: true },
+    { id: "gallery", href: "/gallery", label: t.navGallery, isAnchor: false },
+    { id: "contact", href: "/#contact", label: t.navContact, isAnchor: true },
+  ], [t]);
 
   const isTransparent = !isScrolled && pathname === '/';
 
+  // Optimized Scroll Listener (Throttled)
   React.useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-      if (pathname === '/') {
-        const sections = navItems
-          .filter(item => item.isAnchor)
-          .map((item) => document.querySelector(item.href.replace('/', '')));
-        let current = "home";
-        sections.forEach((section) => {
-          if (section && window.scrollY >= (section as HTMLElement).offsetTop - 120) {
-            current = section.id;
-          }
-        });
-        setActiveSection(current);
+      const scrolled = window.scrollY > 10;
+      if (scrolled !== isScrolled) {
+        setIsScrolled(scrolled);
       }
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, [isScrolled]);
+
+  // Optimized Active Section (Intersection Observer)
+  React.useEffect(() => {
+    if (pathname !== '/') return;
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -70% 0px',
+      threshold: 0
+    };
+
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+    
+    navItems.filter(item => item.isAnchor).forEach(item => {
+      const element = document.getElementById(item.id);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
   }, [pathname, navItems]);
 
   const siteName = language === 'hi' 
@@ -107,7 +118,7 @@ export function Header() {
             variant="ghost" 
             size="sm" 
             className={cn(
-              "h-9 px-2 sm:px-4",
+              "h-9 px-2 sm:px-4 transition-colors",
               isTransparent ? "text-white hover:bg-white/10" : "text-foreground hover:bg-secondary"
             )}
           >
@@ -120,7 +131,7 @@ export function Header() {
             variant="outline" 
             size="sm" 
             className={cn(
-              "h-9 px-2 sm:px-4",
+              "h-9 px-2 sm:px-4 transition-colors",
               isTransparent ? "border-white/40 text-white hover:bg-white/10" : "border-primary/20 text-foreground hover:bg-primary/5"
             )}
           >
@@ -161,7 +172,14 @@ export function Header() {
           )}>
             <div className="relative h-9 w-9 sm:h-11 sm:w-11 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/10 shadow-inner">
               {settings?.favicon && !logoError ? (
-                <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1.5" onError={() => setLogoError(true)} />
+                <Image 
+                  src={settings.favicon} 
+                  alt="Logo" 
+                  fill 
+                  className="object-contain p-1.5" 
+                  priority
+                  onError={() => setLogoError(true)} 
+                />
               ) : (
                 <TempleIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
               )}
@@ -190,7 +208,7 @@ export function Header() {
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = pathname === '/' 
-                ? activeSection === item.href.replace('/#', '') 
+                ? activeSection === item.id
                 : pathname === item.href;
 
               return (
@@ -258,27 +276,6 @@ export function Header() {
                     {item.label}
                   </Link>
                 ))}
-                <div className="xs:hidden py-8 border-b border-border/50">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4">
-                    {language === 'hi' ? 'भाषा चुनें' : 'Choose Language'}
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      variant={language === 'hi' ? 'default' : 'outline'} 
-                      className={cn("h-12 rounded-xl font-bold", language === 'hi' && "bg-primary text-primary-foreground font-hindi text-lg")}
-                      onClick={() => setLanguage('hi')}
-                    >
-                      हिंदी
-                    </Button>
-                    <Button 
-                      variant={language === 'en' ? 'default' : 'outline'} 
-                      className={cn("h-12 rounded-xl font-bold", language === 'en' && "bg-primary text-primary-foreground")}
-                      onClick={() => setLanguage('en')}
-                    >
-                      English
-                    </Button>
-                  </div>
-                </div>
               </div>
               <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">
                 <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>

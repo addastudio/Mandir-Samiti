@@ -8,6 +8,7 @@ import React, {
   useEffect,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
 import { translations, TranslationKeys } from "@/lib/translations";
 
@@ -20,6 +21,7 @@ interface LanguageContextType {
   isLangLoading: boolean;
   showLangPopup: boolean;
   setShowLangPopup: React.Dispatch<React.SetStateAction<boolean>>;
+  settings: any;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -30,6 +32,15 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>("hi");
   const [isLangLoading, setIsLangLoading] = useState(true);
   const [showLangPopup, setShowLangPopup] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+
+  // Fetch settings once at the root level
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => setSettings(data))
+      .catch(() => setSettings(null));
+  }, []);
 
   useEffect(() => {
     const storedLang = localStorage.getItem("language") as Language | null;
@@ -49,17 +60,18 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   const t = translations[language];
 
+  const contextValue = useMemo(() => ({
+    language,
+    setLanguage,
+    t,
+    isLangLoading,
+    showLangPopup,
+    setShowLangPopup,
+    settings,
+  }), [language, setLanguage, t, isLangLoading, showLangPopup, settings]);
+
   return (
-    <LanguageContext.Provider
-      value={{
-        language,
-        setLanguage,
-        t,
-        isLangLoading,
-        showLangPopup,
-        setShowLangPopup,
-      }}
-    >
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );

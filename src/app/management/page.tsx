@@ -91,7 +91,7 @@ import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceSta
 
 /**
  * MANDIR MANAGEMENT PANEL
- * The central command center for Mandir Samiti Bahpura.
+ * Optimized for performance: Collections are only listened to when their tab is active.
  */
 export default function ManagementPage() {
   const { user, isUserLoading } = useUser();
@@ -167,15 +167,15 @@ export default function ManagementPage() {
     }
   }, [websiteSettings]);
 
-  // Collection References
-  const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "events"), [firestore, adminDoc]);
-  const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "gallery"), [firestore, adminDoc]);
-  const noticesRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "notices"), [firestore, adminDoc]);
-  const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "prayer_requests"), [firestore, adminDoc]);
-  const usersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "users"), [firestore, adminDoc]);
-  const membersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "mandir_samiti_members"), [firestore, adminDoc]);
-  const logsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "admin_activity_logs"), [firestore, adminDoc]);
-  const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collectionGroup(firestore, "donations")), [firestore, adminDoc]);
+  // Collection References - Optimized to only create refs when needed
+  const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'events') ? null : collection(firestore, "events"), [firestore, adminDoc, activeTab]);
+  const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'gallery') ? null : collection(firestore, "gallery"), [firestore, adminDoc, activeTab]);
+  const noticesRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'notices') ? null : collection(firestore, "notices"), [firestore, adminDoc, activeTab]);
+  const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'requests') ? null : collection(firestore, "prayer_requests"), [firestore, adminDoc, activeTab]);
+  const usersRef = useMemoFirebase(() => (!firestore || !adminDoc || (activeTab !== 'users' && activeTab !== 'broadcast')) ? null : collection(firestore, "users"), [firestore, adminDoc, activeTab]);
+  const membersRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'members') ? null : collection(firestore, "mandir_samiti_members"), [firestore, adminDoc, activeTab]);
+  const logsRef = useMemoFirebase(() => (!firestore || !adminDoc || (activeTab !== 'logs' && activeTab !== 'overview')) ? null : collection(firestore, "admin_activity_logs"), [firestore, adminDoc, activeTab]);
+  const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc || (activeTab !== 'donations' && activeTab !== 'overview')) ? null : query(collectionGroup(firestore, "donations")), [firestore, adminDoc, activeTab]);
   const allAdminsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "roles_admin"), [firestore, adminDoc]);
 
   const { data: events } = useCollection(eventsRef);
@@ -282,7 +282,6 @@ export default function ManagementPage() {
 
     setIsProcessingRole(true);
     try {
-      // Re-authentication for sensitive security changes
       if (type === 'resign' || type === 'admin') {
         if (user.providerData.some(p => p.providerId === 'password')) {
           if (!resignPassword) {
@@ -372,10 +371,7 @@ export default function ManagementPage() {
 
     setIsSendingBroadcast(true);
     try {
-      // Collect emails
       const emails: string[] = [];
-      
-      // Filter from Users collection based on selected roles
       if (allUsers) {
         allUsers.forEach(u => {
           if (u.email && selectedRoles.includes(u.role || 'devotee')) {
@@ -383,27 +379,20 @@ export default function ManagementPage() {
           }
         });
       }
-
-      // Add manual emails
       if (manualEmails) {
         const manualArr = manualEmails.split(',').map(e => e.trim()).filter(e => e.includes('@'));
         emails.push(...manualArr);
       }
-
-      // De-duplicate
       const uniqueEmails = Array.from(new Set(emails));
-
       if (uniqueEmails.length === 0) {
-        toast({ variant: "destructive", title: "No Recipients", description: "No valid email addresses found for the selected criteria." });
+        toast({ variant: "destructive", title: "No Recipients", description: "No valid email addresses found." });
         setIsSendingBroadcast(false);
         return;
       }
-
       const result = await sendManualEmail(uniqueEmails, broadcastSubject, broadcastMessage, language as 'hi' | 'en');
-      
       if (result.success) {
         await logActivity('UPDATE', 'communications', `Broadcast Sent: ${broadcastSubject} to ${uniqueEmails.length} users`);
-        toast({ title: "Broadcast Sent", description: `Successfully queued emails for ${uniqueEmails.length} recipients.` });
+        toast({ title: "Broadcast Sent" });
         setBroadcastSubject("");
         setBroadcastMessage("");
         setManualEmails("");
@@ -487,27 +476,9 @@ export default function ManagementPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2 text-destructive border-destructive/20 hover:bg-destructive/10"
-              onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}
-            >
-              <LogOut className="h-4 w-4" />
-              {language === 'hi' ? 'इस्तीफा दें' : 'Resign as Admin'}
-            </Button>
-            <Link href="/dashboard" className="flex-1 sm:flex-initial">
-              <Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm">
-                <LayoutDashboard className="h-4 w-4" />
-                {language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}
-              </Button>
-            </Link>
-            <Link href="/" className="flex-1 sm:flex-initial">
-              <Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm">
-                <Globe className="h-4 w-4" />
-                {language === 'hi' ? 'वेबसाइट' : 'Website'}
-              </Button>
-            </Link>
+            <Button variant="outline" size="sm" className="gap-2 text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}><LogOut className="h-4 w-4" />{language === 'hi' ? 'इस्तीफा दें' : 'Resign'}</Button>
+            <Link href="/dashboard" className="flex-1 sm:flex-initial"><Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm"><LayoutDashboard className="h-4 w-4" />{language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}</Button></Link>
+            <Link href="/" className="flex-1 sm:flex-initial"><Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm"><Globe className="h-4 w-4" />{language === 'hi' ? 'वेबसाइट' : 'Website'}</Button></Link>
           </div>
         </div>
 
@@ -527,11 +498,7 @@ export default function ManagementPage() {
                 { value: 'settings', icon: Settings, label: language === 'hi' ? 'सेटिंग्स' : 'Settings' },
                 { value: 'logs', icon: Activity, label: language === 'hi' ? 'लॉग्स' : 'Logs' }
               ].map((tab) => (
-                <TabsTrigger 
-                  key={tab.value} 
-                  value={tab.value} 
-                  className="flex items-center gap-2 py-2 px-3 sm:px-4 shrink-0 rounded-lg transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary"
-                >
+                <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2 py-2 px-3 sm:px-4 shrink-0 rounded-lg transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary">
                   <tab.icon className="h-4 w-4" />
                   <span className="text-xs font-bold whitespace-nowrap">{tab.label}</span>
                 </TabsTrigger>
@@ -540,846 +507,225 @@ export default function ManagementPage() {
           </div>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: t.mgmtStatTotalCollection, value: `₹${totalDonationsCount.toLocaleString()}`, color: 'bg-primary/10 border-primary/20', icon: HandCoins },
-                { label: t.mgmtStatPendingRequests, value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200', icon: MessageSquare },
-                { label: t.mgmtStatActiveEvents, value: events?.length || 0, color: 'bg-amber-50 border-amber-200', icon: Calendar },
-                { label: t.mgmtStatTotalDevotees, value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200', icon: Users }
-              ].map((stat, i) => (
-                <Card key={i} className={cn("relative overflow-hidden group transition-all hover:shadow-md", stat.color)}>
-                  <stat.icon className="absolute -right-2 -bottom-2 h-16 w-16 opacity-10 rotate-12 transition-transform group-hover:scale-110" />
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs font-black uppercase tracking-widest opacity-70">{stat.label}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{stat.value}</div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-8">
-                <Card className="shadow-md border-primary/10 overflow-hidden h-full">
-                  <CardHeader className="bg-white border-b py-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg font-bold flex items-center gap-2">
-                          <TrendingUp className="h-5 w-5 text-primary" />
-                          {language === 'hi' ? 'दान विश्लेषण' : 'Donation Trends'}
-                        </CardTitle>
-                      </div>
-                      <Select value={analyticsRange} onValueChange={setAnalyticsRange}>
-                        <SelectTrigger className="w-32 h-8 text-[10px] font-black uppercase border-primary/10">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="7d">7 Days</SelectItem>
-                          <SelectItem value="30d">30 Days</SelectItem>
-                          <SelectItem value="90d">90 Days</SelectItem>
-                          <SelectItem value="1y">1 Year</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6 h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id="colorAmount" x1="0" x1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
-                        <Tooltip />
-                        <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="lg:col-span-4">
-                 <Card className="shadow-md border-primary/10 h-full flex flex-col overflow-hidden">
-                  <CardHeader className="bg-primary/5 border-b">
-                    <CardTitle className="text-sm font-bold flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-primary" />
-                      {language === 'hi' ? 'सिस्टम फीड' : 'Live Feed'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0 flex-1 overflow-y-auto max-h-[400px]">
-                    <div className="divide-y divide-primary/5">
-                      {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10).map((log: any) => {
-                        const details = getActionDetails(log.actionType);
-                        const ActionIcon = details.icon;
-                        return (
-                          <div key={log.id} className="p-4 hover:bg-muted/10 transition-colors group">
-                            <div className="flex items-start gap-3">
-                              <div className={cn("p-2 rounded-lg shrink-0", details.color)}>
-                                <ActionIcon className="h-3.5 w-3.5" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold truncate">{log.entityTitle}</p>
-                                <div className="flex items-center justify-between mt-1">
-                                  <span className="text-[9px] text-muted-foreground uppercase font-black tracking-tighter">{log.adminName}</span>
-                                  <span className="text-[9px] text-muted-foreground opacity-60 flex items-center gap-1"><Clock className="h-2 w-2" />{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            {activeTab === 'overview' && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { label: t.mgmtStatTotalCollection, value: `₹${totalDonationsCount.toLocaleString()}`, color: 'bg-primary/10 border-primary/20', icon: HandCoins },
+                    { label: t.mgmtStatPendingRequests, value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200', icon: MessageSquare },
+                    { label: t.mgmtStatActiveEvents, value: events?.length || 0, color: 'bg-amber-50 border-amber-200', icon: Calendar },
+                    { label: t.mgmtStatTotalDevotees, value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200', icon: Users }
+                  ].map((stat, i) => (
+                    <Card key={i} className={cn("relative overflow-hidden group transition-all hover:shadow-md", stat.color)}>
+                      <stat.icon className="absolute -right-2 -bottom-2 h-16 w-16 opacity-10 rotate-12 transition-transform group-hover:scale-110" />
+                      <CardHeader className="pb-2"><CardTitle className="text-xs font-black uppercase tracking-widest opacity-70">{stat.label}</CardTitle></CardHeader>
+                      <CardContent><div className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{stat.value}</div></CardContent>
+                    </Card>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div className="lg:col-span-8">
+                    <Card className="shadow-md border-primary/10 overflow-hidden h-full">
+                      <CardHeader className="bg-white border-b py-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <CardTitle className="text-lg font-bold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" />{language === 'hi' ? 'दान विश्लेषण' : 'Donation Trends'}</CardTitle>
+                          <Select value={analyticsRange} onValueChange={setAnalyticsRange}><SelectTrigger className="w-32 h-8 text-[10px] font-black uppercase border-primary/10"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="7d">7 Days</SelectItem><SelectItem value="30d">30 Days</SelectItem><SelectItem value="90d">90 Days</SelectItem><SelectItem value="1y">1 Year</SelectItem></SelectContent></Select>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-6 h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={chartData}><defs><linearGradient id="colorAmount" x1="0" x1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/><stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" /><XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} /><YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} /><Tooltip /><Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" /></AreaChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <div className="lg:col-span-4">
+                    <Card className="shadow-md border-primary/10 h-full flex flex-col overflow-hidden">
+                      <CardHeader className="bg-primary/5 border-b"><CardTitle className="text-sm font-bold flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />{language === 'hi' ? 'सिस्टम फीड' : 'Live Feed'}</CardTitle></CardHeader>
+                      <CardContent className="p-0 flex-1 overflow-y-auto max-h-[400px]">
+                        <div className="divide-y divide-primary/5">
+                          {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10).map((log: any) => {
+                            const details = getActionDetails(log.actionType);
+                            const ActionIcon = details.icon;
+                            return (
+                              <div key={log.id} className="p-4 hover:bg-muted/10 transition-colors group">
+                                <div className="flex items-start gap-3">
+                                  <div className={cn("p-2 rounded-lg shrink-0", details.color)}><ActionIcon className="h-3.5 w-3.5" /></div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold truncate">{log.entityTitle}</p>
+                                    <div className="flex items-center justify-between mt-1"><span className="text-[9px] text-muted-foreground uppercase font-black tracking-tighter">{log.adminName}</span><span className="text-[9px] text-muted-foreground opacity-60 flex items-center gap-1"><Clock className="h-2 w-2" />{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="donations" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-4">
-                <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5">
-                    <CardTitle className="text-lg">Record Manual Donation</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <form onSubmit={async (e) => {
-                      e.preventDefault();
-                      const fd = new FormData(e.currentTarget);
-                      const amount = Number(fd.get('amount'));
-                      const devoteeName = fd.get('devoteeName') as string;
-                      await logActivity('CREATE', 'donations', `Manual: ₹${amount} from ${devoteeName}`);
-                      const manualRef = collection(firestore!, "donations");
-                      await addDoc(manualRef, {
-                        amount,
-                        devoteeName,
-                        mode: fd.get('mode') as string,
-                        date: (fd.get('date') as string) || new Date().toISOString(),
-                        status: 'completed'
-                      });
-                      (e.target as HTMLFormElement).reset();
-                      toast({ title: "Donation Recorded" });
-                    }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Devotee Name</Label><Input name="devoteeName" placeholder="Full Name" required /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Amount (₹)</Label><Input name="amount" type="number" required /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Payment Mode</Label>
-                        <Select name="mode" defaultValue="Cash">
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent><SelectItem value="Cash">Cash</SelectItem><SelectItem value="UPI (Manual)">Direct UPI</SelectItem></SelectContent>
-                        </Select>
-                      </div>
-                      <Button className="w-full shadow-lg gap-2">Save Record</Button>
-                    </form>
-                  </CardContent>
-                </Card>
+            {activeTab === 'donations' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-4">
+                  <Card className="shadow-md border-primary/10">
+                    <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Record Manual Donation</CardTitle></CardHeader>
+                    <CardContent className="pt-6">
+                      <form onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); const amount = Number(fd.get('amount')); const devoteeName = fd.get('devoteeName') as string; await logActivity('CREATE', 'donations', `Manual: ₹${amount} from ${devoteeName}`); await addDoc(collection(firestore!, "donations"), { amount, devoteeName, mode: fd.get('mode') as string, date: new Date().toISOString(), status: 'completed' }); (e.target as HTMLFormElement).reset(); toast({ title: "Donation Recorded" }); }} className="space-y-4">
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Devotee Name</Label><Input name="devoteeName" placeholder="Full Name" required /></div>
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Amount (₹)</Label><Input name="amount" type="number" required /></div>
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Payment Mode</Label><Select name="mode" defaultValue="Cash"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Cash">Cash</SelectItem><SelectItem value="UPI (Manual)">Direct UPI</SelectItem></SelectContent></Select></div>
+                        <Button className="w-full shadow-lg gap-2">Save Record</Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+                </div>
+                <div className="lg:col-span-8">
+                  <Card className="shadow-xl border-primary/10 overflow-hidden">
+                    <CardHeader className="bg-white border-b py-4 flex flex-row items-center justify-between"><CardTitle className="text-xl font-bold flex items-center gap-2"><IndianRupee className="h-5 w-5 text-primary" />Donation Ledger</CardTitle><div className="relative w-64"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search..." className="pl-10 h-10" value={donationSearch} onChange={(e) => setDonationSearch(e.target.value)} /></div></CardHeader>
+                    <CardContent className="p-0 overflow-x-auto">
+                      <Table><TableHeader className="bg-muted/30"><TableRow><TableHead className="text-[10px] uppercase font-black pl-6">Devotee</TableHead><TableHead className="text-[10px] uppercase font-black text-center">Amount</TableHead><TableHead className="text-[10px] uppercase font-black text-center">Mode</TableHead><TableHead className="text-[10px] uppercase font-black text-right pr-6">Status</TableHead></TableRow></TableHeader>
+                        <TableBody>{filteredDonations.map(d => (
+                            <TableRow key={d.id} className="hover:bg-primary/5"><TableCell className="pl-6 py-4 font-bold text-sm">{d.devoteeName || 'Devotee'}</TableCell><TableCell className="text-center font-black text-primary">₹{d.amount}</TableCell><TableCell className="text-center"><Badge variant="outline">{d.mode}</Badge></TableCell><TableCell className="text-right pr-6"><Badge className={d.status === 'completed' ? "bg-emerald-500" : "bg-amber-500"}>{d.status}</Badge></TableCell></TableRow>
+                          ))}</TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-              <div className="lg:col-span-8">
-                <Card className="shadow-xl border-primary/10 overflow-hidden">
-                  <CardHeader className="bg-white border-b py-4 flex flex-row items-center justify-between">
-                    <CardTitle className="text-xl font-bold flex items-center gap-2"><IndianRupee className="h-5 w-5 text-primary" />Donation Ledger</CardTitle>
-                    <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Search..." className="pl-10 h-10" value={donationSearch} onChange={(e) => setDonationSearch(e.target.value)} />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0 overflow-x-auto">
-                    <Table>
-                      <TableHeader className="bg-muted/30">
-                        <TableRow>
-                          <TableHead className="text-[10px] uppercase font-black pl-6">Devotee</TableHead>
-                          <TableHead className="text-[10px] uppercase font-black text-center">Amount</TableHead>
-                          <TableHead className="text-[10px] uppercase font-black text-center">Mode</TableHead>
-                          <TableHead className="text-[10px] uppercase font-black text-right pr-6">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredDonations.map(d => (
-                          <TableRow key={d.id} className="hover:bg-primary/5">
-                            <TableCell className="pl-6 py-4 font-bold text-sm">{d.devoteeName || 'Devotee'}</TableCell>
-                            <TableCell className="text-center font-black text-primary">₹{d.amount}</TableCell>
-                            <TableCell className="text-center"><Badge variant="outline">{d.mode}</Badge></TableCell>
-                            <TableCell className="text-right pr-6"><Badge className={d.status === 'completed' ? "bg-emerald-500" : "bg-amber-500"}>{d.status}</Badge></TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="events" className="space-y-6">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-4">
-                <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add New Event</CardTitle></CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Content Drafter</Label>
-                      <div className="flex gap-2">
-                        <Input placeholder="e.g. Holi 2025" className="h-9 text-xs" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} />
-                        <Button size="sm" variant="secondary" className="shrink-0 h-9 gap-2" disabled={isAiGenerating} onClick={(e) => handleAiGenerate('event', (e.currentTarget.closest('form') || document.getElementById('event-form')) as HTMLFormElement)}>
-                          {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Draft
-                        </Button>
-                      </div>
-                    </div>
-                    <form id="event-form" onSubmit={async (e) => {
-                      e.preventDefault();
-                      const fd = new FormData(e.currentTarget);
-                      const data = { title: fd.get('title') as string, description: fd.get('description') as string, date: fd.get('date') as string, image: fd.get('image') as string, createdAt: new Date().toISOString() };
-                      await logActivity('CREATE', 'events', data.title);
-                      await addDoc(eventsRef!, data);
-                      (e.target as HTMLFormElement).reset();
-                      toast({ title: "Event Published" });
-                    }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Title</Label><Input name="title" required /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Date</Label><Input name="date" type="datetime-local" required /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Description</Label><Textarea name="description" rows={4} /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Image URL</Label><Input name="image" /></div>
-                      <Button className="w-full shadow-lg gap-2"><Calendar className="h-4 w-4" /> Publish Event</Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="lg:col-span-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {events?.map(event => (
-                    <Card key={event.id} className="overflow-hidden">
-                      <div className="flex items-stretch h-32">
-                        <div className="w-24 shrink-0 bg-muted">{event.image && <img src={event.image} className="h-full w-full object-cover" />}</div>
-                        <div className="p-4 flex-1 min-w-0 flex flex-col justify-between">
-                          <h4 className="font-bold text-sm truncate">{event.title}</h4>
-                          <p className="text-[10px] text-muted-foreground line-clamp-2">{event.description}</p>
-                          <Button variant="ghost" size="sm" className="h-7 w-fit text-destructive text-[10px]" onClick={() => setDeleteConfirm({ col: 'events', id: event.id, title: event.title })}>Remove</Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+            {activeTab === 'events' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-4">
+                  <Card className="shadow-md border-primary/10">
+                    <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add New Event</CardTitle></CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20"><Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Content Drafter</Label><div className="flex gap-2"><Input placeholder="e.g. Holi 2025" className="h-9 text-xs" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} /><Button size="sm" variant="secondary" className="shrink-0 h-9 gap-2" disabled={isAiGenerating} onClick={(e) => handleAiGenerate('event', (e.currentTarget.closest('form') || document.getElementById('event-form')) as HTMLFormElement)}>{isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Draft</Button></div></div>
+                      <form id="event-form" onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); const data = { title: fd.get('title') as string, description: fd.get('description') as string, date: fd.get('date') as string, image: fd.get('image') as string, createdAt: new Date().toISOString() }; await logActivity('CREATE', 'events', data.title); await addDoc(eventsRef!, data); (e.target as HTMLFormElement).reset(); toast({ title: "Event Published" }); }} className="space-y-4">
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Title</Label><Input name="title" required /></div>
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Date</Label><Input name="date" type="datetime-local" required /></div>
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Description</Label><Textarea name="description" rows={4} /></div>
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Image URL</Label><Input name="image" /></div>
+                        <Button className="w-full shadow-lg gap-2"><Calendar className="h-4 w-4" /> Publish Event</Button>
+                      </form>
+                    </CardContent>
+                  </Card>
                 </div>
+                <div className="lg:col-span-8"><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{events?.map(event => (<Card key={event.id} className="overflow-hidden"><div className="flex items-stretch h-32"><div className="w-24 shrink-0 bg-muted">{event.image && <img src={event.image} className="h-full w-full object-cover" />}</div><div className="p-4 flex-1 min-w-0 flex flex-col justify-between"><h4 className="font-bold text-sm truncate">{event.title}</h4><p className="text-[10px] text-muted-foreground line-clamp-2">{event.description}</p><Button variant="ghost" size="sm" className="h-7 w-fit text-destructive text-[10px]" onClick={() => setDeleteConfirm({ col: 'events', id: event.id, title: event.title })}>Remove</Button></div></div></Card>))}</div></div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="notices" className="space-y-6">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-4">
-                <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Post Official Notice</CardTitle></CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Drafter</Label>
-                      <div className="flex gap-2">
-                        <Input placeholder="e.g. Schedule change" className="h-9 text-xs" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} />
-                        <Button size="sm" variant="secondary" className="shrink-0 h-9 gap-2" disabled={isAiGenerating} onClick={(e) => handleAiGenerate('notice', (e.currentTarget.closest('form') || document.getElementById('notice-form')) as HTMLFormElement)}>
-                          {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Draft
-                        </Button>
-                      </div>
-                    </div>
-                    <form id="notice-form" onSubmit={async (e) => {
-                      e.preventDefault();
-                      const fd = new FormData(e.currentTarget);
-                      const data = { title: fd.get('title') as string, content: fd.get('content') as string, importance: fd.get('importance') as string, createdAt: new Date().toISOString() };
-                      await logActivity('CREATE', 'notices', data.title);
-                      await addDoc(noticesRef!, data);
-                      (e.target as HTMLFormElement).reset();
-                      toast({ title: "Notice Posted" });
-                    }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Headline</Label><Input name="title" required /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Priority</Label>
-                        <Select name="importance" defaultValue="normal">
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent><SelectItem value="normal">Normal</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Content</Label><Textarea name="content" rows={5} /></div>
-                      <Button className="w-full shadow-lg gap-2"><Bell className="h-4 w-4" /> Broadcast Notice</Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="lg:col-span-8">
-                <div className="space-y-4">
-                  {notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(notice => (
-                    <Card key={notice.id} className={cn("border-l-4", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}>
-                      <div className="p-4 flex justify-between">
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-sm truncate">{notice.title}</h4>
-                          <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{notice.content}</p>
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm({ col: 'notices', id: notice.id, title: notice.title })}><Trash2 className="h-4 w-4" /></Button>
-                      </div>
-                    </Card>
-                  ))}
+            {activeTab === 'notices' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-4">
+                  <Card className="shadow-md border-primary/10">
+                    <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Post Official Notice</CardTitle></CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20"><Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">AI Drafter</Label><div className="flex gap-2"><Input placeholder="e.g. Schedule change" className="h-9 text-xs" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} /><Button size="sm" variant="secondary" className="shrink-0 h-9 gap-2" disabled={isAiGenerating} onClick={(e) => handleAiGenerate('notice', (e.currentTarget.closest('form') || document.getElementById('notice-form')) as HTMLFormElement)}>{isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />} Draft</Button></div></div>
+                      <form id="notice-form" onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); const data = { title: fd.get('title') as string, content: fd.get('content') as string, importance: fd.get('importance') as string, createdAt: new Date().toISOString() }; await logActivity('CREATE', 'notices', data.title); await addDoc(noticesRef!, data); (e.target as HTMLFormElement).reset(); toast({ title: "Notice Posted" }); }} className="space-y-4">
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Headline</Label><Input name="title" required /></div>
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Priority</Label><Select name="importance" defaultValue="normal"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="normal">Normal</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent></Select></div>
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Content</Label><Textarea name="content" rows={5} /></div>
+                        <Button className="w-full shadow-lg gap-2"><Bell className="h-4 w-4" /> Broadcast Notice</Button>
+                      </form>
+                    </CardContent>
+                  </Card>
                 </div>
+                <div className="lg:col-span-8"><div className="space-y-4">{notices?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(notice => (<Card key={notice.id} className={cn("border-l-4", notice.importance === 'urgent' ? 'border-l-destructive' : 'border-l-primary')}><div className="p-4 flex justify-between"><div className="min-w-0"><h4 className="font-bold text-sm truncate">{notice.title}</h4><p className="text-xs text-muted-foreground line-clamp-2 mt-2">{notice.content}</p></div><Button variant="ghost" size="icon" onClick={() => setDeleteConfirm({ col: 'notices', id: notice.id, title: notice.title })}><Trash2 className="h-4 w-4" /></Button></div></Card>))}</div></div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="gallery" className="space-y-6">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-4">
-                <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add Media</CardTitle></CardHeader>
-                  <CardContent className="pt-6">
-                    <form onSubmit={async (e) => {
-                      e.preventDefault();
-                      const fd = new FormData(e.currentTarget);
-                      const data = { caption: fd.get('caption') as string, imageURL: fd.get('url') as string, createdAt: new Date().toISOString() };
-                      await logActivity('CREATE', 'gallery', data.caption);
-                      await addDoc(galleryRef!, data);
-                      (e.target as HTMLFormElement).reset();
-                      toast({ title: "Media Added" });
-                    }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Caption</Label><Input name="caption" required /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">URL</Label><Input name="url" placeholder="Image or YouTube" required /></div>
-                      <Button className="w-full shadow-lg"><Plus className="h-4 w-4 mr-2" /> Add Media</Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="lg:col-span-8">
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {gallery?.map(item => (
-                    <div key={item.id} className="group relative aspect-[4/3] bg-muted rounded-xl overflow-hidden">
-                      <img src={item.imageURL} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col justify-between p-2">
-                        <Button variant="destructive" size="icon" className="h-7 w-7 ml-auto" onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption })}><Trash2 className="h-4 w-4" /></Button>
-                        <p className="text-[9px] text-white truncate text-center">{item.caption}</p>
-                      </div>
-                    </div>
-                  ))}
+            {activeTab === 'gallery' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-4">
+                  <Card className="shadow-md border-primary/10">
+                    <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add Media</CardTitle></CardHeader>
+                    <CardContent className="pt-6">
+                      <form onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); const data = { caption: fd.get('caption') as string, imageURL: fd.get('url') as string, createdAt: new Date().toISOString() }; await logActivity('CREATE', 'gallery', data.caption); await addDoc(galleryRef!, data); (e.target as HTMLFormElement).reset(); toast({ title: "Media Added" }); }} className="space-y-4">
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Caption</Label><Input name="caption" required /></div>
+                        <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">URL</Label><Input name="url" placeholder="Image or YouTube" required /></div>
+                        <Button className="w-full shadow-lg"><Plus className="h-4 w-4 mr-2" /> Add Media</Button>
+                      </form>
+                    </CardContent>
+                  </Card>
                 </div>
+                <div className="lg:col-span-8"><div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">{gallery?.map(item => (<div key={item.id} className="group relative aspect-[4/3] bg-muted rounded-xl overflow-hidden"><img src={item.imageURL} className="h-full w-full object-cover" /><div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col justify-between p-2"><Button variant="destructive" size="icon" className="h-7 w-7 ml-auto" onClick={() => setDeleteConfirm({ col: 'gallery', id: item.id, title: item.caption })}><Trash2 className="h-4 w-4" /></Button><p className="text-[9px] text-white truncate text-center">{item.caption}</p></div></div>))}</div></div>
               </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="requests" className="space-y-6">
-            <Card className="shadow-xl border-primary/10 overflow-hidden">
-              <CardHeader className="bg-white border-b py-4"><CardTitle className="text-xl font-bold">Devotee Requests</CardTitle></CardHeader>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-muted/30">
-                    <TableRow>
-                      <TableHead className="text-[10px] uppercase font-black pl-6">Devotee</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black">Type</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black text-center">Status</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black text-right pr-6">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {requests?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(req => (
-                      <TableRow key={req.id} className="hover:bg-primary/5">
-                        <TableCell className="pl-6"><div className="flex flex-col"><span className="font-bold text-sm">{req.name}</span><span className="text-[10px] text-muted-foreground">{req.phone || req.email}</span></div></TableCell>
-                        <TableCell><Badge variant="outline">{req.requestType}</Badge></TableCell>
-                        <TableCell className="text-center">
-                          <Select defaultValue={req.status} onValueChange={async (val) => {
-                            await logActivity('UPDATE', 'prayer_requests', `Status ${req.name}: ${val}`);
-                            await updateDoc(doc(firestore!, "prayer_requests", req.id), { status: val });
-                            toast({ title: "Status Updated" });
-                          }}>
-                            <SelectTrigger className="h-7 w-28 text-[9px] font-black uppercase border-0 bg-secondary/50"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="pending">Pending</SelectItem><SelectItem value="viewed">Viewed</SelectItem><SelectItem value="completed">Completed</SelectItem></SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-right pr-6"><Button variant="ghost" size="icon" onClick={() => setDeleteConfirm({ col: 'prayer_requests', id: req.id, title: `Request: ${req.name}` })}><Trash2 className="h-4 w-4" /></Button></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            {activeTab === 'requests' && (
+              <Card className="shadow-xl border-primary/10 overflow-hidden">
+                <CardHeader className="bg-white border-b py-4"><CardTitle className="text-xl font-bold">Devotee Requests</CardTitle></CardHeader>
+                <CardContent className="p-0 overflow-x-auto">
+                  <Table><TableHeader className="bg-muted/30"><TableRow><TableHead className="text-[10px] uppercase font-black pl-6">Devotee</TableHead><TableHead className="text-[10px] uppercase font-black">Type</TableHead><TableHead className="text-[10px] uppercase font-black text-center">Status</TableHead><TableHead className="text-[10px] uppercase font-black text-right pr-6">Action</TableHead></TableRow></TableHeader>
+                    <TableBody>{requests?.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(req => (<TableRow key={req.id} className="hover:bg-primary/5"><TableCell className="pl-6"><div className="flex flex-col"><span className="font-bold text-sm">{req.name}</span><span className="text-[10px] text-muted-foreground">{req.phone || req.email}</span></div></TableCell><TableCell><Badge variant="outline">{req.requestType}</Badge></TableCell><TableCell className="text-center"><Select defaultValue={req.status} onValueChange={async (val) => { await logActivity('UPDATE', 'prayer_requests', `Status ${req.name}: ${val}`); await updateDoc(doc(firestore!, "prayer_requests", req.id), { status: val }); toast({ title: "Status Updated" }); }}><SelectTrigger className="h-7 w-28 text-[9px] font-black uppercase border-0 bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">Pending</SelectItem><SelectItem value="viewed">Viewed</SelectItem><SelectItem value="completed">Completed</SelectItem></SelectContent></Select></TableCell><TableCell className="text-right pr-6"><Button variant="ghost" size="icon" onClick={() => setDeleteConfirm({ col: 'prayer_requests', id: req.id, title: `Request: ${req.name}` })}><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="broadcast" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-8">
-                <Card className="shadow-md border-primary/10 overflow-hidden">
-                  <CardHeader className="bg-primary/5 border-b">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Mail className="h-5 w-5 text-primary" />
-                      Email Communication Center
-                    </CardTitle>
-                    <CardDescription>Send custom announcements and event invitations to devotees.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6 space-y-6">
-                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex gap-3">
-                      <BarChart className="h-5 w-5 text-amber-600 shrink-0" />
-                      <p className="text-xs text-amber-800">
-                        <strong>Tracking Enabled:</strong> All broadcasts sent from this panel are automatically tracked in your <strong>Resend Dashboard</strong>. You can view open rates, click rates, and delivery reports there.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase opacity-60">Target Recipient Roles</Label>
-                        <div className="grid grid-cols-2 gap-3">
-                          {[
-                            { id: 'devotee', label: 'Devotees' },
-                            { id: 'member', label: 'Members' },
-                            { id: 'official', label: 'Officials' },
-                            { id: 'president', label: 'Presidents' }
-                          ].map(role => (
-                            <div key={role.id} className="flex items-center space-x-2">
-                              <Checkbox 
-                                id={`role-${role.id}`} 
-                                checked={selectedRoles.includes(role.id)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) setSelectedRoles([...selectedRoles, role.id]);
-                                  else setSelectedRoles(selectedRoles.filter(r => r !== role.id));
-                                }}
-                              />
-                              <label htmlFor={`role-${role.id}`} className="text-xs font-medium leading-none cursor-pointer">
-                                {role.label}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase opacity-60">Manual Email Addresses</Label>
-                        <Input 
-                          placeholder="email1@example.com, email2@example.com" 
-                          value={manualEmails}
-                          onChange={(e) => setManualEmails(e.target.value)}
-                        />
-                        <p className="text-[9px] text-muted-foreground italic">Comma-separated list of additional recipients.</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase opacity-60">Email Subject</Label>
-                        <Input 
-                          placeholder="e.g. Special Invitation: Holi Mahotsav 2025" 
-                          value={broadcastSubject}
-                          onChange={(e) => setBroadcastSubject(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase opacity-60">Message Content (HTML Supported)</Label>
-                        <Textarea 
-                          placeholder="Write your spiritual message here..." 
-                          rows={10} 
-                          value={broadcastMessage}
-                          onChange={(e) => setBroadcastMessage(e.target.value)}
-                        />
-                        <p className="text-[9px] text-muted-foreground italic">Branded template will be applied automatically around this content.</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end">
-                      <Button 
-                        size="lg" 
-                        className="gap-2 px-10 shadow-lg h-12" 
-                        onClick={handleSendBroadcast}
-                        disabled={isSendingBroadcast}
-                      >
-                        {isSendingBroadcast ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                        Send Broadcast
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+            {activeTab === 'broadcast' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8">
+                  <Card className="shadow-md border-primary/10 overflow-hidden">
+                    <CardHeader className="bg-primary/5 border-b"><CardTitle className="text-lg flex items-center gap-2"><Mail className="h-5 w-5 text-primary" />Email Broadcast</CardTitle></CardHeader>
+                    <CardContent className="pt-6 space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6"><div className="space-y-4"><Label className="text-[10px] font-black uppercase opacity-60">Roles</Label><div className="grid grid-cols-2 gap-3">{['devotee', 'member', 'official', 'president'].map(role => (<div key={role} className="flex items-center space-x-2"><Checkbox id={`role-${role}`} checked={selectedRoles.includes(role)} onCheckedChange={(checked) => checked ? setSelectedRoles([...selectedRoles, role]) : setSelectedRoles(selectedRoles.filter(r => r !== role))} /><label htmlFor={`role-${role}`} className="text-xs font-medium cursor-pointer capitalize">{role}</label></div>))}</div></div><div className="space-y-4"><Label className="text-[10px] font-black uppercase opacity-60">Manual Emails</Label><Input placeholder="email@example.com" value={manualEmails} onChange={(e) => setManualEmails(e.target.value)} /></div></div>
+                      <div className="space-y-4 pt-4 border-t"><div className="space-y-2"><Label className="text-[10px] font-black uppercase opacity-60">Subject</Label><Input placeholder="Broadcast Subject" value={broadcastSubject} onChange={(e) => setBroadcastSubject(e.target.value)} /></div><div className="space-y-2"><Label className="text-[10px] font-black uppercase opacity-60">Message</Label><Textarea rows={10} value={broadcastMessage} onChange={(e) => setBroadcastMessage(e.target.value)} /></div></div>
+                      <div className="pt-4 flex justify-end"><Button size="lg" className="gap-2 px-10 shadow-lg h-12" onClick={handleSendBroadcast} disabled={isSendingBroadcast}>{isSendingBroadcast ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send</Button></div>
+                    </CardContent>
+                  </Card>
+                </div>
+                <div className="lg:col-span-4"><Card className="bg-amber-50 border-amber-200"><CardHeader><CardTitle className="text-sm font-bold">Info</CardTitle></CardHeader><CardContent className="text-xs text-amber-900/80"><p>Broadcasts are routed via Resend for tracking.</p></CardContent></Card></div>
               </div>
-
-              <div className="lg:col-span-4 space-y-6">
-                <Card className="bg-amber-50 border-amber-200">
-                  <CardHeader>
-                    <CardTitle className="text-sm font-bold flex items-center gap-2">
-                      <Info className="h-4 w-4 text-amber-600" />
-                      Sender Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 text-xs text-amber-900/80">
-                    <p>Emails will be sent from: <br /><strong>contact@suryamandir.online</strong></p>
-                    <p>Devotee replies will be routed to your Resend dashboard where you can analyze and manage them.</p>
-                    <div className="pt-2">
-                      <Label className="text-[10px] font-black uppercase opacity-60 mb-2 block">Recipient Count</Label>
-                      <Badge variant="outline" className="bg-white/50 border-amber-300">
-                        {(() => {
-                          let count = 0;
-                          if (allUsers) {
-                            allUsers.forEach(u => {
-                              if (u.email && selectedRoles.includes(u.role || 'devotee')) count++;
-                            });
-                          }
-                          const manuals = manualEmails.split(',').filter(e => e.trim().includes('@')).length;
-                          return count + manuals;
-                        })()} Active Recipients
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-dashed border-primary/20 bg-primary/5">
-                  <CardHeader>
-                    <CardTitle className="text-sm font-bold">Email Tips</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-xs text-muted-foreground">
-                    <p>1. Use **bold** or *italic* markdown if needed.</p>
-                    <p>2. To manage devotees directly from the Resend dashboard, ensure your MX records are configured as per the Migration Guide.</p>
-                    <p>3. Sending to many users at once may take a few seconds to queue.</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="members" className="space-y-6">
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-4">
-                <Card className="shadow-md border-primary/10">
-                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add Samiti Member</CardTitle></CardHeader>
-                  <CardContent className="pt-6">
-                    <form onSubmit={async (e) => {
-                      e.preventDefault();
-                      const fd = new FormData(e.currentTarget);
-                      const data = { name: fd.get('name') as string, role: fd.get('role') as string, displayOrder: Number(fd.get('order')), createdAt: new Date().toISOString() };
-                      await logActivity('CREATE', 'mandir_samiti_members', data.name);
-                      await addDoc(membersRef!, data);
-                      (e.target as HTMLFormElement).reset();
-                      toast({ title: "Member Added" });
-                    }} className="space-y-4">
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Full Name</Label><Input name="name" required /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Role</Label><Input name="role" required /></div>
-                      <div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Order</Label><Input name="order" type="number" defaultValue={0} /></div>
-                      <Button className="w-full shadow-lg"><Plus className="h-4 w-4 mr-2" /> Save Member</Button>
-                    </form>
-                  </CardContent>
-                </Card>
+            {activeTab === 'members' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-4"><Card className="shadow-md border-primary/10"><CardHeader className="bg-primary/5"><CardTitle className="text-lg">Add Samiti Member</CardTitle></CardHeader><CardContent className="pt-6"><form onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); const data = { name: fd.get('name') as string, role: fd.get('role') as string, displayOrder: Number(fd.get('order')), createdAt: new Date().toISOString() }; await logActivity('CREATE', 'mandir_samiti_members', data.name); await addDoc(membersRef!, data); (e.target as HTMLFormElement).reset(); toast({ title: "Member Added" }); }} className="space-y-4"><div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Full Name</Label><Input name="name" required /></div><div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Role</Label><Input name="role" required /></div><div className="space-y-1"><Label className="text-[10px] uppercase font-bold opacity-60">Order</Label><Input name="order" type="number" defaultValue={0} /></div><Button className="w-full shadow-lg">Save</Button></form></CardContent></Card></div>
+                <div className="lg:col-span-8"><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{members?.sort((a,b) => a.displayOrder - b.displayOrder).map(member => (<Card key={member.id} className="p-4 flex items-center justify-between group"><div className="flex items-center gap-3"><div className="h-10 w-10 bg-secondary rounded-full flex items-center justify-center text-primary font-bold">{member.name.charAt(0)}</div><div><h4 className="font-bold text-sm">{member.name}</h4><p className="text-[10px] text-primary uppercase font-black">{member.role}</p></div></div><Button variant="ghost" size="icon" className="text-muted-foreground opacity-0 group-hover:opacity-100" onClick={() => setDeleteConfirm({ col: 'mandir_samiti_members', id: member.id, title: member.name })}><Trash2 className="h-4 w-4" /></Button></Card>))}</div></div>
               </div>
-              <div className="lg:col-span-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {members?.sort((a,b) => a.displayOrder - b.displayOrder).map(member => (
-                    <Card key={member.id} className="p-4 flex items-center justify-between group">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-secondary rounded-full flex items-center justify-center text-primary font-bold">{member.name.charAt(0)}</div>
-                        <div><h4 className="font-bold text-sm">{member.name}</h4><p className="text-[10px] text-primary uppercase font-black">{member.role}</p></div>
-                      </div>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100" onClick={() => setDeleteConfirm({ col: 'mandir_samiti_members', id: member.id, title: member.name })}><Trash2 className="h-4 w-4" /></Button>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
-             <Card className="shadow-xl border-primary/10 overflow-hidden">
-               <CardHeader className="bg-white border-b py-6 px-6 flex flex-row items-center justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-xl font-bold flex items-center gap-2"><UserCog className="h-5 w-5 text-primary" />Devotee Management</CardTitle>
-                    <CardDescription className="text-xs uppercase tracking-widest font-semibold opacity-60">Control roles and system access</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Search devotees..." className="pl-10 h-10" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
-                    </div>
-                  </div>
-              </CardHeader>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-muted/30">
-                    <TableRow>
-                      <TableHead className="text-[10px] uppercase font-black pl-6">Profile</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black">Official Role</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black text-center">System Access</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black text-right pr-6">Member ID</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedUsers.map(u => {
-                      const isAdminNow = allAdmins?.some(a => a.id === u.id);
-                      const isMe = u.id === user?.uid;
-                      return (
-                        <TableRow key={u.id} className="hover:bg-primary/5">
-                          <TableCell className="pl-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-bold text-xs uppercase overflow-hidden">
-                                {u.photoURL ? <img src={u.photoURL} /> : u.name?.charAt(0) || <UserIcon className="h-4 w-4 opacity-30" />}
-                              </div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="font-bold text-sm truncate">{u.name || 'Devotee'} {isMe && <Badge className="ml-1 bg-primary/20 text-primary border-0 h-4 text-[8px]">YOU</Badge>}</span>
-                                <span className="text-[10px] text-muted-foreground truncate">{u.email}</span>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Select 
-                              defaultValue={u.role || 'devotee'} 
-                              onValueChange={(val) => setRoleConfirm({ userId: u.id, name: u.name, newRole: val, type: 'role' })}
-                            >
-                              <SelectTrigger className="h-8 w-32 text-[10px] font-black uppercase bg-secondary/50 border-0"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="devotee">Devotee</SelectItem>
-                                <SelectItem value="member">Samiti Member</SelectItem>
-                                <SelectItem value="official">Temple Official</SelectItem>
-                                <SelectItem value="president">Samiti President</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {isMe ? (
-                              <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                className="h-9 px-4 text-xs font-bold gap-2 shadow-sm" 
-                                onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}
-                              >
-                                <LogOut className="h-4 w-4" /> Resign Access
-                              </Button>
-                            ) : isAdminNow ? (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-9 px-4 text-xs font-bold gap-2 text-destructive border-destructive/20 hover:bg-destructive/5 shadow-sm"
-                                onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}
-                              >
-                                <ShieldAlert className="h-4 w-4" /> Revoke Access
-                              </Button>
-                            ) : (
-                              <Button 
-                                variant="default" 
-                                size="sm" 
-                                className="h-9 px-4 text-xs font-bold gap-2 bg-primary text-primary-foreground shadow-md hover:scale-105 transition-transform"
-                                onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}
-                              >
-                                <ShieldCheck className="h-4 w-4" /> Make Admin
-                              </Button>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right pr-6"><span className="text-[9px] font-mono text-muted-foreground opacity-40 uppercase">{u.id.slice(0, 12)}</span></TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            {activeTab === 'users' && (
+              <Card className="shadow-xl border-primary/10 overflow-hidden"><CardHeader className="bg-white border-b py-6 px-6 flex flex-row items-center justify-between"><div className="space-y-1"><CardTitle className="text-xl font-bold flex items-center gap-2"><UserCog className="h-5 w-5 text-primary" />Devotee Management</CardTitle></div><div className="relative w-64"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} /></div></CardHeader><CardContent className="p-0 overflow-x-auto"><Table><TableHeader className="bg-muted/30"><TableRow><TableHead className="pl-6">Profile</TableHead><TableHead>Role</TableHead><TableHead className="text-center">System Access</TableHead><TableHead className="text-right pr-6">ID</TableHead></TableRow></TableHeader><TableBody>{sortedUsers.map(u => { const isAdminNow = allAdmins?.some(a => a.id === u.id); const isMe = u.id === user?.uid; return (<TableRow key={u.id} className="hover:bg-primary/5"><TableCell className="pl-6 py-4"><div className="flex items-center gap-3"><div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-bold text-xs uppercase overflow-hidden">{u.photoURL ? <img src={u.photoURL} /> : u.name?.charAt(0)}</div><div><p className="font-bold text-sm truncate">{u.name || 'Devotee'} {isMe && <Badge className="ml-1">YOU</Badge>}</p><p className="text-[10px] text-muted-foreground">{u.email}</p></div></div></TableCell><TableCell><Select defaultValue={u.role || 'devotee'} onValueChange={(val) => setRoleConfirm({ userId: u.id, name: u.name, newRole: val, type: 'role' })}><SelectTrigger className="h-8 w-32 text-[10px] uppercase bg-secondary/50 border-0"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="devotee">Devotee</SelectItem><SelectItem value="member">Member</SelectItem><SelectItem value="official">Official</SelectItem><SelectItem value="president">President</SelectItem></SelectContent></Select></TableCell><TableCell className="text-center">{isMe ? (<Button variant="destructive" size="sm" onClick={() => setRoleConfirm({ userId: user!.uid, name: user!.displayName || user!.email || 'Me', newRole: '', type: 'resign' })}>Resign</Button>) : isAdminNow ? (<Button variant="outline" size="sm" onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}>Revoke</Button>) : (<Button variant="default" size="sm" onClick={() => setRoleConfirm({ userId: u.id, name: u.name, newRole: '', type: 'admin' })}>Make Admin</Button>)}</TableCell><TableCell className="text-right pr-6 text-[9px]">{u.id.slice(0, 8)}</TableCell></TableRow>) })}</TableBody></Table></CardContent></Card>
+            )}
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-8 space-y-6">
-                <Card className="shadow-md border-primary/10 overflow-hidden">
-                  <CardHeader className="bg-primary/5 border-b">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Tv className="h-5 w-5 text-primary" />
-                      Live Stream Management
-                    </CardTitle>
-                    <CardDescription>Configure the Live Aarti broadcast shown on the homepage.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6 space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase opacity-60">YouTube Live URL</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          placeholder="https://www.youtube.com/watch?v=..." 
-                          value={liveUrlInput} 
-                          onChange={(e) => setLiveUrlInput(e.target.value)} 
-                          className="flex-1"
-                        />
-                        <Button 
-                          onClick={handleUpdateWebsiteSettings} 
-                          disabled={isSavingSettings}
-                          className="gap-2 shrink-0"
-                        >
-                          {isSavingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                          Save Link
-                        </Button>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground italic">Note: Use a full YouTube link or a direct embed URL.</p>
-                    </div>
-
-                    {liveUrlInput && (
-                      <div className="mt-6 aspect-video bg-black rounded-xl overflow-hidden shadow-inner border-4 border-white/5">
-                        <iframe
-                          width="100%"
-                          height="100%"
-                          src={liveUrlInput.includes('v=') ? `https://www.youtube.com/embed/${liveUrlInput.split('v=')[1]?.split('&')[0]}` : liveUrlInput}
-                          title="Preview"
-                          frameBorder="0"
-                          allowFullScreen
-                        ></iframe>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card className="shadow-md border-primary/10 overflow-hidden">
-                  <CardHeader className="bg-secondary/30 border-b">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-primary" />
-                      API Status Settings
-                    </CardTitle>
-                    <CardDescription>Real-time health monitoring of integrated services.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {apiStatus ? (
-                        [
-                          { 
-                            label: apiStatus.backend.firebase.label, 
-                            sub: "Core Database", 
-                            active: apiStatus.backend.firebase.active, 
-                            icon: Globe, 
-                            activeLabel: "ACTIVE", 
-                            inactiveLabel: "OFFLINE",
-                            color: "text-primary",
-                            bg: "bg-primary/5"
-                          },
-                          { 
-                            label: apiStatus.backend.superbase.label, 
-                            sub: "Migration Layer", 
-                            active: apiStatus.backend.superbase.active, 
-                            icon: Activity, 
-                            activeLabel: "READY", 
-                            inactiveLabel: "OFFLINE",
-                            color: "text-blue-600",
-                            bg: "bg-blue-50"
-                          },
-                          { 
-                            label: apiStatus.backend.contentful.label, 
-                            sub: "Headless CMS", 
-                            active: apiStatus.backend.contentful.active, 
-                            icon: LayoutDashboard, 
-                            activeLabel: "CONNECTED", 
-                            inactiveLabel: "OFFLINE",
-                            color: "text-purple-600",
-                            bg: "bg-purple-50"
-                          },
-                          { 
-                            label: "Stripe Gateway", 
-                            sub: "International Payments", 
-                            active: apiStatus.payments.stripe, 
-                            icon: HandCoins, 
-                            activeLabel: "LIVE", 
-                            inactiveLabel: "DISABLED",
-                            color: "text-indigo-600",
-                            bg: "bg-indigo-50"
-                          },
-                          { 
-                            label: "Cashfree Gateway", 
-                            sub: "Domestic (India) Payments", 
-                            active: apiStatus.payments.cashfree, 
-                            icon: Zap, 
-                            activeLabel: "LIVE", 
-                            inactiveLabel: "DISABLED",
-                            color: "text-emerald-600",
-                            bg: "bg-emerald-50"
-                          },
-                          { 
-                            label: "Resend Service", 
-                            sub: "Email & OTP", 
-                            active: apiStatus.email.isLive, 
-                            icon: MessageSquare, 
-                            activeLabel: "LIVE", 
-                            inactiveLabel: "SIMULATED",
-                            color: "text-orange-600",
-                            bg: "bg-orange-50"
-                          },
-                          { 
-                            label: "reCAPTCHA", 
-                            sub: "Bot Protection", 
-                            active: apiStatus.recaptcha.isLive, 
-                            icon: Lock, 
-                            activeLabel: "LIVE", 
-                            inactiveLabel: "SIMULATION",
-                            color: "text-slate-600",
-                            bg: "bg-slate-50"
-                          }
-                        ].map((api, idx) => (
-                          <div key={idx} className="p-4 rounded-xl border bg-white flex items-center justify-between group hover:shadow-sm transition-all">
-                            <div className="flex items-center gap-3">
-                              <div className={cn("p-2 rounded-lg", api.bg)}><api.icon className={cn("h-4 w-4", api.color)} /></div>
-                              <div>
-                                <p className="text-xs font-bold">{api.label}</p>
-                                <p className="text-[9px] text-muted-foreground uppercase font-black">{api.sub}</p>
-                              </div>
-                            </div>
-                            <Badge 
-                              variant="outline" 
-                              className={cn(
-                                "h-6 border-0 uppercase font-black text-[9px]", 
-                                api.active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600",
-                                !api.active && (api.inactiveLabel === "SIMULATED" || api.inactiveLabel === "SIMULATION") && "bg-amber-50 text-amber-600"
-                              )}
-                            >
-                              {api.active ? api.activeLabel : api.inactiveLabel}
-                            </Badge>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="col-span-full py-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+            {activeTab === 'settings' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 space-y-6">
+                  <Card className="shadow-md border-primary/10 overflow-hidden"><CardHeader className="bg-primary/5 border-b"><CardTitle className="text-lg flex items-center gap-2"><Tv className="h-5 w-5 text-primary" />Live Stream</CardTitle></CardHeader><CardContent className="pt-6 space-y-4"><div className="space-y-2"><Label>YouTube Live URL</Label><div className="flex gap-2"><Input placeholder="URL" value={liveUrlInput} onChange={(e) => setLiveUrlInput(e.target.value)} /><Button onClick={handleUpdateWebsiteSettings} disabled={isSavingSettings}>{isSavingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}</Button></div></div></CardContent></Card>
+                  <Card className="shadow-md border-primary/10 overflow-hidden"><CardHeader className="bg-secondary/30 border-b"><CardTitle className="text-lg flex items-center gap-2"><Zap className="h-5 w-5 text-primary" />API Status</CardTitle></CardHeader><CardContent className="pt-6"><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{apiStatus ? ([{ label: apiStatus.backend.firebase.label, active: apiStatus.backend.firebase.active, icon: Globe }, { label: "Stripe", active: apiStatus.payments.stripe, icon: HandCoins }, { label: "Cashfree", active: apiStatus.payments.cashfree, icon: Zap }, { label: "Resend", active: apiStatus.email.isLive, icon: MessageSquare }].map((api, idx) => (<div key={idx} className="p-4 rounded-xl border bg-white flex items-center justify-between"><div className="flex items-center gap-3"><api.icon className="h-4 w-4" /><span className="text-xs font-bold">{api.label}</span></div><Badge variant={api.active ? "default" : "destructive"}>{api.active ? "LIVE" : "OFFLINE"}</Badge></div>))) : (<div className="col-span-full py-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>)}</div></CardContent></Card>
+                </div>
               </div>
-
-              <div className="lg:col-span-4">
-                <Card className="bg-primary/5 border-dashed border-primary/20 h-full">
-                  <CardHeader>
-                    <CardTitle className="text-sm font-bold">Quick Help</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 text-xs text-muted-foreground">
-                    <div className="flex gap-2">
-                      <div className="h-4 w-4 bg-primary/20 rounded shrink-0 flex items-center justify-center font-bold text-[10px]">1</div>
-                      <p>Updates to the **Live Link** are saved to Firestore and reflected on the home page instantly.</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="h-4 w-4 bg-primary/20 rounded shrink-0 flex items-center justify-center font-bold text-[10px]">2</div>
-                      <p>**API Status** is read-only here. To change these, update the Environment Variables in Vercel/Netlify.</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="h-4 w-4 bg-primary/20 rounded shrink-0 flex items-center justify-center font-bold text-[10px]">3</div>
-                      <p>If the **reCAPTCHA** badge is yellow (SIMULATION), the site uses test keys that show a banner on your live domain.</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="logs" className="space-y-6">
-             <Card className="shadow-xl border-primary/10 overflow-hidden">
-               <CardHeader className="bg-white border-b py-4">
-                <CardTitle className="text-xl font-bold flex items-center gap-2"><Activity className="h-5 w-5 text-primary" />Administrative Logs</CardTitle>
-                <CardDescription className="text-xs">Security audit trail of system modifications</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-muted/30">
-                    <TableRow>
-                      <TableHead className="text-[10px] uppercase font-black pl-6">Admin</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black text-center">Action</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black">Target Entity</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black text-right pr-6">Timestamp</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map(log => {
-                      const details = getActionDetails(log.actionType);
-                      const ActionIcon = details.icon;
-                      return (
-                        <TableRow key={log.id} className="hover:bg-muted/10 transition-colors">
-                          <TableCell className="pl-6 py-4"><div className="flex items-center gap-3"><div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center"><UserIcon className="h-4 w-4 text-muted-foreground" /></div><div className="flex flex-col"><span className="font-bold text-xs">{log.adminName}</span><span className="text-[9px] text-muted-foreground uppercase">{log.adminId.slice(0, 6)}</span></div></div></TableCell>
-                          <TableCell className="text-center"><div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider", details.color)}><ActionIcon className="h-3 w-3" />{log.actionType.replace('_', ' ')}</div></TableCell>
-                          <TableCell><div className="flex flex-col"><span className="text-[10px] font-black uppercase text-primary tracking-tighter">{log.entityType}</span><span className="text-xs font-medium line-clamp-1">{log.entityTitle}</span></div></TableCell>
-                          <TableCell className="text-right pr-6"><div className="flex flex-col items-end"><span className="text-xs font-bold">{new Date(log.timestamp).toLocaleDateString()}</span><span className="text-[10px] text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString()}</span></div></TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            {activeTab === 'logs' && (
+              <Card className="shadow-xl border-primary/10 overflow-hidden"><CardHeader className="bg-white border-b py-4"><CardTitle className="text-xl font-bold">Audit Logs</CardTitle></CardHeader><CardContent className="p-0 overflow-x-auto"><Table><TableHeader className="bg-muted/30"><TableRow><TableHead className="pl-6">Admin</TableHead><TableHead className="text-center">Action</TableHead><TableHead>Entity</TableHead><TableHead className="text-right pr-6">Time</TableHead></TableRow></TableHeader><TableBody>{logs?.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map(log => { const details = getActionDetails(log.actionType); const ActionIcon = details.icon; return (<TableRow key={log.id} className="hover:bg-muted/10"><TableCell className="pl-6 py-4"><span className="font-bold text-xs">{log.adminName}</span></TableCell><TableCell className="text-center"><Badge className={details.color}>{log.actionType}</Badge></TableCell><TableCell><span className="text-xs">{log.entityTitle}</span></TableCell><TableCell className="text-right pr-6 text-[10px]">{new Date(log.timestamp).toLocaleString()}</TableCell></TableRow>) })}</TableBody></Table></CardContent></Card>
+            )}
           </TabsContent>
         </Tabs>
       </main>
@@ -1387,64 +733,16 @@ export default function ManagementPage() {
       {/* MODALS */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive h-5 w-5" /> Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">Are you sure you want to remove "{deleteConfirm?.title}" from {deleteConfirm?.col}? This action is permanent.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
-            <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90 shadow-lg">Delete Permanently</AlertDialogAction>
-          </AlertDialogFooter>
+          <AlertDialogHeader><AlertDialogTitle>Confirm Deletion</AlertDialogTitle><AlertDialogDescription>Are you sure you want to remove "{deleteConfirm?.title}"? This is permanent.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={confirmDelete} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={!!roleConfirm} onOpenChange={(o) => { if(!o) { setRoleConfirm(null); setResignPassword(""); } }}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto border-2 border-primary/20">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-xl font-bold">
-              {roleConfirm?.type === 'resign' ? <LogOut className="text-destructive h-6 w-6" /> : <ShieldAlert className="text-primary h-6 w-6" />}
-              Security Confirmation
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm font-medium py-2">
-              {roleConfirm?.type === 'resign' 
-                ? "CRITICAL: You are about to resign your administrative privileges. This action requires password verification for security. Continue?" 
-                : roleConfirm?.type === 'admin' 
-                  ? allAdmins?.some(a => a.id === roleConfirm.userId)
-                    ? `You are about to REVOKE administrative access for ${roleConfirm.name}. This action requires password verification for security. Proceed?`
-                    : `You are about to GRANT full administrative access to ${roleConfirm.name}. This action requires password verification for security. Proceed?`
-                  : `Update the official temple role for ${roleConfirm?.name} to "${roleConfirm?.newRole}"?`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          {(roleConfirm?.type === 'resign' || roleConfirm?.type === 'admin') && user?.providerData.some(p => p.providerId === 'password') && (
-            <div className="space-y-2 py-4">
-              <Label htmlFor="verify-password">Verify Your Password</Label>
-              <Input 
-                id="verify-password" 
-                type="password" 
-                value={resignPassword} 
-                onChange={(e) => setResignPassword(e.target.value)} 
-                placeholder="Enter your account password"
-                className="border-primary/20"
-              />
-            </div>
-          )}
-
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-3 mt-6">
-            <AlertDialogCancel className="mt-0 h-11">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleRoleAction} 
-              disabled={isProcessingRole || ((roleConfirm?.type === 'resign' || roleConfirm?.type === 'admin') && !resignPassword && user?.providerData.some(p => p.providerId === 'password'))}
-              className={cn(
-                "h-11 shadow-lg font-bold min-w-[120px]", 
-                roleConfirm?.type === 'resign' || (roleConfirm?.type === 'admin' && allAdmins?.some(a => a.id === roleConfirm.userId)) 
-                  ? "bg-destructive hover:bg-destructive/90 text-white" 
-                  : "bg-primary hover:bg-primary/90"
-              )}
-            >
-              {isProcessingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Security Change"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          <AlertDialogHeader><AlertDialogTitle>Security Confirmation</AlertDialogTitle><AlertDialogDescription>This action requires security verification.</AlertDialogDescription></AlertDialogHeader>
+          {(roleConfirm?.type === 'resign' || roleConfirm?.type === 'admin') && user?.providerData.some(p => p.providerId === 'password') && (<div className="space-y-2 py-4"><Label>Verify Your Password</Label><Input type="password" value={resignPassword} onChange={(e) => setResignPassword(e.target.value)} placeholder="Password" /></div>)}
+          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRoleAction} disabled={isProcessingRole || ((roleConfirm?.type === 'resign' || roleConfirm?.type === 'admin') && !resignPassword && user?.providerData.some(p => p.providerId === 'password'))}>Confirm</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
