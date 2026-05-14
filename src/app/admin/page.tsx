@@ -1,9 +1,10 @@
+
 "use client";
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, ShieldCheck, ArrowRight, LayoutDashboard, Database, Loader2 } from "lucide-react";
+import { LayoutDashboard, ShieldCheck, ArrowRight, Database, Loader2, Globe, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,6 @@ import { useRouter } from "next/navigation";
 
 /**
  * Gateway page for Administrators.
- * Restricted visibility: Content Editor is only for President and Official.
  */
 export default function AdminGatewayPage() {
   const { language, t } = useLanguage();
@@ -27,13 +27,19 @@ export default function AdminGatewayPage() {
   }, [firestore, user]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "roles_admin", user.uid);
+  }, [firestore, user]);
+  const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
+
   React.useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/login");
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || isProfileLoading) {
+  if (isUserLoading || isProfileLoading || isAdminLoading) {
     return (
       <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -41,46 +47,50 @@ export default function AdminGatewayPage() {
     );
   }
 
-  if (!user) return null;
-
-  const isLeadership = userProfile?.role === 'president' || userProfile?.role === 'official';
+  if (!user || !adminDoc) {
+    return (
+      <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4 text-center">
+        <div className="space-y-4">
+          <ShieldCheck className="h-12 w-12 text-destructive mx-auto" />
+          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <p className="text-muted-foreground">You do not have administrative privileges.</p>
+          <Link href="/dashboard"><Button>Back to Dashboard</Button></Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary/30 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-        {isLeadership && (
-          <Card className="shadow-xl border-primary/10 overflow-hidden hover:shadow-2xl transition-all group">
-            <CardHeader className="bg-primary/5 pb-8">
-              <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Settings className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle className={cn("text-2xl", language === 'hi' ? 'font-hindi' : 'font-headline')}>
-                {language === 'hi' ? 'कंटेंट एडिटर' : 'Content Editor'}
-              </CardTitle>
-              <CardDescription>
-                {language === 'hi' 
-                  ? 'वेबसाइट के मुख्य कंटेंट, हीरो सेक्शन और अबाउट अस को बदलें।' 
-                  : 'Manage structural content like Hero, About Us, and Seva programs.'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <Link href="/admin/index.html">
-                <Button className="w-full h-12 gap-2 font-bold shadow-md">
-                  {language === 'hi' ? 'CMS खोलें' : 'Open CMS'}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <p className="mt-4 text-[10px] text-muted-foreground text-center uppercase tracking-widest font-bold opacity-60">
-                Powered by Decap CMS
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="shadow-xl border-primary/10 overflow-hidden hover:shadow-2xl transition-all group">
+          <CardHeader className="bg-primary/5 pb-8">
+            <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className={cn("text-2xl", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+              {language === 'hi' ? 'वेबसाइट कंटेंट' : 'Tiny CMS'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'hi' 
+                ? 'हेडलाइन, अबाउट अस और सेटिंग्स को सीधे यहाँ से बदलें।' 
+                : 'Manage headlines, about us, and site settings directly.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Link href="/management?tab=content">
+              <Button className="w-full h-12 gap-2 font-bold shadow-md">
+                {language === 'hi' ? 'कंटेंट बदलें' : 'Edit Content'}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <p className="mt-4 text-[10px] text-muted-foreground text-center uppercase tracking-widest font-bold opacity-60">
+              Integrated TinyCMS
+            </p>
+          </CardContent>
+        </Card>
 
-        <Card className={cn(
-          "shadow-xl border-primary/10 overflow-hidden hover:shadow-2xl transition-all group",
-          !isLeadership && "md:col-span-2 max-w-xl mx-auto"
-        )}>
+        <Card className="shadow-xl border-accent/10 overflow-hidden hover:shadow-2xl transition-all group">
           <CardHeader className="bg-accent/5 pb-8">
             <div className="h-12 w-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Database className="h-6 w-6 text-accent" />
@@ -90,8 +100,8 @@ export default function AdminGatewayPage() {
             </CardTitle>
             <CardDescription>
               {language === 'hi' 
-                ? 'दान, इवेंट्स, सूचना और भक्तों के रिकॉर्ड प्रबंधित करें।' 
-                : 'Handle daily operations: Donations, Notices, Events, and Members.'}
+                ? 'दान, इवेंट्स और भक्तों के रिकॉर्ड प्रबंधित करें।' 
+                : 'Handle daily operations: Donations, Events, and Members.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
@@ -102,7 +112,7 @@ export default function AdminGatewayPage() {
               </Button>
             </Link>
             <p className="mt-4 text-[10px] text-muted-foreground text-center uppercase tracking-widest font-bold opacity-60">
-              Powered by Firebase
+              Operational Management
             </p>
           </CardContent>
         </Card>

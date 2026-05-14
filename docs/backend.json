@@ -80,7 +80,35 @@
       "description": "Global website configuration.",
       "type": "object",
       "properties": {
-        "liveAartiUrl": { "type": "string", "description": "YouTube URL for Live Darshan." }
+        "liveAartiUrl": { "type": "string", "description": "YouTube URL for Live Darshan." },
+        "siteTitleEn": { "type": "string" },
+        "siteTitleHi": { "type": "string" },
+        "favicon": { "type": "string" }
+      }
+    },
+    "HeroContent": {
+      "title": "HeroContent",
+      "description": "Dynamic homepage hero content.",
+      "type": "object",
+      "properties": {
+        "headlineEn": { "type": "string" },
+        "headlineHi": { "type": "string" },
+        "subtitleEn": { "type": "string" },
+        "subtitleHi": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "fallbackImage": { "type": "string" }
+      }
+    },
+    "AboutContent": {
+      "title": "AboutContent",
+      "description": "Dynamic about section content.",
+      "type": "object",
+      "properties": {
+        "historyEn": { "type": "string" },
+        "historyHi": { "type": "string" },
+        "missionEn": { "type": "string" },
+        "missionHi": { "type": "string" },
+        "featuredImage": { "type": "string" }
       }
     }
   },
@@ -112,6 +140,14 @@
     "/settings/website": { 
       "schema": { "$ref": "#/entities/WebsiteSettings" },
       "description": "Global website configuration (e.g. Live Aarti URL)." 
+    },
+    "/site_content/hero": {
+      "schema": { "$ref": "#/entities/HeroContent" },
+      "description": "Live homepage content."
+    },
+    "/site_content/about": {
+      "schema": { "$ref": "#/entities/AboutContent" },
+      "description": "Live about page content."
     },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },

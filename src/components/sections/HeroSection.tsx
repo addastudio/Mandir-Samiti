@@ -7,8 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { ArrowDown, LayoutDashboard, ShieldCheck, UserPlus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowDown, LayoutDashboard, UserPlus } from "lucide-react";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
@@ -16,32 +15,25 @@ export function HeroSection() {
   const { t, language } = useLanguage();
   const { user } = useUser();
   const firestore = useFirestore();
-  const [cmsHero, setCmsHero] = useState<any>(null);
+  
+  const heroContentRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "site_content", "hero");
+  }, [firestore]);
+
+  const { data: liveHero } = useDoc(heroContentRef);
   const heroImage = PlaceHolderImages.find((img) => img.id === "hero-background");
 
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, "roles_admin", user.uid);
-  }, [firestore, user]);
-  const { data: adminDoc } = useDoc(adminRoleRef);
-
-  useEffect(() => {
-    fetch('/api/content/hero')
-      .then(res => res.json())
-      .then(data => setCmsHero(data))
-      .catch(() => setCmsHero(null));
-  }, []);
-
   const headline = language === 'hi' 
-    ? (cmsHero?.headline_hi || t.heroHeadline)
-    : (cmsHero?.headline_en || t.heroHeadline);
+    ? (liveHero?.headlineHi || t.heroHeadline)
+    : (liveHero?.headlineEn || t.heroHeadline);
 
   const subtitle = language === 'hi'
-    ? (cmsHero?.subtitle_hi || t.heroSubtitle)
-    : (cmsHero?.subtitle_en || t.heroSubtitle);
+    ? (liveHero?.subtitleHi || t.heroSubtitle)
+    : (liveHero?.subtitleEn || t.heroSubtitle);
 
-  const videoUrl = cmsHero?.video_url || "https://assets.mixkit.co/videos/preview/kit-top-view-of-a-temple-complex-in-india-40000-large.mp4";
-  const bgImage = cmsHero?.fallback_image || heroImage?.imageUrl;
+  const videoUrl = liveHero?.videoUrl || "https://assets.mixkit.co/videos/preview/kit-top-view-of-a-temple-complex-in-india-40000-large.mp4";
+  const bgImage = liveHero?.fallbackImage || heroImage?.imageUrl;
 
   return (
     <section
@@ -97,20 +89,6 @@ export function HeroSection() {
           </p>
           
           <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full sm:w-auto max-w-[320px] sm:max-w-none mx-auto">
-            {adminDoc && (
-              <Link href="/management" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className={cn(
-                    "w-full bg-white text-primary hover:bg-white/90 text-base sm:text-lg transition-all hover:scale-105 h-12 sm:h-16 px-8 font-bold rounded-xl shadow-2xl gap-2",
-                    language === "hi" ? "font-hindi text-xl" : ""
-                  )}
-                >
-                  <LayoutDashboard className="h-5 w-5" />
-                  {language === 'hi' ? 'प्रबंधन पैनल' : 'Management'}
-                </Button>
-              </Link>
-            )}
             {!user && (
               <Link href="/signup" className="w-full sm:w-auto">
                 <Button

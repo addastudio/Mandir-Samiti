@@ -1,27 +1,25 @@
+
 "use client";
 
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, History, Target, Loader2, Sparkles, Quote } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, doc } from "firebase/firestore";
 
 export function AboutSection() {
   const { t, language } = useLanguage();
   const firestore = useFirestore();
-  const [cmsContent, setCmsContent] = useState<any>(null);
-  const galleryImage = PlaceHolderImages.find((img) => img.id === "gallery-1");
+  
+  const aboutContentRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "site_content", "about");
+  }, [firestore]);
 
-  useEffect(() => {
-    fetch('/api/content/about')
-      .then(res => res.json())
-      .then(data => setCmsContent(data))
-      .catch(() => setCmsContent(null));
-  }, []);
+  const { data: liveAbout } = useDoc(aboutContentRef);
+  const galleryImage = PlaceHolderImages.find((img) => img.id === "gallery-1");
 
   const membersRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -41,12 +39,12 @@ export function AboutSection() {
     : fallbackMembers;
 
   const historyText = language === 'hi' 
-    ? (cmsContent?.history_hi || t.aboutHistoryP1)
-    : (cmsContent?.history_en || t.aboutHistoryP1);
+    ? (liveAbout?.historyHi || t.aboutHistoryP1)
+    : (liveAbout?.historyEn || t.aboutHistoryP1);
 
   const missionText = language === 'hi' 
-    ? (cmsContent?.mission_hi || t.aboutMissionP1)
-    : (cmsContent?.mission_en || t.aboutMissionP1);
+    ? (liveAbout?.missionHi || t.aboutMissionP1)
+    : (liveAbout?.missionEn || t.aboutMissionP1);
 
   return (
     <section id="about" className="py-20 sm:py-32 relative overflow-hidden bg-gradient-to-b from-transparent to-secondary/30">
@@ -68,17 +66,15 @@ export function AboutSection() {
 
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 items-center">
           <div className="relative order-2 lg:order-1 group p-4 sm:p-0">
-            {/* Decorative backgrounds with explicit z-index to avoid overlap */}
             <div className="absolute -inset-2 sm:-inset-4 bg-primary/20 rounded-[2rem] rotate-3 transition-transform group-hover:rotate-6 duration-700 z-0" />
             <div className="absolute -inset-2 sm:-inset-4 bg-accent/10 rounded-[2rem] -rotate-3 transition-transform group-hover:-rotate-1 duration-700 z-0" />
             
             <div className="relative overflow-hidden rounded-[1.5rem] shadow-2xl border-4 border-white aspect-[4/3] z-10">
               <Image 
-                  src={cmsContent?.featured_image || galleryImage?.imageUrl || "https://picsum.photos/seed/about-main/800/600"}
+                  src={liveAbout?.featuredImage || galleryImage?.imageUrl || "https://picsum.photos/seed/about-main/800/600"}
                   alt="Temple Heritage"
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  data-ai-hint="indian temple architecture"
               />
             </div>
             
@@ -98,7 +94,7 @@ export function AboutSection() {
               <Quote className="absolute -top-6 -left-6 h-12 w-12 text-primary/10 -scale-x-100 hidden sm:block" />
               <div className="bg-white/60 backdrop-blur-sm p-6 sm:p-10 rounded-[2rem] shadow-sm border border-primary/10 transition-all hover:shadow-md">
                   <h3 className={cn("text-2xl sm:text-3xl font-bold flex items-center gap-3 text-text-accent", language === "hi" ? "font-hindi" : "font-headline")}>
-                    {language === 'hi' ? (cmsContent?.history_title_hi || t.aboutHistory) : (cmsContent?.history_title_en || t.aboutHistory)}
+                    {t.aboutHistory}
                   </h3>
                   <div className={cn("mt-6 text-muted-foreground text-sm sm:text-lg leading-relaxed italic prose prose-sm sm:prose-base", language === "hi" ? "font-hindi" : "")}>
                     {historyText}
@@ -108,7 +104,7 @@ export function AboutSection() {
 
             <div className="bg-gradient-to-br from-primary to-accent p-6 sm:p-10 rounded-[2rem] shadow-xl text-white">
                 <h3 className={cn("text-2xl sm:text-3xl font-bold flex items-center gap-3", language === "hi" ? "font-hindi" : "font-headline")}>
-                  <Target className="h-7 w-7 shrink-0" /> {language === 'hi' ? (cmsContent?.mission_title_hi || t.aboutMission) : (cmsContent?.mission_title_en || t.aboutMission)}
+                  <Target className="h-7 w-7 shrink-0" /> {t.aboutMission}
                 </h3>
                 <div className={cn("mt-6 text-white/90 text-sm sm:text-lg leading-relaxed font-medium prose prose-invert prose-sm sm:prose-base", language === "hi" ? "font-hindi" : "")}>
                   {missionText}
