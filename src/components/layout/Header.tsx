@@ -137,22 +137,25 @@ export function Header() {
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         
         <Link href="/" className="flex items-center min-w-0 group shrink-0">
-          <div className="flex items-center gap-2 lg:gap-3 rounded-xl bg-amber-50/80 px-2 py-1.5 shadow-sm border border-primary/10 overflow-hidden">
-            <div className="relative h-8 w-8 sm:h-10 sm:w-10 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/5">
+          <div className="flex items-center gap-2 lg:gap-4 rounded-2xl bg-white/40 md:bg-amber-50/80 px-2.5 py-2 shadow-sm border border-primary/10 transition-all hover:bg-white/60">
+            <div className="relative h-9 w-9 sm:h-11 sm:w-11 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/10 shadow-inner">
               {settings?.favicon && !logoError ? (
-                <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1" onError={() => setLogoError(true)} />
+                <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1.5" onError={() => setLogoError(true)} />
               ) : (
-                <TempleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                <TempleIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
               )}
             </div>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col justify-center min-w-0 pt-0.5">
               <span className={cn(
-                "text-xs sm:text-base lg:text-lg font-bold truncate leading-tight", 
-                language === "hi" ? "font-hindi" : "font-headline"
+                "text-sm sm:text-base lg:text-xl font-extrabold truncate tracking-tight", 
+                language === "hi" ? "font-hindi leading-snug" : "font-headline leading-none"
               )}>
                 {siteName}
               </span>
-              <span className="text-[7px] sm:text-[9px] uppercase tracking-widest text-muted-foreground font-black opacity-70 hidden xs:block truncate">
+              <span className={cn(
+                "text-[7px] sm:text-[9px] uppercase tracking-[0.15em] text-muted-foreground font-black opacity-80 hidden xs:block truncate mt-0.5",
+                language === 'hi' && "font-hindi text-[10px] tracking-normal leading-none opacity-60"
+              )}>
                 {language === 'hi' ? 'श्रद्धा और सेवा' : 'Faith and Service'}
               </span>
             </div>
@@ -164,19 +167,20 @@ export function Header() {
           <nav className="flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.label} href={item.href} className={cn(
-                "px-3 py-2 text-sm font-medium transition-colors hover:text-primary",
-                pathname === '/' ? (activeSection === item.href.replace('/#', '') ? "text-primary" : "text-muted-foreground") : (pathname === item.href ? "text-primary" : "text-muted-foreground")
+                "px-3 py-2 text-sm font-bold transition-all hover:text-primary hover:scale-105",
+                pathname === '/' ? (activeSection === item.href.replace('/#', '') ? "text-primary bg-primary/5 rounded-lg" : "text-muted-foreground") : (pathname === item.href ? "text-primary bg-primary/5 rounded-lg" : "text-muted-foreground"),
+                language === 'hi' && "font-hindi text-base"
               )}>
                 {item.label}
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-4 border-l pl-6">
+          <div className="flex items-center gap-4 border-l border-primary/10 pl-6 ml-2">
             <LanguageSwitcher />
             <AdminButton />
             <AuthButtons />
             <Link href="/donate">
-              <Button size="sm" className="bg-accent text-accent-foreground font-bold h-9 px-4 shadow-sm hover:scale-105 transition-transform">
+              <Button size="sm" className="bg-accent text-accent-foreground font-black h-10 px-5 shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all">
                 <Heart className="h-4 w-4 mr-2 fill-current" />
                 {t.navDonate}
               </Button>
@@ -193,17 +197,25 @@ export function Header() {
           <AuthButtons isMobile />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
-                <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
+              <Button variant="ghost" size="icon" className="h-10 w-10 bg-secondary/50 rounded-xl">
+                <Menu className="h-6 w-6 text-primary" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="flex flex-col p-0">
-              <div className="h-20 flex items-center px-6 border-b bg-amber-50">
-                <SheetTitle className="font-bold text-lg truncate text-left">{siteName}</SheetTitle>
+            <SheetContent side="right" className="flex flex-col p-0 border-l-primary/10">
+              <div className="h-20 flex items-center px-6 border-b bg-gradient-to-r from-amber-50 to-white">
+                <SheetTitle className={cn("font-bold text-lg truncate text-left", language === 'hi' && "font-hindi")}>{siteName}</SheetTitle>
               </div>
               <div className="flex-1 overflow-y-auto py-6 px-6">
                 {navItems.map((item) => (
-                  <Link key={item.label} href={item.href} onClick={() => setIsMobileMenuOpen(false)} className="block py-4 text-lg font-medium border-b border-border/50">
+                  <Link 
+                    key={item.label} 
+                    href={item.href} 
+                    onClick={() => setIsMobileMenuOpen(false)} 
+                    className={cn(
+                      "block py-5 text-lg font-bold border-b border-border/50 hover:text-primary transition-colors",
+                      language === 'hi' && "font-hindi text-xl"
+                    )}
+                  >
                     {item.label}
                   </Link>
                 ))}
@@ -214,14 +226,14 @@ export function Header() {
                   <div className="grid grid-cols-2 gap-3">
                     <Button 
                       variant={language === 'hi' ? 'default' : 'outline'} 
-                      className={cn("h-11 rounded-xl font-bold", language === 'hi' && "bg-primary text-primary-foreground")}
+                      className={cn("h-12 rounded-xl font-bold", language === 'hi' && "bg-primary text-primary-foreground font-hindi text-lg")}
                       onClick={() => setLanguage('hi')}
                     >
                       हिंदी
                     </Button>
                     <Button 
                       variant={language === 'en' ? 'default' : 'outline'} 
-                      className={cn("h-11 rounded-xl font-bold", language === 'en' && "bg-primary text-primary-foreground")}
+                      className={cn("h-12 rounded-xl font-bold", language === 'en' && "bg-primary text-primary-foreground")}
                       onClick={() => setLanguage('en')}
                     >
                       English
@@ -231,8 +243,8 @@ export function Header() {
               </div>
               <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">
                 <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full h-12 bg-accent text-accent-foreground font-bold shadow-lg">
-                    <Heart className="h-5 w-5 mr-2 fill-current" /> {t.navDonate}
+                  <Button className="w-full h-14 bg-accent text-accent-foreground font-black text-lg shadow-xl shadow-accent/10 rounded-2xl">
+                    <Heart className="h-6 w-6 mr-2 fill-current" /> {t.navDonate}
                   </Button>
                 </Link>
               </div>
