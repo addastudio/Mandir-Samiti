@@ -87,7 +87,7 @@ export function ContactSection() {
 
   const phone = cmsContent?.phone || t.contactPhone;
   const email = cmsContent?.email || t.contactEmail;
-  const mapUrl = cmsContent?.mapUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3549.442755910103!2d78.008074!3d27.175144!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39747121d702ff6d%3A0xdd2ae4803f767dde!2sTaj%20Mahal!5e0!3m2!1sen!2sin!4v1628610423093!5m2!1sen!2sin";
+  const mapUrl = cmsContent?.mapUrl || "https://maps.app.goo.gl/JYYXPXxTfH6KQ9Rx6";
 
   return (
     <section id="contact" className="py-16 sm:py-20 md:py-28">
