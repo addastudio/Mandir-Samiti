@@ -7,15 +7,16 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "next dev -p 9002",
-    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
-    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "NODE_ENV=production next build",
+    "dev": "tinacms dev -c \"next dev -p 9002\"",
+    "build": "tinacms build && NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "deploy:vercel": "vercel deploy --prod",
-    "deploy:netlify": "netlify deploy --prod"
+    "deploy:netlify": "netlify deploy --prod",
+    "tina:dev": "tinacms dev",
+    "tina:build": "tinacms build",
+    "tina:audit": "tinacms audit"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.3",
@@ -45,6 +46,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@supabase/supabase-js": "^2.48.1",
     "class-variance-authority": "^0.7.1",
+    "client-only": "^0.0.1",
     "clsx": "^2.1.1",
     "contentful": "^11.4.3",
     "date-fns": "^4.1.0",
@@ -64,9 +66,11 @@
     "stripe": "^17.6.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "tinacms": "^2.3.2",
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@tinacms/cli": "^1.6.11",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
