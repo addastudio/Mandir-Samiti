@@ -1,62 +1,73 @@
 backend:
   name: git-gateway
-  branch: main
-  site_domain: mandirsamiti.netlify.app
+  branch: main # Branch to update (optional; defaults to master)
 
-media_folder: "public/uploads"
-public_folder: "/uploads"
+# This is the domain where Decap CMS will be accessed.
+site_url: https://www.suryamandir.online
+display_url: https://www.suryamandir.online
 
-site_url: "https://www.suryamandir.online"
-display_url: "https://www.suryamandir.online"
-logo_url: "https://www.suryamandir.online/uploads/suryamandir.svg"
-
-publish_mode: editorial_workflow
+media_folder: "public/uploads" # Media files will be stored in the repo under public/uploads
+public_folder: "/uploads" # The src attribute for images in the content
 
 collections:
+  - name: "settings"
+    label: "Site Settings"
+    delete: false
+    editor:
+      preview: false
+    files:
+      - name: "general"
+        label: "General Settings"
+        file: "content/settings.json"
+        fields:
+          - { label: "Site Title (EN)", name: "site_title_en", widget: "string" }
+          - { label: "Site Title (HI)", name: "site_title_hi", widget: "string" }
+          - { label: "Favicon/Logo", name: "favicon", widget: "image" }
+
   - name: "pages"
-    label: "Website Content"
+    label: "Main Sections"
+    delete: false
+    editor:
+      preview: false
     files:
       - name: "hero"
         label: "Hero Section"
         file: "content/hero.json"
         fields:
-          - {label: "Headline (English)", name: "headline_en", widget: "string"}
-          - {label: "Headline (Hindi)", name: "headline_hi", widget: "string"}
-          - {label: "Subtitle (English)", name: "subtitle_en", widget: "string"}
-          - {label: "Subtitle (Hindi)", name: "subtitle_hi", widget: "string"}
-          - {label: "Background Video URL", name: "video_url", widget: "string"}
-          - {label: "Fallback Hero Image", name: "fallback_image", widget: "image"}
-          
+          - { label: "Headline (EN)", name: "headline_en", widget: "string" }
+          - { label: "Headline (HI)", name: "headline_hi", widget: "string" }
+          - { label: "Subtitle (EN)", name: "subtitle_en", widget: "text" }
+          - { label: "Subtitle (HI)", name: "subtitle_hi", widget: "text" }
+          - { label: "Hero Video URL", name: "video_url", widget: "string" }
+          - { label: "Fallback Image", name: "fallback_image", widget: "image" }
+      
       - name: "about"
-        label: "About Section"
+        label: "About Us"
         file: "content/about.json"
         fields:
-          - {label: "History Title (English)", name: "history_title_en", widget: "string"}
-          - {label: "History Title (Hindi)", name: "history_title_hi", widget: "string"}
-          - {label: "History Content (English)", name: "history_en", widget: "text"}
-          - {label: "History Content (Hindi)", name: "history_hi", widget: "text"}
-          - {label: "Mission Title (English)", name: "mission_title_en", widget: "string"}
-          - {label: "Mission Title (Hindi)", name: "mission_title_hi", widget: "string"}
-          - {label: "Mission Content (English)", name: "mission_en", widget: "text"}
-          - {label: "Mission Content (Hindi)", name: "mission_hi", widget: "text"}
-          - {label: "Featured Heritage Image", name: "featured_image", widget: "image"}
-
-      - name: "settings"
-        label: "Global Settings"
-        file: "content/settings.json"
-        fields:
-          - {label: "Site Title (English)", name: "site_title_en", widget: "string"}
-          - {label: "Site Title (Hindi)", name: "site_title_hi", widget: "string"}
-          - {label: "Site Logo / Favicon", name: "favicon", widget: "image"}
+          - { label: "History Title (EN)", name: "history_title_en", widget: "string" }
+          - { label: "History Title (HI)", name: "history_title_hi", widget: "string" }
+          - { label: "History Content (EN)", name: "history_en", widget: "markdown" }
+          - { label: "History Content (HI)", name: "history_hi", widget: "markdown" }
+          - { label: "Mission Title (EN)", name: "mission_title_en", widget: "string" }
+          - { label: "Mission Title (HI)", name: "mission_title_hi", widget: "string" }
+          - { label: "Mission Content (EN)", name: "mission_en", widget: "markdown" }
+          - { label: "Mission Content (HI)", name: "mission_hi", widget: "markdown" }
+          - { label: "Featured Image", name: "featured_image", widget: "image" }
 
   - name: "seva"
     label: "Seva Programs"
     folder: "content/seva"
     create: true
-    slug: "{{slug}}"
+    slug: "{{title_en}}"
     fields:
-      - {label: "Title (English)", name: "title_en", widget: "string"}
-      - {label: "Title (Hindi)", name: "title_hi", widget: "string"}
-      - {label: "Description (English)", name: "desc_en", widget: "text"}
-      - {label: "Description (Hindi)", name: "desc_hi", widget: "text"}
-      - {label: "Icon", name: "icon", widget: "select", options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"]}
+      - { label: "Title (EN)", name: "title_en", widget: "string" }
+      - { label: "Title (HI)", name: "title_hi", widget: "string" }
+      - { label: "Description (EN)", name: "desc_en", widget: "text" }
+      - { label: "Description (HI)", name: "desc_hi", widget: "text" }
+      - { 
+          label: "Icon", 
+          name: "icon", 
+          widget: "select", 
+          options: ["UtensilsCrossed", "HeartHandshake", "BookOpenCheck", "Users", "Hand", "Shield"] 
+        }
