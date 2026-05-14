@@ -1,20 +1,29 @@
-# Decap CMS Auth Guide: Fixed Identity Bridge
+# Decap CMS Auth Guide: Vercel + Netlify Identity
 
-This project uses a hard-coded Identity bridge to allow Decap CMS to function on Vercel while using Netlify Identity as the authentication provider.
+This project is now fully configured to host the main site on **Vercel** while using **Netlify Identity** as the authentication bridge for Decap CMS.
 
-## Identity Configuration
-The identity service is hosted at: `https://mandirsamiti.netlify.app`.
+## The Architecture
+1.  **Frontend**: Hosted on Vercel (`suryamandir.online`).
+2.  **Auth Provider**: Hosted on Netlify (`mandirsamiti.netlify.app`).
+3.  **CMS**: Decap CMS, initialized at `/admin/`.
 
-### How it works:
-1.  **localStorage Bridge**: When the site loads on Vercel, a script in `src/app/layout.tsx` automatically sets `localStorage.setItem("netlifySiteURL", "https://mandirsamiti.netlify.app")`.
-2.  **Admin Initialization**: When you visit `/admin/`, the Decap CMS initialization script checks this value and directs all authentication requests to the Netlify domain instead of the local Vercel domain.
-3.  **Git Gateway**: The `config.yml` is configured with `site_domain: mandirsamiti.netlify.app` to ensure the handshake with your GitHub repository remains stable.
+## Configuration Applied
+- **Bridge Script**: `src/app/layout.tsx` forces `localStorage.setItem("netlifySiteURL", "https://mandirsamiti.netlify.app")`. This tells the CMS to ignore the current Vercel domain and look at Netlify for the "Git Gateway" handshake.
+- **Admin Entry**: `public/admin/index.html` includes the Netlify Identity widget and standard redirect listeners.
+- **CMS Config**: `public/admin/config.yml` uses `git-gateway` and defines collections for Hero, About, Seva, and Site Settings.
 
-## Troubleshooting
-If you still see a login error:
-1.  **Clear Browser Data**: Clear your localStorage or open the site in Incognito mode to ensure the new bridge logic executes cleanly.
-2.  **Check Netlify Settings**: Ensure that "Git Gateway" is enabled in your Netlify Dashboard and that your GitHub repository is correctly connected.
-3.  **Invite Only**: We recommend setting Netlify Identity to "Invite Only" for security. Committee members must be invited via the Netlify Identity tab.
+## Required Setup in Netlify Dashboard
+To avoid "Unauthorized" or "CORS" errors, you **must** do the following in your Netlify account for the `mandirsamiti` site:
+
+1.  **Add Allowed Domains**:
+    - Go to **Site configuration** > **Identity** > **External providers**.
+    - Add `https://www.suryamandir.online`
+    - Add your Vercel deployment URL (e.g., `mandir-samiti-bahpura.vercel.app`).
+2.  **Enable Git Gateway**:
+    - Ensure **Git Gateway** is enabled in **Identity** settings and linked to your GitHub repository.
+3.  **Invite Users**:
+    - Set Registration to **Invite only**.
+    - Send invites to the email addresses that will be editing the site.
 
 ---
-**Status**: The Identity bridge is now hard-coded to `mandirsamiti.netlify.app` for maximum reliability across deployments.
+**Status**: Option 3 (Vercel Host + Netlify Auth) is now ACTIVE.
