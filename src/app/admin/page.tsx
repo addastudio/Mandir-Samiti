@@ -46,7 +46,8 @@ function AdminCMSContent() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Access the TinyMCE API Key from environment variables
-  const tinyApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || "";
+  // Checking both common names and the user-specified TINA_TOKEN
+  const tinyApiKey = process.env.NEXT_PUBLIC_TINA_TOKEN || process.env.NEXT_PUBLIC_TINYMCE_API_KEY || "";
 
   // TinyMCE Content States
   const [historyEn, setHistoryEn] = useState("");
