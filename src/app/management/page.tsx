@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,12 +75,57 @@ import {
   ChartTooltip, 
   ChartTooltipContent 
 } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis } from "recharts";
 import Link from "next/link";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus, sendManualEmail } from "@/app/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+/**
+ * Memoized Trend Chart to prevent lagging during management panel interactions.
+ */
+const OverviewTrendChart = memo(({ data }: { data: any[] }) => {
+  return (
+    <ChartContainer 
+      config={{ 
+        amount: { label: "Donations", color: "hsl(var(--primary))" } 
+      }} 
+      className="h-full w-full"
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+          <XAxis 
+            dataKey="day" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 9, fontWeight: 500 }} 
+            tickMargin={10}
+          />
+          <YAxis hide />
+          <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+          <Area 
+            type="monotone" 
+            dataKey="amount" 
+            stroke="hsl(var(--primary))" 
+            strokeWidth={2}
+            fillOpacity={1} 
+            fill="url(#colorAmount)" 
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </ChartContainer>
+  );
+});
+
+OverviewTrendChart.displayName = "OverviewTrendChart";
 
 /**
  * Management Panel Content Component
@@ -222,26 +267,31 @@ function ManagementPageContent() {
     }
   };
 
-  // Chart Logic
+  // Optimized Chart Data Calculation
   const chartData = React.useMemo(() => {
     if (!allDonations) return [];
     const daysCount = parseInt(chartPeriod);
-    const dateLabels = Array.from({ length: daysCount }, (_, i) => {
+    const result = [];
+    const now = new Date();
+    
+    // Create map for efficient lookup
+    const dataMap = new Map();
+    allDonations.forEach((d: any) => {
+      const dateKey = new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      dataMap.set(dateKey, (dataMap.get(dateKey) || 0) + (d.amount || 0));
+    });
+
+    for (let i = daysCount - 1; i >= 0; i--) {
       const d = new Date();
-      d.setDate(d.getDate() - i);
-      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    }).reverse();
+      d.setDate(now.getDate() - i);
+      const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      result.push({
+        day: label,
+        amount: dataMap.get(label) || 0
+      });
+    }
 
-    const dataMap = allDonations.reduce((acc: any, d: any) => {
-      const day = new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      acc[day] = (acc[day] || 0) + (d.amount || 0);
-      return acc;
-    }, {});
-
-    return dateLabels.map(day => ({
-      day,
-      amount: dataMap[day] || 0
-    }));
+    return result;
   }, [allDonations, chartPeriod]);
 
   if (!mounted || isUserLoading || isAdminLoading) {
@@ -321,7 +371,7 @@ function ManagementPageContent() {
                     <CardDescription className="text-[10px]">Financial performance visualization.</CardDescription>
                   </div>
                   <Select value={chartPeriod} onValueChange={(val: any) => setChartPeriod(val)}>
-                    <SelectTrigger className="w-[110px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="7">Last 7 Days</SelectItem>
                       <SelectItem value="30">Last 30 Days</SelectItem>
@@ -329,16 +379,7 @@ function ManagementPageContent() {
                   </Select>
                 </CardHeader>
                 <CardContent className="pt-4 h-[300px]">
-                  <ChartContainer config={{ amount: { label: "Donations", color: "hsl(var(--primary))" } }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
+                  <OverviewTrendChart data={chartData} />
                 </CardContent>
               </Card>
 
