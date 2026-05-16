@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import { Facebook, Instagram, Youtube, MapPin } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -31,7 +30,12 @@ export function Footer() {
             <div className="flex items-center gap-4 min-w-0">
               <div className="relative h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-full border-2 border-primary/10 bg-white flex shrink-0 items-center justify-center shadow-sm">
                 {settings?.favicon && !logoError ? (
-                  <Image src={settings.favicon} alt="Logo" fill className="object-contain p-1.5" onError={() => setLogoError(true)} />
+                  <img 
+                    src={settings.favicon} 
+                    alt="Logo" 
+                    className="w-full h-full object-contain p-1.5" 
+                    onError={() => setLogoError(true)} 
+                  />
                 ) : (
                   <TempleIcon className="h-7 w-7 text-primary" />
                 )}

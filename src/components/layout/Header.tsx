@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Menu, LogIn, Heart, User as UserIcon, ShieldCheck, UserPlus } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -29,6 +28,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState("home");
   const [logoError, setLogoError] = React.useState(false);
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
 
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -53,19 +53,25 @@ export function Header() {
 
   const isTransparent = !isScrolled && pathname === '/';
 
-  // Optimized Scroll Listener (Throttled)
+  // High-performance scroll detection using IntersectionObserver
   React.useEffect(() => {
-    const handleScroll = () => {
-      const scrolled = window.scrollY > 10;
-      if (scrolled !== isScrolled) {
-        setIsScrolled(scrolled);
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isScrolled]);
+    if (typeof window === 'undefined') return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsScrolled(!entry.isIntersecting);
+      },
+      { threshold: [1.0], rootMargin: '0px 0px 0px 0px' }
+    );
 
-  // Optimized Active Section (Intersection Observer)
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Optimized Active Section tracking
   React.useEffect(() => {
     if (pathname !== '/') return;
 
@@ -157,137 +163,138 @@ export function Header() {
   };
 
   return (
-    <header className={cn(
-      "fixed top-0 z-50 w-full transition-all duration-300",
-      isScrolled || pathname !== '/' ? "border-b bg-background/95 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-4"
-    )}>
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        
-        <Link href="/" className="flex items-center min-w-0 group shrink-0">
-          <div className={cn(
-            "flex items-center gap-2 lg:gap-4 rounded-2xl px-2.5 py-2 transition-all duration-300",
-            isTransparent 
-              ? "bg-white/10 backdrop-blur-md border border-white/20 shadow-none hover:bg-white/20" 
-              : "bg-white/40 md:bg-amber-50/80 shadow-sm border border-primary/10 hover:bg-white/60"
-          )}>
-            <div className="relative h-9 w-9 sm:h-11 sm:w-11 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/10 shadow-inner">
-              {settings?.favicon && !logoError ? (
-                <Image 
-                  src={settings.favicon} 
-                  alt="Logo" 
-                  fill 
-                  className="object-contain p-1.5" 
-                  priority
-                  onError={() => setLogoError(true)} 
-                />
-              ) : (
-                <TempleIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-              )}
-            </div>
-            <div className="flex flex-col justify-center min-w-0 pt-0.5">
-              <span className={cn(
-                "text-sm sm:text-base lg:text-xl font-extrabold truncate tracking-tight transition-colors duration-300", 
-                isTransparent ? "text-white" : "text-foreground",
-                language === "hi" ? "font-hindi leading-snug" : "font-headline leading-none"
-              )}>
-                {siteName}
-              </span>
-              <span className={cn(
-                "text-[7px] sm:text-[9px] uppercase tracking-[0.15em] font-black hidden xs:block truncate mt-0.5 transition-colors duration-300",
-                isTransparent ? "text-white/70" : "text-muted-foreground opacity-80",
-                language === 'hi' && "font-hindi text-[10px] tracking-normal leading-none opacity-60"
-              )}>
-                {language === 'hi' ? 'श्रद्धा और सेवा' : 'Faith and Service'}
-              </span>
-            </div>
-          </div>
-        </Link>
-
-        {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-6">
-          <nav className="flex items-center gap-1">
-            {navItems.map((item) => {
-              const isActive = pathname === '/' 
-                ? activeSection === item.id
-                : pathname === item.href;
-
-              return (
-                <Link key={item.label} href={item.href} className={cn(
-                  "px-3 py-2 text-sm font-bold transition-all hover:scale-105",
-                  isActive 
-                    ? "text-primary bg-primary/5 rounded-lg" 
-                    : isTransparent 
-                      ? "text-white/80 hover:text-white" 
-                      : "text-muted-foreground hover:text-primary",
-                  language === 'hi' && "font-hindi text-base"
-                )}>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className={cn(
-            "flex items-center gap-4 border-l pl-6 ml-2 transition-colors duration-300",
-            isTransparent ? "border-white/20" : "border-primary/10"
-          )}>
-            <LanguageSwitcher />
-            <AdminButton />
-            <AuthButtons />
-            <Link href="/donate">
-              <Button size="sm" className="bg-accent text-accent-foreground font-black h-10 px-5 shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all">
-                <Heart className="h-4 w-4 mr-2 fill-current" />
-                {t.navDonate}
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Mobile Controls */}
-        <div className="flex lg:hidden items-center gap-1.5 sm:gap-3 shrink-0 ml-2">
-          <div className="hidden xs:block">
-            <LanguageSwitcher />
-          </div>
-          <AdminButton isMobile />
-          <AuthButtons isMobile />
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className={cn(
-                "h-10 w-10 rounded-xl",
-                isTransparent ? "bg-white/10 text-white" : "bg-secondary/50 text-primary"
-              )}>
-                <Menu className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="flex flex-col p-0 border-l-primary/10">
-              <div className="h-20 flex items-center px-6 border-b bg-gradient-to-r from-amber-50 to-white">
-                <SheetTitle className={cn("font-bold text-lg truncate text-left", language === 'hi' && "font-hindi")}>{siteName}</SheetTitle>
+    <>
+      <div ref={sentinelRef} className="absolute top-0 h-1 w-full pointer-events-none z-[-1]" />
+      <header className={cn(
+        "fixed top-0 z-50 w-full transition-all duration-300",
+        isScrolled || pathname !== '/' ? "border-b bg-background/95 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-4"
+      )}>
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+          
+          <Link href="/" className="flex items-center min-w-0 group shrink-0">
+            <div className={cn(
+              "flex items-center gap-2 lg:gap-4 rounded-2xl px-2.5 py-2 transition-all duration-300",
+              isTransparent 
+                ? "bg-white/10 backdrop-blur-md border border-white/20 shadow-none hover:bg-white/20" 
+                : "bg-white/40 md:bg-amber-50/80 shadow-sm border border-primary/10 hover:bg-white/60"
+            )}>
+              <div className="relative h-9 w-9 sm:h-11 sm:w-11 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/10 shadow-inner">
+                {settings?.favicon && !logoError ? (
+                  <img 
+                    src={settings.favicon} 
+                    alt="Logo" 
+                    className="w-full h-full object-contain p-1.5" 
+                    onError={() => setLogoError(true)} 
+                  />
+                ) : (
+                  <TempleIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+                )}
               </div>
-              <div className="flex-1 overflow-y-auto py-6 px-6">
-                {navItems.map((item) => (
-                  <Link 
-                    key={item.label} 
-                    href={item.href} 
-                    onClick={() => setIsMobileMenuOpen(false)} 
-                    className={cn(
-                      "block py-5 text-lg font-bold border-b border-border/50 hover:text-primary transition-colors",
-                      language === 'hi' && "font-hindi text-xl"
-                    )}
-                  >
+              <div className="flex flex-col justify-center min-w-0 pt-0.5">
+                <span className={cn(
+                  "text-sm sm:text-base lg:text-xl font-extrabold truncate tracking-tight transition-colors duration-300", 
+                  isTransparent ? "text-white" : "text-foreground",
+                  language === "hi" ? "font-hindi leading-snug" : "font-headline leading-none"
+                )}>
+                  {siteName}
+                </span>
+                <span className={cn(
+                  "text-[7px] sm:text-[9px] uppercase tracking-[0.15em] font-black hidden xs:block truncate mt-0.5 transition-colors duration-300",
+                  isTransparent ? "text-white/70" : "text-muted-foreground opacity-80",
+                  language === 'hi' && "font-hindi text-[10px] tracking-normal leading-none opacity-60"
+                )}>
+                  {language === 'hi' ? 'श्रद्धा और सेवा' : 'Faith and Service'}
+                </span>
+              </div>
+            </div>
+          </Link>
+
+          {/* Desktop Nav */}
+          <div className="hidden lg:flex items-center gap-6">
+            <nav className="flex items-center gap-1">
+              {navItems.map((item) => {
+                const isActive = pathname === '/' 
+                  ? activeSection === item.id
+                  : pathname === item.href;
+
+                return (
+                  <Link key={item.label} href={item.href} className={cn(
+                    "px-3 py-2 text-sm font-bold transition-all hover:scale-105",
+                    isActive 
+                      ? "text-primary bg-primary/5 rounded-lg" 
+                      : isTransparent 
+                        ? "text-white/80 hover:text-white" 
+                        : "text-muted-foreground hover:text-primary",
+                    language === 'hi' && "font-hindi text-base"
+                  )}>
                     {item.label}
                   </Link>
-                ))}
-              </div>
-              <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">
-                <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full h-14 bg-accent text-accent-foreground font-black text-lg shadow-xl shadow-accent/10 rounded-2xl">
-                    <Heart className="h-6 w-6 mr-2 fill-current" /> {t.navDonate}
-                  </Button>
-                </Link>
-              </div>
-            </SheetContent>
-          </Sheet>
+                );
+              })}
+            </nav>
+            <div className={cn(
+              "flex items-center gap-4 border-l pl-6 ml-2 transition-colors duration-300",
+              isTransparent ? "border-white/20" : "border-primary/10"
+            )}>
+              <LanguageSwitcher />
+              <AdminButton />
+              <AuthButtons />
+              <Link href="/donate">
+                <Button size="sm" className="bg-accent text-accent-foreground font-black h-10 px-5 shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all">
+                  <Heart className="h-4 w-4 mr-2 fill-current" />
+                  {t.navDonate}
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Mobile Controls */}
+          <div className="flex lg:hidden items-center gap-1.5 sm:gap-3 shrink-0 ml-2">
+            <div className="hidden xs:block">
+              <LanguageSwitcher />
+            </div>
+            <AdminButton isMobile />
+            <AuthButtons isMobile />
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className={cn(
+                  "h-10 w-10 rounded-xl",
+                  isTransparent ? "bg-white/10 text-white" : "bg-secondary/50 text-primary"
+                )}>
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="flex flex-col p-0 border-l-primary/10">
+                <div className="h-20 flex items-center px-6 border-b bg-gradient-to-r from-amber-50 to-white">
+                  <SheetTitle className={cn("font-bold text-lg truncate text-left", language === 'hi' && "font-hindi")}>{siteName}</SheetTitle>
+                </div>
+                <div className="flex-1 overflow-y-auto py-6 px-6">
+                  {navItems.map((item) => (
+                    <Link 
+                      key={item.label} 
+                      href={item.href} 
+                      onClick={() => setIsMobileMenuOpen(false)} 
+                      className={cn(
+                        "block py-5 text-lg font-bold border-b border-border/50 hover:text-primary transition-colors",
+                        language === 'hi' && "font-hindi text-xl"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">
+                  <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full h-14 bg-accent text-accent-foreground font-black text-lg shadow-xl shadow-accent/10 rounded-2xl">
+                      <Heart className="h-6 w-6 mr-2 fill-current" /> {t.navDonate}
+                    </Button>
+                  </Link>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }
