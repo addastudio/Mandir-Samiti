@@ -25,12 +25,9 @@ import {
   HandCoins, 
   Image as ImageIcon,
   ShieldCheck,
-  Zap,
   Wand2,
   Clock,
   LayoutDashboard,
-  CheckCircle2,
-  AlertTriangle,
   Search,
   History,
   Palette,
@@ -40,7 +37,9 @@ import {
   Lock,
   UserCog,
   Upload,
-  TrendingUp
+  TrendingUp,
+  UserCheck,
+  Shield
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -96,6 +95,7 @@ function ManagementPageContent() {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "overview");
   const [apiStatus, setApiStatus] = useState<any>(null);
   const [isAIGenerating, setIsAIGenerating] = useState(false);
+  const [chartPeriod, setChartPeriod] = useState<"7" | "30">("7");
 
   useEffect(() => {
     setMounted(true);
@@ -122,7 +122,7 @@ function ManagementPageContent() {
   const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "prayer_requests"), orderBy("createdAt", "desc")), [firestore, adminDoc]);
   const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collectionGroup(firestore, "donations"), orderBy("date", "desc")), [firestore, adminDoc]);
   const logsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "admin_activity_logs"), orderBy("timestamp", "desc")), [firestore, adminDoc]);
-  const recentLogsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "admin_activity_logs"), orderBy("timestamp", "desc"), limit(5)), [firestore, adminDoc]);
+  const recentLogsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "admin_activity_logs"), orderBy("timestamp", "desc"), limit(10)), [firestore, adminDoc]);
   const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "gallery"), [firestore, adminDoc]);
   const usersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "users"), [firestore, adminDoc]);
   const rolesAdminRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "roles_admin"), [firestore, adminDoc]);
@@ -190,7 +190,18 @@ function ManagementPageContent() {
         });
       }
       await logAction(action, "ROLE", targetName);
-      toast({ title: "Role Updated" });
+      toast({ title: "Administrative status updated" });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message });
+    }
+  };
+
+  const handleUpdateUserRole = async (targetUserId: string, targetName: string, newRole: string) => {
+    if (!firestore) return;
+    try {
+      await updateDoc(doc(firestore, "users", targetUserId), { role: newRole });
+      await logAction("UPDATE_ROLE", "USER", `${targetName} -> ${newRole}`);
+      toast({ title: "User role updated successfully" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
     }
@@ -213,23 +224,24 @@ function ManagementPageContent() {
   // Chart Logic
   const chartData = React.useMemo(() => {
     if (!allDonations) return [];
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const daysCount = parseInt(chartPeriod);
+    const dateLabels = Array.from({ length: daysCount }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      return d.toLocaleDateString('en-US', { weekday: 'short' });
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }).reverse();
 
     const dataMap = allDonations.reduce((acc: any, d: any) => {
-      const day = new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' });
+      const day = new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       acc[day] = (acc[day] || 0) + (d.amount || 0);
       return acc;
     }, {});
 
-    return last7Days.map(day => ({
+    return dateLabels.map(day => ({
       day,
       amount: dataMap[day] || 0
     }));
-  }, [allDonations]);
+  }, [allDonations, chartPeriod]);
 
   if (!mounted || isUserLoading || isAdminLoading) {
     return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -251,7 +263,7 @@ function ManagementPageContent() {
               <h1 className={cn("text-lg sm:text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
                 Mandir Management
               </h1>
-              <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-widest text-primary border-primary/20">Operational Golden State</Badge>
+              <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-widest text-primary border-primary/20">Golden State Operational</Badge>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -305,15 +317,22 @@ function ManagementPageContent() {
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <div className="space-y-1">
                     <CardTitle className="text-sm font-bold flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" />Donation Trends</CardTitle>
-                    <CardDescription className="text-[10px]">Financial performance over the last 7 days.</CardDescription>
+                    <CardDescription className="text-[10px]">Financial performance visualization.</CardDescription>
                   </div>
+                  <Select value={chartPeriod} onValueChange={(val: any) => setChartPeriod(val)}>
+                    <SelectTrigger className="w-[110px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">Last 7 Days</SelectItem>
+                      <SelectItem value="30">Last 30 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </CardHeader>
                 <CardContent className="pt-4 h-[300px]">
                   <ChartContainer config={{ amount: { label: "Donations", color: "hsl(var(--primary))" } }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                        <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -456,11 +475,33 @@ function ManagementPageContent() {
              </div>
           </TabsContent>
 
+          <TabsContent value="members" className="space-y-6">
+             <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold">Committee Structure</h2>
+                <MemberFormDialog onSave={async (d: any) => { await addDoc(collection(firestore!, "mandir_samiti_members"), d); await logAction("CREATE", "MEMBER", d.name); }} />
+             </div>
+             <Card>
+               <Table>
+                 <TableHeader><TableRow><TableHead>Order</TableHead><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                 <TableBody>
+                    {members?.map((m: any) => (
+                      <TableRow key={m.id}>
+                        <TableCell className="w-12"><Input className="h-8 w-12 text-center text-xs" defaultValue={m.displayOrder} onBlur={async (e) => await updateDoc(doc(firestore!, "mandir_samiti_members", m.id), { displayOrder: parseInt(e.target.value) || 0 })} /></TableCell>
+                        <TableCell className="font-bold">{m.name}</TableCell>
+                        <TableCell><Badge variant="secondary">{m.role}</Badge></TableCell>
+                        <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete("mandir_samiti_members", m.id, m.name)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                      </TableRow>
+                    ))}
+                 </TableBody>
+               </Table>
+             </Card>
+          </TabsContent>
+
           <TabsContent value="access" className="space-y-6 animate-in slide-in-from-bottom-2">
              <h2 className="text-xl font-bold">Administrative Access Control</h2>
              <Card>
                 <Table>
-                  <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Email</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Email</TableHead><TableHead>Assigned Role</TableHead><TableHead>Administrative Access</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {allUsers?.map((u: any) => {
                       const isAdmin = adminRoles?.some((r: any) => r.id === u.id);
@@ -471,18 +512,33 @@ function ManagementPageContent() {
                             <span className="font-bold text-sm">{u.name}</span>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">{u.email}</TableCell>
-                          <TableCell>{isAdmin ? <Badge className="bg-primary">Administrator</Badge> : <Badge variant="outline">Devotee</Badge>}</TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant={isAdmin ? "destructive" : "default"} 
-                              size="sm" 
-                              className="h-8 gap-2"
-                              onClick={() => handleToggleAdmin(u.id, u.name, !!isAdmin)}
-                              disabled={u.id === user.uid}
-                            >
-                              <UserCog className="h-3 w-3" />
-                              {isAdmin ? "Revoke Access" : "Grant Access"}
-                            </Button>
+                          <TableCell>
+                            <Select defaultValue={u.role || "devotee"} onValueChange={(val) => handleUpdateUserRole(u.id, u.name, val)}>
+                              <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="devotee">Devotee</SelectItem>
+                                <SelectItem value="member">Member</SelectItem>
+                                <SelectItem value="official">Official</SelectItem>
+                                <SelectItem value="president">President</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                               <Badge variant={isAdmin ? "default" : "outline"} className={cn("gap-1", isAdmin ? "bg-primary" : "opacity-50")}>
+                                 {isAdmin ? <ShieldCheck className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                                 {isAdmin ? "Admin" : "Standard"}
+                               </Badge>
+                               <Button 
+                                variant={isAdmin ? "destructive" : "outline"} 
+                                size="sm" 
+                                className="h-7 text-[10px] px-3 font-bold uppercase tracking-tighter"
+                                onClick={() => handleToggleAdmin(u.id, u.name, !!isAdmin)}
+                                disabled={u.id === user.uid}
+                              >
+                                {isAdmin ? "Revoke Admin" : "Grant Admin"}
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -586,6 +642,28 @@ function BroadcastForm({ allEmails }: { allEmails: string[] }) {
          </Button>
        </div>
     </form>
+  );
+}
+
+function MemberFormDialog({ onSave }: any) {
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+  const [order, setOrder] = useState("0");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button className="gap-2"><Plus className="h-4 w-4" />Add Member</Button></DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Add Committee Member</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-4">
+           <div className="space-y-2"><Label>Full Name</Label><Input value={name} onChange={e => setName(e.target.value)} required /></div>
+           <div className="space-y-2"><Label>Role / Designation</Label><Input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. President, Secretary" required /></div>
+           <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={order} onChange={e => setOrder(e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={() => { onSave({ name, role, displayOrder: parseInt(order) || 0 }); setOpen(false); setName(""); setRole(""); }}>Save Member</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
