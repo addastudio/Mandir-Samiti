@@ -4,7 +4,7 @@
 import * as React from "react";
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,10 +31,9 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus } from "@/app/actions";
 
 /**
- * Management Panel (Operations)
- * Focuses on donations, users, and daily statistics.
+ * Management Panel Content Component
  */
-export default function ManagementPage() {
+function ManagementPageContent() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -167,5 +166,17 @@ export default function ManagementPage() {
         </Tabs>
       </main>
     </div>
+  );
+}
+
+export default function ManagementPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <ManagementPageContent />
+    </Suspense>
   );
 }
