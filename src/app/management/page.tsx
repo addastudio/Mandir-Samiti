@@ -40,7 +40,8 @@ import {
   TrendingUp,
   UserCheck,
   Shield,
-  Zap
+  Zap,
+  Banknote
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -470,7 +471,14 @@ function ManagementPageContent() {
           </TabsContent>
 
           <TabsContent value="donations" className="space-y-6">
-             <h2 className="text-xl font-bold">Global Donation Records</h2>
+             <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold">Global Donation Records</h2>
+                <ManualDonationFormDialog onSave={async (d: any) => { 
+                  await addDoc(collection(firestore!, "donations"), d); 
+                  await logAction("CREATE", "DONATION", `Manual: ${d.devoteeName} - ₹${d.amount}`); 
+                  toast({ title: "Manual record saved successfully." });
+                }} />
+             </div>
              <Card>
                <Table>
                  <TableHeader><TableRow><TableHead>Devotee</TableHead><TableHead>Amount</TableHead><TableHead>Mode</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
@@ -823,6 +831,77 @@ function GalleryFormDialog({ onSave }: any) {
            <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={e => setCaption(e.target.value)} required /></div>
         </div>
         <DialogFooter><Button onClick={() => { onSave({ imageURL: url, caption }); setOpen(false); setUrl(""); setCaption(""); }}>Add to Library</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ManualDonationFormDialog({ onSave }: any) {
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [mode, setMode] = useState("Cash");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Record Manual Donation
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Banknote className="h-5 w-5 text-primary" />
+            Manual Donation Entry
+          </DialogTitle>
+          <DialogDescription>Record a donation received offline (Cash, Cheque, or Offline UPI).</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>Devotee Name</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Rahul Sharma" required />
+          </div>
+          <div className="space-y-2">
+            <Label>Amount (₹)</Label>
+            <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" required />
+          </div>
+          <div className="space-y-2">
+            <Label>Payment Mode</Label>
+            <Select value={mode} onValueChange={setMode}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cash">Cash</SelectItem>
+                <SelectItem value="UPI">UPI (Offline)</SelectItem>
+                <SelectItem value="Cheque">Cheque</SelectItem>
+                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Date & Time</Label>
+            <Input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} required />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button className="w-full h-12 font-bold" onClick={() => { 
+            if (!name || !amount) return;
+            onSave({ 
+              devoteeName: name, 
+              amount: parseFloat(amount) || 0, 
+              mode, 
+              date: new Date(date).toISOString(),
+              status: "completed"
+            }); 
+            setOpen(false); 
+            setName(""); 
+            setAmount(""); 
+          }}>
+            Save Contribution Record
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
