@@ -39,7 +39,8 @@ import {
   Upload,
   TrendingUp,
   UserCheck,
-  Shield
+  Shield,
+  Zap
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
