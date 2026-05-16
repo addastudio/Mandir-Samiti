@@ -172,23 +172,44 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
 
 /**
  * Sends a broadcast or manual email to specific devotees.
+ * Updated to send individually to improve deliverability and ensure privacy.
  */
 export async function sendManualEmail(emails: string[], subject: string, message: string, language: 'hi' | 'en' = 'hi') {
   if (!resendContact) return { success: false, message: "Email service not configured" };
   if (emails.length === 0) return { success: false, message: "No recipients selected" };
 
+  let successCount = 0;
+  let failCount = 0;
+
   try {
-    await resendContact.emails.send({
-      from: 'Mandir Samiti <contact@suryamandir.online>',
-      to: emails,
-      subject: subject,
-      html: getBroadcastEmailHtml(subject, message, language),
-      tags: [
-        { name: 'category', value: 'admin_broadcast' },
-        { name: 'tracking_domain', value: 'gmb.suryamandir.online' }
-      ]
-    });
-    return { success: true };
+    // Process sending in individual calls to ensure private delivery (BCC style) and avoid Resend batch limits
+    for (const email of emails) {
+      try {
+        await resendContact.emails.send({
+          from: 'Mandir Samiti <contact@suryamandir.online>',
+          to: email,
+          subject: subject,
+          html: getBroadcastEmailHtml(subject, message, language),
+          tags: [
+            { name: 'category', value: 'admin_broadcast' },
+            { name: 'tracking_domain', value: 'gmb.suryamandir.online' }
+          ]
+        });
+        successCount++;
+      } catch (e) {
+        console.error(`Failed to send to ${email}:`, e);
+        failCount++;
+      }
+    }
+
+    if (successCount === 0 && failCount > 0) {
+      throw new Error("All email deliveries failed. Check your Resend configuration.");
+    }
+
+    return { 
+      success: true, 
+      message: `Successfully delivered to ${successCount} devotees.${failCount > 0 ? ` ${failCount} failed.` : ''}` 
+    };
   } catch (error: any) {
     console.error("Resend Manual Email Error:", error);
     return { success: false, message: error.message || "Failed to send broadcast" };

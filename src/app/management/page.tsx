@@ -41,7 +41,9 @@ import {
   UserCheck,
   Shield,
   Zap,
-  Banknote
+  Banknote,
+  CheckCircle2,
+  Check
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -82,6 +84,8 @@ import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus, sendManualEmail } from "@/app/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 /**
  * Memoized Trend Chart to prevent lagging during management panel interactions.
@@ -600,13 +604,13 @@ function ManagementPageContent() {
 
           <TabsContent value="broadcast" className="space-y-6">
              <h2 className="text-xl font-bold">Global Devotee Broadcast</h2>
-             <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2"><Mail className="h-4 w-4" />Official Email Messenger</CardTitle>
-                  <CardDescription>Send notices directly to the registered devotee community.</CardDescription>
+             <Card className="shadow-lg border-primary/5 overflow-hidden">
+                <CardHeader className="bg-primary/5 border-b">
+                  <CardTitle className="text-sm flex items-center gap-2"><Mail className="h-4 w-4 text-primary" />Official Email Messenger</CardTitle>
+                  <CardDescription>Send notices directly to selected devotees. All emails are sent individually for privacy.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <BroadcastForm allEmails={allUsers?.map((u: any) => u.email).filter(Boolean) || []} />
+                <CardContent className="p-0">
+                  <BroadcastForm allUsers={allUsers || []} />
                 </CardContent>
              </Card>
           </TabsContent>
@@ -657,21 +661,44 @@ function ManagementPageContent() {
   );
 }
 
-function BroadcastForm({ allEmails }: { allEmails: string[] }) {
+function BroadcastForm({ allUsers }: { allUsers: any[] }) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedUids, setSelectedUids] = useState<Set<string>>(new Set(allUsers.map(u => u.id)));
   const { toast } = useToast();
   const { language } = useLanguage();
 
+  const filteredUsers = allUsers.filter(u => 
+    u.name?.toLowerCase().includes(search.toLowerCase()) || 
+    u.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const toggleUser = (uid: string) => {
+    const next = new Set(selectedUids);
+    if (next.has(uid)) next.delete(uid);
+    else next.add(uid);
+    setSelectedUids(next);
+  };
+
+  const toggleAll = () => {
+    if (selectedUids.size === allUsers.length) setSelectedUids(new Set());
+    else setSelectedUids(new Set(allUsers.map(u => u.id)));
+  };
+
   const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (allEmails.length === 0) return;
+    const emails = allUsers.filter(u => selectedUids.has(u.id)).map(u => u.email).filter(Boolean);
+    if (emails.length === 0) {
+      toast({ variant: "destructive", title: "No recipients", description: "Please select at least one devotee." });
+      return;
+    }
     setIsSending(true);
     try {
-      const res = await sendManualEmail(allEmails, subject, message, language as 'hi' | 'en');
+      const res = await sendManualEmail(emails, subject, message, language as 'hi' | 'en');
       if (res.success) {
-        toast({ title: "Broadcast Sent", description: `Delivered to ${allEmails.length} devotees.` });
+        toast({ title: "Broadcast Execution Complete", description: res.message });
         setSubject("");
         setMessage("");
       } else throw new Error(res.message);
@@ -681,17 +708,102 @@ function BroadcastForm({ allEmails }: { allEmails: string[] }) {
   };
 
   return (
-    <form onSubmit={handleBroadcast} className="space-y-4">
-       <div className="space-y-2"><Label>Subject</Label><Input value={subject} onChange={e => setSubject(e.target.value)} required /></div>
-       <div className="space-y-2"><Label>Message</Label><Textarea rows={6} value={message} onChange={e => setMessage(e.target.value)} required /></div>
-       <div className="flex items-center justify-between pt-2">
-         <p className="text-[10px] text-muted-foreground uppercase font-bold">Recipients: {allEmails.length} users</p>
-         <Button type="submit" disabled={isSending || allEmails.length === 0}>
-           {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
-           Execute Broadcast
-         </Button>
-       </div>
-    </form>
+    <div className="grid grid-cols-1 lg:grid-cols-12">
+      <div className="lg:col-span-4 border-r bg-muted/20 flex flex-col max-h-[600px]">
+        <div className="p-4 border-b bg-white/50 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-black uppercase tracking-widest text-primary">Recipients</h3>
+            <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold uppercase" onClick={toggleAll}>
+              {selectedUids.size === allUsers.length ? "Deselect All" : "Select All"}
+            </Button>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input 
+              placeholder="Search devotees..." 
+              className="h-9 pl-8 text-xs bg-white" 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+            />
+          </div>
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {filteredUsers.map(u => (
+              <div 
+                key={u.id} 
+                className={cn(
+                  "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors",
+                  selectedUids.has(u.id) ? "bg-primary/5 border border-primary/10" : "hover:bg-white/50 border border-transparent"
+                )}
+                onClick={() => toggleUser(u.id)}
+              >
+                <Checkbox checked={selectedUids.has(u.id)} className="h-4 w-4" />
+                <Avatar className="h-7 w-7 border">
+                  <AvatarImage src={u.photoURL} />
+                  <AvatarFallback className="text-[10px] font-bold uppercase">{u.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-bold truncate leading-none mb-1">{u.name}</span>
+                  <span className="text-[9px] text-muted-foreground truncate">{u.email}</span>
+                </div>
+                {u.role === 'president' && <Crown className="h-3 w-3 ml-auto text-amber-500 shrink-0" />}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+        <div className="p-3 border-t bg-white/80 text-center">
+          <p className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
+            {selectedUids.size} / {allUsers.length} Selected
+          </p>
+        </div>
+      </div>
+
+      <div className="lg:col-span-8 p-6 sm:p-8 bg-white">
+        <form onSubmit={handleBroadcast} className="space-y-6">
+           <div className="space-y-2">
+             <Label className="text-xs font-bold uppercase opacity-60">Subject</Label>
+             <Input 
+               value={subject} 
+               onChange={e => setSubject(e.target.value)} 
+               placeholder="Official Temple Notice..." 
+               required 
+               className="h-12 border-primary/10 bg-secondary/10"
+             />
+           </div>
+           <div className="space-y-2">
+             <Label className="text-xs font-bold uppercase opacity-60">Message Content</Label>
+             <Textarea 
+               rows={10} 
+               value={message} 
+               onChange={e => setMessage(e.target.value)} 
+               placeholder="Write your official announcement here..." 
+               required 
+               className="border-primary/10 bg-secondary/10 resize-none pt-4"
+             />
+           </div>
+           <div className="flex items-center justify-between pt-4 border-t">
+             <div className="flex items-center gap-2 text-green-600">
+               <ShieldCheck className="h-4 w-4" />
+               <span className="text-[10px] font-black uppercase tracking-widest">Verified Delivery</span>
+             </div>
+             <Button type="submit" size="lg" className="h-14 px-10 font-bold shadow-xl shadow-primary/20" disabled={isSending || selectedUids.size === 0}>
+               {isSending ? (
+                 <>
+                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                   Sending Individually...
+                 </>
+               ) : (
+                 <>
+                   <Mail className="h-4 w-4 mr-2" />
+                   Execute Broadcast
+                 </>
+               )}
+             </Button>
+           </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
