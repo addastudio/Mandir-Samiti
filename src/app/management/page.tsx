@@ -1,58 +1,36 @@
 "use client";
 
 import * as React from "react";
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, useAuth } from "@/firebase";
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from "@/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, collectionGroup, query, setDoc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
+import { collection, doc, collectionGroup, query, setDoc, addDoc } from "firebase/firestore";
 import { Editor } from '@tinymce/tinymce-react';
 import { 
-  Trash2, 
   Loader2, 
   Calendar, 
-  Image as ImageIcon, 
   ShieldAlert, 
   Users, 
-  Bell, 
   Globe, 
   MessageSquare, 
   CheckCircle2, 
-  ShieldCheck, 
   Plus,
-  Search, 
   BarChart3, 
   HandCoins, 
-  Clock,
-  AlertTriangle,
-  Wand2,
   Settings,
-  History,
-  UserPlus,
-  UserCog,
-  UserMinus,
-  Crown,
-  User as UserIcon,
-  Activity,
+  ShieldCheck,
   TrendingUp,
-  IndianRupee,
-  LogOut,
   LayoutDashboard,
-  Tv,
-  CheckCircle,
-  XCircle,
   Zap,
-  Lock,
-  Mail,
-  Send,
-  Info,
+  Palette,
   Sparkles,
-  Palette
+  Info
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -127,8 +105,8 @@ export default function ManagementPage() {
     }
   }, [aboutData]);
 
-  // Operational Collections
-  const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'requests') ? null : collection(firestore, "prayer_requests"), [firestore, adminDoc, activeTab]);
+  // Operational Collections (Lazy loaded via tab check)
+  const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'overview') ? null : collection(firestore, "prayer_requests"), [firestore, adminDoc, activeTab]);
   const allUsersRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'overview') ? null : collection(firestore, "users"), [firestore, adminDoc, activeTab]);
   const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'overview') ? null : query(collectionGroup(firestore, "donations")), [firestore, adminDoc, activeTab]);
   const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'overview') ? null : collection(firestore, "events"), [firestore, adminDoc, activeTab]);
@@ -145,20 +123,6 @@ export default function ManagementPage() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
 
-  const logActivity = async (action: string, entityType: string, title: string) => {
-    if (!firestore || !user) return;
-    try {
-      await addDoc(collection(firestore, "admin_activity_logs"), {
-        adminId: user.uid,
-        adminName: user.displayName || user.email,
-        actionType: action,
-        entityType,
-        entityTitle: title,
-        timestamp: new Date().toISOString()
-      });
-    } catch (e) {}
-  };
-
   const handleSaveHero = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!firestore || !heroContentRef) return;
@@ -167,7 +131,6 @@ export default function ManagementPage() {
     const data = Object.fromEntries(fd.entries());
     try {
       await setDoc(heroContentRef, data, { merge: true });
-      await logActivity('UPDATE', 'site_content/hero', 'Updated Homepage Hero');
       toast({ title: "Hero Content Saved" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Save Failed", description: err.message });
@@ -186,7 +149,6 @@ export default function ManagementPage() {
         missionEn,
         missionHi
       }, { merge: true });
-      await logActivity('UPDATE', 'site_content/about', 'Updated About Content');
       toast({ title: "About Content Saved" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Save Failed", description: err.message });
@@ -203,7 +165,6 @@ export default function ManagementPage() {
     const data = Object.fromEntries(fd.entries());
     try {
       await setDoc(websiteSettingsRef, data, { merge: true });
-      await logActivity('UPDATE', 'settings/website', 'Updated Site Settings');
       toast({ title: "Settings Saved" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Save Failed", description: err.message });
@@ -213,22 +174,22 @@ export default function ManagementPage() {
   };
 
   const tinyMceInit = {
-    height: 300,
+    height: 400,
     menubar: true,
     plugins: [
       'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
-      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'tinymceai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown'
+      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'tinymceai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown', 'importword', 'exportword', 'exportpdf'
     ],
-    toolbar: 'undo redo | tinymceai-chat tinymceai-quickactions | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    toolbar: 'undo redo | tinymceai-chat tinymceai-quickactions tinymceai-review | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
     tinycomments_mode: 'embedded',
     tinycomments_author: 'Admin',
     mergetags_list: [
-      { value: 'Devotee.Name', title: 'Devotee Name' },
-      { value: 'Temple.Name', title: 'Temple Name' },
+      { value: 'First.Name', title: 'First Name' },
+      { value: 'Email', title: 'Email' },
     ],
     tinymceai_token_provider: async () => {
-      // Demo provider for trial purposes
-      return { token: 'demo' };
+      await fetch(`https://demo.api.tiny.cloud/1/jdufhga52csjp4vaqivcwaa029sbkc1d17pjqg8ro54ws7qg/auth/random`, { method: "POST", credentials: "include" });
+      return { token: await fetch(`https://demo.api.tiny.cloud/1/jdufhga52csjp4vaqivcwaa029sbkc1d17pjqg8ro54ws7qg/jwt/tinymceai`, { credentials: "include" }).then(r => r.text()) };
     },
   };
 
@@ -303,7 +264,7 @@ export default function ManagementPage() {
                      <Label className="text-xs font-black uppercase tracking-widest text-primary">History & Heritage (English)</Label>
                      <Editor
                        apiKey=""
-                       init={tinyMceInit}
+                       init={tinyMceInit as any}
                        value={historyEn}
                        onEditorChange={(content) => setHistoryEn(content)}
                      />
@@ -313,7 +274,7 @@ export default function ManagementPage() {
                      <Label className="text-xs font-black uppercase tracking-widest text-primary">मंदिर का इतिहास (Hindi)</Label>
                      <Editor
                        apiKey=""
-                       init={tinyMceInit}
+                       init={tinyMceInit as any}
                        value={historyHi}
                        onEditorChange={(content) => setHistoryHi(content)}
                      />
@@ -323,7 +284,7 @@ export default function ManagementPage() {
                      <Label className="text-xs font-black uppercase tracking-widest text-accent">Mission & Vision (English)</Label>
                      <Editor
                        apiKey=""
-                       init={tinyMceInit}
+                       init={tinyMceInit as any}
                        value={missionEn}
                        onEditorChange={(content) => setMissionEn(content)}
                      />
@@ -333,7 +294,7 @@ export default function ManagementPage() {
                      <Label className="text-xs font-black uppercase tracking-widest text-accent">हमारा लक्ष्य (Hindi)</Label>
                      <Editor
                        apiKey=""
-                       init={tinyMceInit}
+                       init={tinyMceInit as any}
                        value={missionHi}
                        onEditorChange={(content) => setMissionHi(content)}
                      />
@@ -401,13 +362,6 @@ export default function ManagementPage() {
           </TabsContent>
         </Tabs>
       </main>
-
-      <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
-        <AlertDialogContent className="w-[95%] max-w-md mx-auto">
-          <AlertDialogHeader><AlertDialogTitle>Confirm Deletion</AlertDialogTitle><AlertDialogDescription>Are you sure you want to remove "{deleteConfirm?.title}"? This is permanent.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={async () => { if (!firestore || !deleteConfirm) return; const { col, id, title, path } = deleteConfirm; await logActivity('DELETE', col, title); const ref = path ? doc(firestore, path) : doc(firestore, col, id); await deleteDoc(ref); toast({ title: "Deleted Successfully" }); setDeleteConfirm(null); }} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
