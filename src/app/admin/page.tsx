@@ -45,6 +45,9 @@ function AdminCMSContent() {
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Access the TinyMCE API Key from environment variables
+  const tinyApiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY || "";
+
   // TinyMCE Content States
   const [historyEn, setHistoryEn] = useState("");
   const [historyHi, setHistoryHi] = useState("");
@@ -150,6 +153,8 @@ function AdminCMSContent() {
       { value: 'Email', title: 'Email' },
     ],
     tinymceai_token_provider: async () => {
+      // Note: In production, you'd want to use your actual token service.
+      // This is a demo endpoint provided by Tiny.
       await fetch(`https://demo.api.tiny.cloud/1/jdufhga52csjp4vaqivcwaa029sbkc1d17pjqg8ro54ws7qg/auth/random`, { method: "POST", credentials: "include" });
       return { token: await fetch(`https://demo.api.tiny.cloud/1/jdufhga52csjp4vaqivcwaa029sbkc1d17pjqg8ro54ws7qg/jwt/tinymceai`, { credentials: "include" }).then(r => r.text()) };
     },
@@ -263,7 +268,7 @@ function AdminCMSContent() {
                      <Badge variant="outline" className="text-[10px]">Premium Editor</Badge>
                    </div>
                    <Editor
-                     apiKey=""
+                     apiKey={tinyApiKey}
                      init={tinyMceInit as any}
                      value={historyEn}
                      onEditorChange={(content) => setHistoryEn(content)}
@@ -273,7 +278,7 @@ function AdminCMSContent() {
                  <div className="space-y-4">
                    <Label className="text-xs font-black uppercase tracking-widest text-primary">मंदिर का इतिहास (Hindi)</Label>
                    <Editor
-                     apiKey=""
+                     apiKey={tinyApiKey}
                      init={tinyMceInit as any}
                      value={historyHi}
                      onEditorChange={(content) => setHistoryHi(content)}
@@ -283,7 +288,7 @@ function AdminCMSContent() {
                  <div className="space-y-4">
                    <Label className="text-xs font-black uppercase tracking-widest text-accent">Mission & Vision (English)</Label>
                    <Editor
-                     apiKey=""
+                     apiKey={tinyApiKey}
                      init={tinyMceInit as any}
                      value={missionEn}
                      onEditorChange={(content) => setMissionEn(content)}
@@ -293,7 +298,7 @@ function AdminCMSContent() {
                  <div className="space-y-4">
                    <Label className="text-xs font-black uppercase tracking-widest text-accent">हमारा लक्ष्य (Hindi)</Label>
                    <Editor
-                     apiKey=""
+                     apiKey={tinyApiKey}
                      init={tinyMceInit as any}
                      value={missionHi}
                      onEditorChange={(content) => setMissionHi(content)}
