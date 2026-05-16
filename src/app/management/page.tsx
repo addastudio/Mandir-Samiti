@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -12,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { collection, doc, collectionGroup, query, setDoc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
-import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { Editor } from '@tinymce/tinymce-react';
 import { 
   Trash2, 
   Loader2, 
@@ -59,7 +58,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -71,33 +69,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis, Tooltip } from "recharts";
-import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus, sendManualEmail } from "@/app/actions";
+import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus } from "@/app/actions";
 
-/**
- * MANDIR MANAGEMENT PANEL
- * With Integrated TinyCMS for content management.
- */
 export default function ManagementPage() {
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -106,25 +82,15 @@ export default function ManagementPage() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "overview");
   
-  // Search & Filter States
-  const [userSearch, setUserSearch] = useState("");
-  const [donationSearch, setDonationSearch] = useState("");
-  const [userSort, setUserSort] = useState<string>("role");
-  const [analyticsRange, setAnalyticsRange] = useState("7d");
-
-  // API Status States
   const [apiStatus, setApiStatus] = useState<any>(null);
-  
-  // CMS Save States
   const [isSavingContent, setIsSavingContent] = useState(false);
-
-  // Interaction States
   const [deleteConfirm, setDeleteConfirm] = useState<{ col: string, id: string, title: string, path?: string } | null>(null);
-  const [roleConfirm, setRoleConfirm] = useState<{ userId: string, name: string, newRole: string, type: 'admin' | 'role' | 'resign' } | null>(null);
-  const [resignPassword, setResignPassword] = useState("");
-  const [isProcessingRole, setIsProcessingRole] = useState(false);
-  const [isAiGenerating, setIsAiGenerating] = useState(false);
-  const [aiTopic, setAiTopic] = useState("");
+
+  // TinyMCE Content States
+  const [historyEn, setHistoryEn] = useState("");
+  const [historyHi, setHistoryHi] = useState("");
+  const [missionEn, setMissionEn] = useState("");
+  const [missionHi, setMissionHi] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -138,14 +104,12 @@ export default function ManagementPage() {
     });
   }, []);
 
-  // Admin Access Check
   const adminRoleRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "roles_admin", user.uid);
   }, [firestore, user]);
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
 
-  // Content References
   const heroContentRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : doc(firestore, "site_content", "hero"), [firestore, adminDoc]);
   const aboutContentRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : doc(firestore, "site_content", "about"), [firestore, adminDoc]);
   const websiteSettingsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : doc(firestore, "settings", "website"), [firestore, adminDoc]);
@@ -154,26 +118,25 @@ export default function ManagementPage() {
   const { data: aboutData } = useDoc(aboutContentRef);
   const { data: siteSettings } = useDoc(websiteSettingsRef);
 
-  // Operational Collections
-  const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'events') ? null : collection(firestore, "events"), [firestore, adminDoc, activeTab]);
-  const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'gallery') ? null : collection(firestore, "gallery"), [firestore, adminDoc, activeTab]);
-  const noticesRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'notices') ? null : collection(firestore, "notices"), [firestore, adminDoc, activeTab]);
-  const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'requests') ? null : collection(firestore, "prayer_requests"), [firestore, adminDoc, activeTab]);
-  const usersRef = useMemoFirebase(() => (!firestore || !adminDoc || (activeTab !== 'users' && activeTab !== 'broadcast')) ? null : collection(firestore, "users"), [firestore, adminDoc, activeTab]);
-  const membersRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'members') ? null : collection(firestore, "mandir_samiti_members"), [firestore, adminDoc, activeTab]);
-  const logsRef = useMemoFirebase(() => (!firestore || !adminDoc || (activeTab !== 'logs' && activeTab !== 'overview')) ? null : collection(firestore, "admin_activity_logs"), [firestore, adminDoc, activeTab]);
-  const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc || (activeTab !== 'donations' && activeTab !== 'overview')) ? null : query(collectionGroup(firestore, "donations")), [firestore, adminDoc, activeTab]);
-  const allAdminsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "roles_admin"), [firestore, adminDoc]);
+  useEffect(() => {
+    if (aboutData) {
+      setHistoryEn(aboutData.historyEn || "");
+      setHistoryHi(aboutData.historyHi || "");
+      setMissionEn(aboutData.missionEn || "");
+      setMissionHi(aboutData.missionHi || "");
+    }
+  }, [aboutData]);
 
-  const { data: events } = useCollection(eventsRef);
-  const { data: gallery } = useCollection(galleryRef);
-  const { data: notices } = useCollection(noticesRef);
+  // Operational Collections
+  const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'requests') ? null : collection(firestore, "prayer_requests"), [firestore, adminDoc, activeTab]);
+  const allUsersRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'overview') ? null : collection(firestore, "users"), [firestore, adminDoc, activeTab]);
+  const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'overview') ? null : query(collectionGroup(firestore, "donations")), [firestore, adminDoc, activeTab]);
+  const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc || activeTab !== 'overview') ? null : collection(firestore, "events"), [firestore, adminDoc, activeTab]);
+
   const { data: requests } = useCollection(requestsRef);
-  const { data: allUsers } = useCollection(usersRef);
-  const { data: members } = useCollection(membersRef);
-  const { data: logs } = useCollection(logsRef);
+  const { data: allUsers } = useCollection(allUsersRef);
   const { data: allDonations } = useCollection(donationsGroupRef);
-  const { data: allAdmins } = useCollection(allAdminsRef);
+  const { data: events } = useCollection(eventsRef);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !isAdminLoading) {
@@ -213,14 +176,16 @@ export default function ManagementPage() {
     }
   };
 
-  const handleSaveAbout = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSaveAbout = async () => {
     if (!firestore || !aboutContentRef) return;
     setIsSavingContent(true);
-    const fd = new FormData(e.currentTarget);
-    const data = Object.fromEntries(fd.entries());
     try {
-      await setDoc(aboutContentRef, data, { merge: true });
+      await setDoc(aboutContentRef, {
+        historyEn,
+        historyHi,
+        missionEn,
+        missionHi
+      }, { merge: true });
       await logActivity('UPDATE', 'site_content/about', 'Updated About Content');
       toast({ title: "About Content Saved" });
     } catch (err: any) {
@@ -247,6 +212,26 @@ export default function ManagementPage() {
     }
   };
 
+  const tinyMceInit = {
+    height: 300,
+    menubar: true,
+    plugins: [
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'tinymceai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown'
+    ],
+    toolbar: 'undo redo | tinymceai-chat tinymceai-quickactions | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    tinycomments_mode: 'embedded',
+    tinycomments_author: 'Admin',
+    mergetags_list: [
+      { value: 'Devotee.Name', title: 'Devotee Name' },
+      { value: 'Temple.Name', title: 'Temple Name' },
+    ],
+    tinymceai_token_provider: async () => {
+      // Demo provider for trial purposes
+      return { token: 'demo' };
+    },
+  };
+
   if (!mounted || isUserLoading || isAdminLoading) {
     return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -271,8 +256,8 @@ export default function ManagementPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3">
-             <Link href="/dashboard" className="flex-1 sm:flex-initial"><Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm"><LayoutDashboard className="h-4 w-4" />{language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}</Button></Link>
-             <Link href="/" className="flex-1 sm:flex-initial"><Button variant="outline" size="sm" className="w-full gap-2 text-xs sm:text-sm"><Globe className="h-4 w-4" />{language === 'hi' ? 'वेबसाइट' : 'Website'}</Button></Link>
+             <Link href="/dashboard"><Button variant="outline" size="sm" className="gap-2"><LayoutDashboard className="h-4 w-4" />{language === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}</Button></Link>
+             <Link href="/"><Button variant="outline" size="sm" className="gap-2"><Globe className="h-4 w-4" />{language === 'hi' ? 'वेबसाइट' : 'Website'}</Button></Link>
           </div>
         </div>
 
@@ -281,17 +266,8 @@ export default function ManagementPage() {
             <TabsList className="flex h-auto w-max justify-start gap-1 bg-transparent border-0 flex-nowrap">
               {[
                 { value: 'overview', icon: BarChart3, label: language === 'hi' ? 'सारांश' : 'Overview' },
-                { value: 'content', icon: Palette, label: language === 'hi' ? 'कंटेंट' : 'Tiny CMS' },
-                { value: 'donations', icon: HandCoins, label: language === 'hi' ? 'दान' : 'Donations' },
-                { value: 'events', icon: Calendar, label: language === 'hi' ? 'कार्यक्रम' : 'Events' },
-                { value: 'notices', icon: Bell, label: language === 'hi' ? 'सूचना' : 'Notices' },
-                { value: 'gallery', icon: ImageIcon, label: language === 'hi' ? 'गैलरी' : 'Gallery' },
-                { value: 'requests', icon: MessageSquare, label: language === 'hi' ? 'निवेदन' : 'Requests' },
-                { value: 'broadcast', icon: Mail, label: language === 'hi' ? 'प्रसारण' : 'Broadcast' },
-                { value: 'members', icon: Users, label: language === 'hi' ? 'समिति' : 'Committee' },
-                { value: 'users', icon: UserCog, label: language === 'hi' ? 'भक्त प्रबंधन' : 'Roles' },
-                { value: 'settings', icon: Settings, label: language === 'hi' ? 'सेटिंग्स' : 'Settings' },
-                { value: 'logs', icon: Activity, label: language === 'hi' ? 'लॉग्स' : 'Logs' }
+                { value: 'content', icon: Palette, label: language === 'hi' ? 'वेबसाइट कंटेंट' : 'Tiny CMS' },
+                { value: 'settings', icon: Settings, label: language === 'hi' ? 'सेटिंग्स' : 'Settings' }
               ].map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2 py-2 px-3 sm:px-4 shrink-0 rounded-lg transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-primary">
                   <tab.icon className="h-4 w-4" />
@@ -302,45 +278,76 @@ export default function ManagementPage() {
           </div>
 
           <TabsContent value="content" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
                <Card className="shadow-md">
                  <CardHeader className="bg-primary/5"><CardTitle className="text-lg flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Homepage (Hero)</CardTitle></CardHeader>
                  <CardContent className="pt-6">
                    <form onSubmit={handleSaveHero} className="space-y-4">
-                     <div className="grid grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Headline (English)</Label><Input name="headlineEn" defaultValue={heroData?.headlineEn} /></div>
                        <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Headline (Hindi)</Label><Input name="headlineHi" defaultValue={heroData?.headlineHi} /></div>
                      </div>
-                     <div className="grid grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Subtitle (English)</Label><Textarea name="subtitleEn" rows={3} defaultValue={heroData?.subtitleEn} /></div>
                        <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Subtitle (Hindi)</Label><Textarea name="subtitleHi" rows={3} defaultValue={heroData?.subtitleHi} /></div>
                      </div>
-                     <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Background Video URL</Label><Input name="videoUrl" placeholder="Direct MP4 link" defaultValue={heroData?.videoUrl} /></div>
-                     <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Fallback Image URL</Label><Input name="fallbackImage" defaultValue={heroData?.fallbackImage} /></div>
                      <Button type="submit" className="w-full" disabled={isSavingContent}>{isSavingContent ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Hero Content"}</Button>
                    </form>
                  </CardContent>
                </Card>
 
                <Card className="shadow-md">
-                 <CardHeader className="bg-accent/5"><CardTitle className="text-lg flex items-center gap-2"><Info className="h-5 w-5 text-accent" />About Page</CardTitle></CardHeader>
-                 <CardContent className="pt-6">
-                   <form onSubmit={handleSaveAbout} className="space-y-4">
-                     <div className="space-y-2"><Label className="text-xs uppercase opacity-60">History (English)</Label><Textarea name="historyEn" rows={4} defaultValue={aboutData?.historyEn} /></div>
-                     <div className="space-y-2"><Label className="text-xs uppercase opacity-60">History (Hindi)</Label><Textarea name="historyHi" rows={4} defaultValue={aboutData?.historyHi} /></div>
-                     <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Mission (English)</Label><Textarea name="missionEn" rows={3} defaultValue={aboutData?.missionEn} /></div>
-                     <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Mission (Hindi)</Label><Textarea name="missionHi" rows={3} defaultValue={aboutData?.missionHi} /></div>
-                     <div className="space-y-2"><Label className="text-xs uppercase opacity-60">Featured Image URL</Label><Input name="featuredImage" defaultValue={aboutData?.featuredImage} /></div>
-                     <Button type="submit" className="w-full" disabled={isSavingContent}>{isSavingContent ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save About Content"}</Button>
-                   </form>
+                 <CardHeader className="bg-accent/5"><CardTitle className="text-lg flex items-center gap-2"><Info className="h-5 w-5 text-accent" />About Page (Rich Text)</CardTitle></CardHeader>
+                 <CardContent className="pt-6 space-y-8">
+                   <div className="space-y-4">
+                     <Label className="text-xs font-black uppercase tracking-widest text-primary">History & Heritage (English)</Label>
+                     <Editor
+                       apiKey=""
+                       init={tinyMceInit}
+                       value={historyEn}
+                       onEditorChange={(content) => setHistoryEn(content)}
+                     />
+                   </div>
+
+                   <div className="space-y-4">
+                     <Label className="text-xs font-black uppercase tracking-widest text-primary">मंदिर का इतिहास (Hindi)</Label>
+                     <Editor
+                       apiKey=""
+                       init={tinyMceInit}
+                       value={historyHi}
+                       onEditorChange={(content) => setHistoryHi(content)}
+                     />
+                   </div>
+
+                   <div className="space-y-4">
+                     <Label className="text-xs font-black uppercase tracking-widest text-accent">Mission & Vision (English)</Label>
+                     <Editor
+                       apiKey=""
+                       init={tinyMceInit}
+                       value={missionEn}
+                       onEditorChange={(content) => setMissionEn(content)}
+                     />
+                   </div>
+
+                   <div className="space-y-4">
+                     <Label className="text-xs font-black uppercase tracking-widest text-accent">हमारा लक्ष्य (Hindi)</Label>
+                     <Editor
+                       apiKey=""
+                       init={tinyMceInit}
+                       value={missionHi}
+                       onEditorChange={(content) => setMissionHi(content)}
+                     />
+                   </div>
+
+                   <Button onClick={handleSaveAbout} className="w-full h-12" disabled={isSavingContent}>
+                     {isSavingContent ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : "Save Rich Content"}
+                   </Button>
                  </CardContent>
                </Card>
             </div>
           </TabsContent>
 
-          {/* ... Rest of the operational tabs remain the same ... */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Overview Content */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { label: t.mgmtStatTotalCollection, value: `₹${allDonations?.reduce((acc, curr) => acc + (curr.amount || 0), 0).toLocaleString() || 0}`, color: 'bg-primary/10 border-primary/20', icon: HandCoins },
@@ -355,16 +362,14 @@ export default function ManagementPage() {
                 </Card>
               ))}
             </div>
-            {/* Charts would go here as in original */}
           </TabsContent>
 
-          {/* Settings Tab Updated for Live Aarti & Branding */}
           <TabsContent value="settings" className="space-y-6">
             <Card className="shadow-md">
               <CardHeader className="bg-primary/5"><CardTitle className="text-lg">Site Identity & Live Stream</CardTitle></CardHeader>
               <CardContent className="pt-6">
                 <form onSubmit={handleSaveSettings} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2"><Label>Site Title (English)</Label><Input name="siteTitleEn" defaultValue={siteSettings?.siteTitleEn} /></div>
                     <div className="space-y-2"><Label>Site Title (Hindi)</Label><Input name="siteTitleHi" defaultValue={siteSettings?.siteTitleHi} /></div>
                   </div>
@@ -394,18 +399,9 @@ export default function ManagementPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
-          {/* ... Remaining operational TabsContent components ... */}
-          <TabsContent value="donations" className="space-y-6">
-             {/* Original Donations UI */}
-          </TabsContent>
-          <TabsContent value="events" className="space-y-6">
-             {/* Original Events UI */}
-          </TabsContent>
         </Tabs>
       </main>
 
-      {/* Security Modals as in original */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
         <AlertDialogContent className="w-[95%] max-w-md mx-auto">
           <AlertDialogHeader><AlertDialogTitle>Confirm Deletion</AlertDialogTitle><AlertDialogDescription>Are you sure you want to remove "{deleteConfirm?.title}"? This is permanent.</AlertDialogDescription></AlertDialogHeader>
