@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -11,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, addDoc, updateDoc, deleteDoc, query, orderBy, Timestamp, collectionGroup } from "firebase/firestore";
+import { collection, doc, addDoc, updateDoc, deleteDoc, query, orderBy, setDoc, collectionGroup, where, getDocs } from "firebase/firestore";
 import { 
   Loader2, 
   Plus, 
@@ -35,7 +34,12 @@ import {
   ExternalLink,
   Search,
   History,
-  Palette
+  Palette,
+  Mail,
+  Camera,
+  ImagePlus,
+  Lock,
+  UserCog
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -68,7 +72,8 @@ import {
 import Link from "next/link";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus } from "@/app/actions";
+import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus, sendManualEmail } from "@/app/actions";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /**
  * Management Panel Content Component
@@ -113,6 +118,9 @@ function ManagementPageContent() {
   const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "prayer_requests"), orderBy("createdAt", "desc")), [firestore, adminDoc]);
   const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collectionGroup(firestore, "donations"), orderBy("date", "desc")), [firestore, adminDoc]);
   const logsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "admin_activity_logs"), orderBy("timestamp", "desc")), [firestore, adminDoc]);
+  const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "gallery"), [firestore, adminDoc]);
+  const usersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "users"), [firestore, adminDoc]);
+  const rolesAdminRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "roles_admin"), [firestore, adminDoc]);
 
   const { data: notices, isLoading: isNoticesLoading } = useCollection(noticesRef);
   const { data: events, isLoading: isEventsLoading } = useCollection(eventsRef);
@@ -120,6 +128,9 @@ function ManagementPageContent() {
   const { data: requests, isLoading: isRequestsLoading } = useCollection(requestsRef);
   const { data: allDonations, isLoading: isDonationsLoading } = useCollection(donationsGroupRef);
   const { data: logs, isLoading: isLogsLoading } = useCollection(logsRef);
+  const { data: galleryItems, isLoading: isGalleryLoading } = useCollection(galleryRef);
+  const { data: allUsers, isLoading: isUsersLoading } = useCollection(usersRef);
+  const { data: adminRoles } = useCollection(rolesAdminRef);
 
   useEffect(() => {
     if (mounted && !isUserLoading && !isAdminLoading) {
@@ -177,6 +188,36 @@ function ManagementPageContent() {
     }
   };
 
+  const handleToggleAdmin = async (targetUserId: string, targetName: string, currentlyAdmin: boolean) => {
+    if (!firestore || !user) return;
+    if (targetUserId === user.uid) {
+      toast({ variant: "destructive", title: "Self-Demotion Forbidden", description: "You cannot remove your own admin access." });
+      return;
+    }
+
+    const action = currentlyAdmin ? "REMOVE_ADMIN" : "GRANT_ADMIN";
+    const confirmMsg = currentlyAdmin 
+      ? `Are you sure you want to remove admin access from ${targetName}?`
+      : `Are you sure you want to grant admin access to ${targetName}?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      if (currentlyAdmin) {
+        await deleteDoc(doc(firestore, "roles_admin", targetUserId));
+      } else {
+        await setDoc(doc(firestore, "roles_admin", targetUserId), {
+          assignedAt: new Date().toISOString(),
+          assignedBy: user.uid
+        });
+      }
+      await logAction(action, "ROLE", targetName);
+      toast({ title: "Role Updated Successfully" });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Permission Denied", description: err.message });
+    }
+  };
+
   if (!mounted || isUserLoading || isAdminLoading) {
     return <div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -216,9 +257,12 @@ function ManagementPageContent() {
                 { value: 'overview', icon: BarChart3, label: language === 'hi' ? 'सारांश' : 'Overview' },
                 { value: 'notices', icon: Bell, label: language === 'hi' ? 'सूचना' : 'Notices' },
                 { value: 'events', icon: Calendar, label: language === 'hi' ? 'कार्यक्रम' : 'Events' },
+                { value: 'gallery', icon: Camera, label: language === 'hi' ? 'गैलरी' : 'Gallery' },
                 { value: 'donations', icon: HandCoins, label: language === 'hi' ? 'दान' : 'Donations' },
                 { value: 'requests', icon: MessageSquare, label: language === 'hi' ? 'निवेदन' : 'Requests' },
                 { value: 'members', icon: Users, label: language === 'hi' ? 'समिति' : 'Members' },
+                { value: 'access', icon: Lock, label: language === 'hi' ? 'पहुँच' : 'Access' },
+                { value: 'broadcast', icon: Mail, label: language === 'hi' ? 'ब्रॉडकास्ट' : 'Broadcast' },
                 { value: 'logs', icon: History, label: language === 'hi' ? 'लॉग' : 'Audit Logs' },
                 { value: 'infrastructure', icon: Zap, label: language === 'hi' ? 'इन्फ्रास्ट्रक्चर' : 'Infrastructure' }
               ].map((tab) => (
@@ -236,7 +280,7 @@ function ManagementPageContent() {
                 { label: t.mgmtStatTotalCollection, value: `₹${allDonations?.reduce((acc, curr) => acc + (curr.amount || 0), 0).toLocaleString() || 0}`, color: 'bg-primary/10 border-primary/20', icon: HandCoins },
                 { label: t.mgmtStatPendingRequests, value: requests?.filter(r => r.status === 'pending').length || 0, color: 'bg-green-50 border-green-200', icon: MessageSquare },
                 { label: t.mgmtStatActiveEvents, value: events?.length || 0, color: 'bg-amber-50 border-amber-200', icon: Calendar },
-                { label: t.mgmtStatTotalDevotees, value: allDonations?.length || 0, color: 'bg-blue-50 border-blue-200', icon: Users }
+                { label: t.mgmtStatTotalDevotees, value: allUsers?.length || 0, color: 'bg-blue-50 border-blue-200', icon: Users }
               ].map((stat, i) => (
                 <Card key={i} className={cn("relative overflow-hidden group transition-all hover:shadow-md", stat.color)}>
                   <stat.icon className="absolute -right-2 -bottom-2 h-16 w-16 opacity-10 rotate-12 transition-transform group-hover:scale-110" />
@@ -319,6 +363,26 @@ function ManagementPageContent() {
              </Card>
           </TabsContent>
 
+          <TabsContent value="gallery" className="space-y-6">
+             <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold">Media Library</h2>
+                <GalleryFormDialog onSave={async (d) => { await addDoc(collection(firestore!, "gallery"), d); await logAction("CREATE", "GALLERY", d.caption || "Media Item"); }} />
+             </div>
+             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {galleryItems?.map(item => (
+                  <Card key={item.id} className="relative group overflow-hidden aspect-square">
+                    <img src={item.imageURL} className="w-full h-full object-cover" alt="" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
+                       <p className="text-[10px] text-white text-center mb-2 line-clamp-2">{item.caption}</p>
+                       <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete("gallery", item.id, item.caption || "Media")}>
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                    </div>
+                  </Card>
+                ))}
+             </div>
+          </TabsContent>
+
           <TabsContent value="donations" className="space-y-6">
              <h2 className="text-xl font-bold">Global Donation Records</h2>
              <Card>
@@ -389,6 +453,54 @@ function ManagementPageContent() {
              </Card>
           </TabsContent>
 
+          <TabsContent value="access" className="space-y-6">
+             <h2 className="text-xl font-bold">Administrative Access Control</h2>
+             <Card>
+                <Table>
+                  <TableHeader><TableRow><TableHead>Devotee</TableHead><TableHead>Email</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {allUsers?.map(u => {
+                      const isAdmin = adminRoles?.some(r => r.id === u.id);
+                      return (
+                        <TableRow key={u.id}>
+                          <TableCell className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8"><AvatarImage src={u.photoURL} /><AvatarFallback>{u.name?.charAt(0)}</AvatarFallback></Avatar>
+                            <span className="font-bold">{u.name}</span>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{u.email}</TableCell>
+                          <TableCell>{isAdmin ? <Badge className="bg-primary">Admin</Badge> : <Badge variant="outline">Devotee</Badge>}</TableCell>
+                          <TableCell className="text-right">
+                            <Button 
+                              variant={isAdmin ? "destructive" : "default"} 
+                              size="sm" 
+                              className="gap-2"
+                              onClick={() => handleToggleAdmin(u.id, u.name, !!isAdmin)}
+                            >
+                              <UserCog className="h-4 w-4" />
+                              {isAdmin ? "Remove Admin" : "Make Admin"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+             </Card>
+          </TabsContent>
+
+          <TabsContent value="broadcast" className="space-y-6">
+             <h2 className="text-xl font-bold">Global Devotee Broadcast</h2>
+             <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2"><Mail className="h-4 w-4" />Email Messenger</CardTitle>
+                  <CardDescription>Send official notices directly to the registered devotee community.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BroadcastForm allEmails={allUsers?.map(u => u.email).filter(Boolean) || []} />
+                </CardContent>
+             </Card>
+          </TabsContent>
+
           <TabsContent value="logs" className="space-y-6">
              <h2 className="text-xl font-bold">Administrative Activity Trail</h2>
              <Card className="max-h-[600px] overflow-auto">
@@ -435,6 +547,48 @@ function ManagementPageContent() {
 }
 
 /* Sub-form Components */
+
+function BroadcastForm({ allEmails }: { allEmails: string[] }) {
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const { toast } = useToast();
+  const { language } = useLanguage();
+
+  const handleBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (allEmails.length === 0) return;
+    setIsSending(true);
+    try {
+      const res = await sendManualEmail(allEmails, subject, message, language as 'hi' | 'en');
+      if (res.success) {
+        toast({ title: "Broadcast Sent", description: `Message delivered to ${allEmails.length} devotees.` });
+        setSubject("");
+        setMessage("");
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Broadcast Failed", description: err.message });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleBroadcast} className="space-y-4">
+       <div className="space-y-2"><Label>Subject</Label><Input value={subject} onChange={e => setSubject(e.target.value)} required /></div>
+       <div className="space-y-2"><Label>Message</Label><Textarea rows={6} value={message} onChange={e => setMessage(e.target.value)} required /></div>
+       <div className="flex items-center justify-between pt-2">
+         <p className="text-[10px] text-muted-foreground uppercase font-bold">Recipients: {allEmails.length} verified users</p>
+         <Button type="submit" disabled={isSending || allEmails.length === 0}>
+           {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
+           Execute Broadcast
+         </Button>
+       </div>
+    </form>
+  );
+}
 
 function NoticeFormDialog({ onSave, isAIGenerating, onAIGenerate }: any) {
   const [title, setTitle] = useState("");
@@ -494,6 +648,26 @@ function EventFormDialog({ onSave, isAIGenerating, onAIGenerate }: any) {
            <div className="space-y-2"><Label>Description</Label><Textarea rows={4} value={desc} onChange={e => setDesc(e.target.value)} required /></div>
         </div>
         <DialogFooter><Button onClick={() => { onSave({ title, description: desc, date }); setOpen(false); }}>Save Event</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function GalleryFormDialog({ onSave }: any) {
+  const [url, setUrl] = useState("");
+  const [caption, setCaption] = useState("");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button className="gap-2"><ImagePlus className="h-4 w-4" />Add Media</Button></DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Upload Gallery Media</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-4">
+           <div className="space-y-2"><Label>Media URL (Image or YouTube)</Label><Input value={url} onChange={e => setUrl(e.target.value)} required placeholder="https://..." /></div>
+           <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={e => setCaption(e.target.value)} required /></div>
+        </div>
+        <DialogFooter><Button onClick={() => { onSave({ imageURL: url, caption }); setOpen(false); }}>Add to Library</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
