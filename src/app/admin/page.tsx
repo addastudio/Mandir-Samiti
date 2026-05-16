@@ -4,13 +4,14 @@
 import * as React from "react";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { doc, setDoc } from "firebase/firestore";
 import { Editor } from '@tinymce/tinymce-react';
 import { 
@@ -33,10 +34,9 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 /**
- * Tiny CMS Root (/admin)
- * Managed directly via Firestore with TinyMCE Premium.
+ * Tiny CMS Root Content Component
  */
-export default function AdminCMSPage() {
+function AdminCMSContent() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -337,5 +337,17 @@ export default function AdminCMSPage() {
         </Tabs>
       </main>
     </div>
+  );
+}
+
+export default function AdminCMSPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <AdminCMSContent />
+    </Suspense>
   );
 }
