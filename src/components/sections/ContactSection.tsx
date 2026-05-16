@@ -87,7 +87,7 @@ export function ContactSection() {
 
   const phone = cmsContent?.phone || t.contactPhone;
   const email = cmsContent?.email || t.contactEmail;
-  const mapUrl = cmsContent?.mapUrl || "https://maps.app.goo.gl/JYYXPXxTfH6KQ9Rx6";
+  const mapUrl = cmsContent?.mapUrl || "https://maps.app.goo.gl/oookdABLpqNCjgga7";
 
   return (
     <section id="contact" className="py-16 sm:py-20 md:py-28">
