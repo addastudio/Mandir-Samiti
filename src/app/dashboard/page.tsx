@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -10,13 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential, updateProfile, sendPasswordResetEmail, updatePassword } from "firebase/auth";
 import { collection, doc, query, where, deleteDoc, updateDoc } from "firebase/firestore";
-import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info, Shield, Gem, Crown, Clock, KeyRound, MailCheck, ShieldAlert } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, History, ShieldCheck, Globe, IndianRupee, MessageSquare, Trash2, RefreshCw, Plus, AlertCircle, Calendar, CreditCard, Banknote, QrCode, Settings, Search, Sparkles, Star, Heart, Camera, Upload, CheckCircle2, TrendingUp, Trophy, Info, Shield, Gem, Crown, Clock, KeyRound, MailCheck, ShieldAlert, SwitchCamera } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +39,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -71,6 +79,11 @@ function DashboardContent() {
   const [changePwdNew, setChangePwdNew] = useState("");
   const [changePwdConfirm, setChangePwdConfirm] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  
+  // 2FA Placeholder State
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [twoFactorPin, setTwoFactorPin] = useState("");
+  const [isUpdating2FA, setIsUpdating2FA] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -117,6 +130,7 @@ function DashboardContent() {
     if (userProfile) {
       setProfileName(userProfile.name || user?.displayName || "");
       setProfilePhotoPreview(userProfile.photoURL || user?.photoURL || null);
+      setIs2FAEnabled(!!userProfile.twoFactorEnabled);
     }
   }, [userProfile, user]);
 
@@ -166,6 +180,24 @@ function DashboardContent() {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
       setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleToggle2FA = async (enabled: boolean) => {
+    if (!user || !firestore) return;
+    setIsUpdating2FA(true);
+    try {
+      const userRef = doc(firestore, "users", user.uid);
+      await updateDoc(userRef, { 
+        twoFactorEnabled: enabled,
+        twoFactorPin: enabled ? twoFactorPin : null 
+      });
+      setIs2FAEnabled(enabled);
+      toast({ title: "Success", description: t.dashboard2FAUpdateSuccess });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    } finally {
+      setIsUpdating2FA(false);
     }
   };
 
@@ -450,6 +482,36 @@ function DashboardContent() {
                 <Link href="/donate"><Button variant="secondary" className="w-full h-10 text-xs font-bold uppercase" size="sm">{t.navDonate}</Button></Link>
               </div>
             </Card>
+            
+            <Card className="shadow-md border-primary/10 overflow-hidden">
+                <CardHeader className="bg-secondary/40 py-4">
+                    <CardTitle className="text-sm font-bold flex items-center gap-2"><Crown className="h-4 w-4 text-primary" />{t.dashboardTierHonorsTitle}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="grand" className="border-b px-4">
+                            <AccordionTrigger className="hover:no-underline py-3 text-xs font-bold"><div className="flex items-center gap-2"><Crown className="h-3.5 w-3.5 text-indigo-600" />{t.dashboardTierGrandPatron}</div></AccordionTrigger>
+                            <AccordionContent className="text-[11px] text-muted-foreground pb-4">{t.dashboardTierGrandPatronDesc}</AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="guardian" className="border-b px-4">
+                            <AccordionTrigger className="hover:no-underline py-3 text-xs font-bold"><div className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-emerald-600" />{t.dashboardTierGuardian}</div></AccordionTrigger>
+                            <AccordionContent className="text-[11px] text-muted-foreground pb-4">{t.dashboardTierGuardianDesc}</AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="patron" className="border-b px-4">
+                            <AccordionTrigger className="hover:no-underline py-3 text-xs font-bold"><div className="flex items-center gap-2"><Sparkles className="h-3.5 w-3.5 text-primary" />{t.dashboardTierPatron}</div></AccordionTrigger>
+                            <AccordionContent className="text-[11px] text-muted-foreground pb-4">{t.dashboardTierPatronDesc}</AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="pillar" className="border-b px-4">
+                            <AccordionTrigger className="hover:no-underline py-3 text-xs font-bold"><div className="flex items-center gap-2"><Star className="h-3.5 w-3.5 text-amber-500" />{t.dashboardTierPillar}</div></AccordionTrigger>
+                            <AccordionContent className="text-[11px] text-muted-foreground pb-4">{t.dashboardTierPillarDesc}</AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="supporter" className="border-0 px-4">
+                            <AccordionTrigger className="hover:no-underline py-3 text-xs font-bold"><div className="flex items-center gap-2"><Heart className="h-3.5 w-3.5 text-muted-foreground" />{t.dashboardTierSupporter}</div></AccordionTrigger>
+                            <AccordionContent className="text-[11px] text-muted-foreground pb-4">{t.dashboardTierSupporterDesc}</AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </CardContent>
+            </Card>
           </div>
 
           <div className="lg:col-span-8">
@@ -571,12 +633,48 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  {isPasswordUser && (
-                    <div className="space-y-4 pt-8 border-t">
-                      <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                        <KeyRound className="h-4 w-4" />
-                        {t.dashboardSecurityTitle}
-                      </h3>
+                  <div className="space-y-6 pt-8 border-t">
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      {t.dashboardSecurityTitle}
+                    </h3>
+                    
+                    <div className="bg-secondary/20 p-4 rounded-xl space-y-4 border">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <Label className="text-sm font-bold">{t.dashboard2FAEnable}</Label>
+                                <p className="text-[10px] text-muted-foreground">{is2FAEnabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled}</p>
+                            </div>
+                            <Switch checked={is2FAEnabled} onCheckedChange={(val) => {
+                                if (val) {
+                                    // Open dialog to set pin before enabling
+                                } else {
+                                    handleToggle2FA(false);
+                                }
+                            }} disabled={isUpdating2FA} />
+                        </div>
+                        
+                        {is2FAEnabled && (
+                            <div className="pt-4 border-t border-black/5 space-y-3">
+                                <Label className="text-[10px] font-black uppercase">{t.dashboard2FASetPin}</Label>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        type="password" 
+                                        maxLength={6} 
+                                        placeholder="******" 
+                                        className="h-10 text-center font-bold tracking-widest"
+                                        value={twoFactorPin}
+                                        onChange={(e) => setTwoFactorPin(e.target.value.replace(/\D/g, ''))}
+                                    />
+                                    <Button size="sm" onClick={() => handleToggle2FA(true)} disabled={twoFactorPin.length < 6 || isUpdating2FA}>
+                                        {isUpdating2FA ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {isPasswordUser && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
                           <DialogTrigger asChild>
@@ -623,8 +721,8 @@ function DashboardContent() {
                           {t.dashboardForgotPassword}
                         </Button>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <div className="space-y-4 pt-8 border-t">
                     <h3 className="font-bold text-sm uppercase tracking-widest text-destructive">Danger Zone</h3>

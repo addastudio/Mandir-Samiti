@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -315,7 +316,7 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleFinishGoogleLoginWithPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-google-password">{language === 'hi' ? 'पासवर्ड' : 'New Password'}</Label>
+                <Label htmlFor="login-google-password">{t.authPassword}</Label>
                 <div className="relative">
                   <Input 
                     id="login-google-password" 
@@ -356,7 +357,7 @@ export default function LoginPage() {
               <MailCheck className="h-8 w-8 text-primary" />
             </div>
             <CardTitle className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : '')}>
-              {language === 'hi' ? 'खाता सत्यापित करें' : 'Verify Account'}
+              {t.signupOtpTitle}
             </CardTitle>
             <CardDescription>{t.signupOtpDescription}</CardDescription>
           </CardHeader>
@@ -445,7 +446,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-lg border-primary/20">
         <CardHeader className="text-center space-y-1">
           <CardTitle className={cn("text-3xl font-bold text-primary", language === "hi" ? "font-hindi" : "font-headline")}>
-            {language === "hi" ? "लॉग इन" : "Login"}
+            {t.authLoginTitle}
           </CardTitle>
           <CardDescription>{language === "hi" ? "अपने खाते में वापस जाएँ" : "Welcome back to your account"}</CardDescription>
         </CardHeader>
@@ -456,7 +457,7 @@ export default function LoginPage() {
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{language === "hi" ? "पासवर्ड" : "Password"}</Label>
+              <Label htmlFor="password">{t.authPassword}</Label>
               <div className="relative">
                 <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-10" />
                 <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 text-muted-foreground" onClick={() => setShowPassword(!showPassword)}>
@@ -512,7 +513,7 @@ export default function LoginPage() {
 
             {error && <p className="text-sm text-destructive font-medium p-2 rounded bg-destructive/5">{error}</p>}
             <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading || !captchaToken}>
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : (language === "hi" ? "लॉग इन करें" : "Login")}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : t.navLogin}
             </Button>
           </form>
 
@@ -526,7 +527,7 @@ export default function LoginPage() {
             {language === "hi" ? "Google के साथ लॉगिन" : "Continue with Google"}
           </Button>
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            {language === "hi" ? "खाता नहीं है?" : "Don't have an account?"}{" "}
+            {t.authNoAccount}{" "}
             <Link href="/signup" className="text-primary font-semibold hover:underline">{language === "hi" ? "साइन अप करें" : "Sign up"}</Link>
           </div>
         </CardContent>

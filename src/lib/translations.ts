@@ -204,6 +204,13 @@ export type TranslationKeys = {
   prayerStatusViewed: string;
   prayerStatusCompleted: string;
 
+  // Auth Extras
+  authPassword: string;
+  authLoginTitle: string;
+  authSignupTitle: string;
+  authNoAccount: string;
+  authHasAccount: string;
+
   // Auth Errors
   authErrorEmailInUse: string;
   authErrorWeakPassword: string;
@@ -427,6 +434,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     prayerStatusPending: 'लंबित (Pending)',
     prayerStatusViewed: 'देखा गया (Viewed)',
     prayerStatusCompleted: 'पूर्ण (Completed)',
+    authPassword: 'पासवर्ड',
+    authLoginTitle: 'लॉग इन',
+    authSignupTitle: 'साइन अप',
+    authNoAccount: 'खाता नहीं है?',
+    authHasAccount: 'पहले से खाता है?',
     authErrorEmailInUse: 'यह ईमेल पहले से ही पंजीकृत है। कृपया लॉग इन करें।',
     authErrorWeakPassword: 'पासवर्ड बहुत कमजोर है। कृपया कम से कम 6 अक्षरों का उपयोग करें।',
     authErrorInvalidEmail: 'अमान्य ईमेल पता।',
@@ -549,7 +561,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     contactFormMessage: 'Message',
     contactFormSend: 'Send Message',
     contactFormSuccess: 'Your message has been sent successfully!',
-    contactFormError: 'Failed to send message. Please try again later.',
+    contactFormError: 'Error sending message. Please try again later.',
     contactFollow: 'Follow Us',
     footerCopyright: '© Surya Mandir Bahpura 2026. All rights reserved.',
     footerQuickLinks: 'Quick Links',
@@ -637,6 +649,11 @@ export const translations: { [key: string]: TranslationKeys } = {
     prayerStatusPending: 'Pending',
     prayerStatusViewed: 'Viewed',
     prayerStatusCompleted: 'Completed',
+    authPassword: 'Password',
+    authLoginTitle: 'Login',
+    authSignupTitle: 'Sign Up',
+    authNoAccount: "Don't have an account?",
+    authHasAccount: 'Already have an account?',
     authErrorEmailInUse: 'This email is already registered. Please log in instead.',
     authErrorWeakPassword: 'Password is too weak. Please use at least 6 characters.',
     authErrorInvalidEmail: 'Invalid email address.',

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -303,7 +304,7 @@ export default function SignupPage() {
           <CardContent>
             <form onSubmit={handleFinishGoogleSignupWithPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="google-password">{language === 'hi' ? 'पासवर्ड' : 'New Password'}</Label>
+                <Label htmlFor="google-password">{t.authPassword}</Label>
                 <div className="relative">
                   <Input 
                     id="google-password" 
@@ -437,7 +438,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-md shadow-lg border-primary/20">
         <CardHeader className="text-center space-y-1">
           <CardTitle className={cn("text-3xl font-bold text-primary", language === "hi" ? "font-hindi" : "font-headline")}>
-            {t.navHome} {language === "hi" ? "साइन अप" : "Sign Up"}
+            {t.authSignupTitle}
           </CardTitle>
           <CardDescription className={cn(language === "hi" ? "font-hindi" : "")}>
             {language === "hi" ? "अपना विवरण दर्ज करें" : "Enter your details to create an account"}
@@ -454,7 +455,7 @@ export default function SignupPage() {
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="border-primary/20" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className={cn(language === 'hi' ? 'font-hindi' : '')}>{language === 'hi' ? 'पासवर्ड' : 'Password'}</Label>
+              <Label htmlFor="password" className={cn(language === 'hi' ? 'font-hindi' : '')}>{t.authPassword}</Label>
               <div className="relative">
                 <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="border-primary/20 pr-10" />
                 <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 text-muted-foreground" onClick={() => setShowPassword(!showPassword)}>
@@ -483,7 +484,7 @@ export default function SignupPage() {
             {language === "hi" ? "Google के साथ साइन अप" : "Continue with Google"}
           </Button>
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            {language === "hi" ? "पहले से खाता है?" : "Already have an account?"}{" "}
+            {t.authHasAccount}{" "}
             <Link href="/login" className="text-primary font-semibold hover:underline">{language === "hi" ? "लॉग इन करें" : "Login"}</Link>
           </div>
         </CardContent>
