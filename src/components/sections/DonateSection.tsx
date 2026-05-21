@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -78,8 +79,9 @@ export function DonateSection() {
                   <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-xl border-4 border-white z-10">
                     <img 
                       src="https://picsum.photos/seed/donate-hero/600/600" 
-                      alt="Donation Impact" 
+                      alt={language === 'hi' ? "दान का प्रभाव" : "Donation Impact"} 
                       className="w-full h-full object-cover block"
+                      data-ai-hint="donating hand"
                     />
                   </div>
                   
