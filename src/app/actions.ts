@@ -1,3 +1,4 @@
+
 "use server";
 
 import { z } from "zod";
@@ -7,7 +8,7 @@ import { headers } from 'next/headers';
 import { getContentfulStatus } from '@/lib/contentful';
 import { getOtpEmailHtml, getBroadcastEmailHtml } from '@/lib/email-templates';
 
-// Initialize two distinct Resend clients for separate routing
+// Initialize distinct Resend clients for separate operational routes
 const resendOtp = process.env.RESEND_OTP_API_KEY 
   ? new Resend(process.env.RESEND_OTP_API_KEY) 
   : (process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null);
@@ -17,7 +18,7 @@ const resendContact = process.env.RESEND_CONTACT_API_KEY
   : (process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null);
 
 /**
- * Checks backend connection status for reporting in the Admin Panel.
+ * Infrastructure Health Check
  */
 export async function getBackendConnectionStatus() {
   const contentful = getContentfulStatus();
@@ -38,7 +39,7 @@ export async function getBackendConnectionStatus() {
 }
 
 /**
- * Checks which payment gateways are active based on available API keys.
+ * Payment Gateway Status
  */
 export async function getPaymentGatewayStatus() {
   return {
@@ -48,7 +49,7 @@ export async function getPaymentGatewayStatus() {
 }
 
 /**
- * Checks if the live email service is configured.
+ * Email Service Status
  */
 export async function getEmailServiceStatus() {
   return {
@@ -60,7 +61,7 @@ export async function getEmailServiceStatus() {
 }
 
 /**
- * Checks the status of reCAPTCHA configuration.
+ * reCAPTCHA Status
  */
 export async function getRecaptchaStatus() {
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -76,15 +77,13 @@ export async function getRecaptchaStatus() {
 }
 
 /**
- * Verifies a reCAPTCHA token with Google's API.
- * Hardened for production safety.
+ * Critical Security: Production-hardened reCAPTCHA verification.
  */
 async function verifyRecaptcha(token: string | null) {
   if (!token) return false;
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
   
   if (!secretKey) {
-    // SECURITY: Only allow simulation/bypass in non-production environments
     if (process.env.NODE_ENV === 'production') {
       console.error("SECURITY ALERT: RECAPTCHA_SECRET_KEY is missing in production. Blocking request.");
       return false;
@@ -105,7 +104,7 @@ async function verifyRecaptcha(token: string | null) {
 }
 
 /**
- * Submits the contact form and routes the notification via Resend.
+ * Contact Form Submission with reCAPTCHA guard.
  */
 export async function submitContactForm(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
@@ -143,12 +142,12 @@ export async function submitContactForm(prevState: any, formData: FormData) {
 }
 
 /**
- * Sends a verification OTP via Resend.
+ * OTP Verification Email with reCAPTCHA guard.
  */
 export async function sendVerificationOtp(email: string, otp: string, language: 'hi' | 'en' = 'hi', captchaToken?: string) {
   if (captchaToken) {
     const isCaptchaValid = await verifyRecaptcha(captchaToken);
-    if (!isCaptchaValid) return { success: false, message: "Captcha failed" };
+    if (!isCaptchaValid) return { success: false, message: "Captcha validation failed. Please refresh and try again." };
   }
   
   if (resendOtp) {
@@ -174,14 +173,12 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
 }
 
 /**
- * Sends a broadcast or manual email to specific devotees.
- * Optimized for deliverability and strict recipient privacy.
+ * Manual Broadcast with privacy protection (Individual Sending).
  */
 export async function sendManualEmail(emails: string[], subject: string, message: string, language: 'hi' | 'en' = 'hi') {
   if (!resendContact) return { success: false, message: "Email service not configured" };
   if (emails.length === 0) return { success: false, message: "No recipients selected" };
   
-  // Anti-abuse: Limit total recipients in a single broadcast call
   if (emails.length > 500) {
     return { success: false, message: "Broadcast limit exceeded (Max 500 recipients per execution)" };
   }
@@ -190,8 +187,6 @@ export async function sendManualEmail(emails: string[], subject: string, message
   let failCount = 0;
 
   try {
-    // Process sending in individual calls to ensure private delivery (BCC style) 
-    // and avoid Resend batch limits or single-address failures halting the entire job.
     for (const email of emails) {
       try {
         await resendContact.emails.send({
@@ -206,22 +201,21 @@ export async function sendManualEmail(emails: string[], subject: string, message
         });
         successCount++;
       } catch (e) {
-        console.error(`Broadcast individual delivery failure for ${email}:`, e);
+        console.error(`Broadcast delivery failure for ${email}:`, e);
         failCount++;
       }
     }
 
     if (successCount === 0 && failCount > 0) {
-      throw new Error("All email deliveries failed. Please verify your Resend configuration.");
+      throw new Error("All deliveries failed. Please verify Resend config.");
     }
 
     return { 
       success: true, 
-      message: `Successfully delivered to ${successCount} devotees.${failCount > 0 ? ` ${failCount} failed.` : ''}` 
+      message: `Delivered to ${successCount} devotees.${failCount > 0 ? ` ${failCount} failed.` : ''}` 
     };
   } catch (error: any) {
-    console.error("Resend Broadcast Execution Error:", error);
-    return { success: false, message: error.message || "Failed to execute broadcast" };
+    return { success: false, message: error.message || "Broadcast execution failed" };
   }
 }
 
@@ -247,6 +241,5 @@ export async function createStripeCheckoutSession(amount: number, userEmail?: st
 
 export async function createCashfreeOrder(amount: number, userEmail?: string, userId?: string) {
   if (!process.env.CASHFREE_APP_ID) return { success: false };
-  // Placeholder for Cashfree production integration
-  return { success: false, message: "Domestic payment bridge is currently under scheduled maintenance." };
+  return { success: false, message: "Domestic payment bridge is under maintenance." };
 }

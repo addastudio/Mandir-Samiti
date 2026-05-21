@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -19,6 +20,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { doc } from "firebase/firestore";
 import { usePathname } from "next/navigation";
 
+/**
+ * Global Header Component
+ * Optimized for performance and responsive branding.
+ */
 export function Header() {
   const { t, language, settings } = useLanguage();
   const { user, isUserLoading } = useUser();
@@ -53,7 +58,6 @@ export function Header() {
 
   const isTransparent = !isScrolled && pathname === '/';
 
-  // High-performance scroll detection using IntersectionObserver
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     
@@ -71,7 +75,6 @@ export function Header() {
     return () => observer.disconnect();
   }, []);
 
-  // Optimized Active Section tracking
   React.useEffect(() => {
     if (pathname !== '/') return;
 
@@ -173,12 +176,12 @@ export function Header() {
           
           <Link href="/" className="flex items-center min-w-0 group shrink-0">
             <div className={cn(
-              "flex items-center gap-2 lg:gap-4 rounded-2xl px-2.5 py-2 transition-all duration-300",
+              "flex items-center gap-2 lg:gap-4 rounded-2xl px-2 py-1.5 transition-all duration-300 max-w-[180px] xs:max-w-none",
               isTransparent 
                 ? "bg-white/10 backdrop-blur-md border border-white/20 shadow-none hover:bg-white/20" 
                 : "bg-white/40 md:bg-amber-50/80 shadow-sm border border-primary/10 hover:bg-white/60"
             )}>
-              <div className="relative h-9 w-9 sm:h-11 sm:w-11 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/10 shadow-inner">
+              <div className="relative h-8 w-8 sm:h-11 sm:w-11 overflow-hidden rounded-full bg-white shrink-0 flex items-center justify-center border border-primary/10 shadow-inner">
                 {settings?.favicon && !logoError ? (
                   <img 
                     src={settings.favicon} 
@@ -187,21 +190,21 @@ export function Header() {
                     onError={() => setLogoError(true)} 
                   />
                 ) : (
-                  <TempleIcon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+                  <TempleIcon className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
                 )}
               </div>
               <div className="flex flex-col justify-center min-w-0 pt-0.5">
                 <span className={cn(
-                  "text-sm sm:text-base lg:text-xl font-extrabold truncate tracking-tight transition-colors duration-300", 
+                  "text-xs sm:text-base lg:text-xl font-extrabold truncate tracking-tight transition-colors duration-300", 
                   isTransparent ? "text-white" : "text-foreground",
                   language === "hi" ? "font-hindi leading-snug" : "font-headline leading-none"
                 )}>
                   {siteName}
                 </span>
                 <span className={cn(
-                  "text-[7px] sm:text-[9px] uppercase tracking-[0.15em] font-black hidden xs:block truncate mt-0.5 transition-colors duration-300",
+                  "text-[6px] sm:text-[9px] uppercase tracking-[0.15em] font-black hidden xs:block truncate mt-0.5 transition-colors duration-300",
                   isTransparent ? "text-white/70" : "text-muted-foreground opacity-80",
-                  language === 'hi' && "font-hindi text-[10px] tracking-normal leading-none opacity-60"
+                  language === 'hi' && "font-hindi text-[9px] tracking-normal leading-none opacity-60"
                 )}>
                   {language === 'hi' ? 'श्रद्धा और सेवा' : 'Faith and Service'}
                 </span>
@@ -282,6 +285,10 @@ export function Header() {
                       {item.label}
                     </Link>
                   ))}
+                  <div className="py-6 flex items-center justify-between border-b border-border/50">
+                    <span className="text-sm font-bold opacity-60">{t.languageSwitcher}</span>
+                    <LanguageSwitcher />
+                  </div>
                 </div>
                 <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">
                   <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>

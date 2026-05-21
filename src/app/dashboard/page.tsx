@@ -51,6 +51,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /**
  * Devotee Dashboard Root
+ * Hardened for production with full security and data management features.
  */
 function DashboardContent() {
   const { user, isUserLoading } = useUser();
@@ -80,7 +81,7 @@ function DashboardContent() {
   const [changePwdConfirm, setChangePwdConfirm] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   
-  // 2FA Placeholder State
+  // 2FA Security State
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [twoFactorPin, setTwoFactorPin] = useState("");
   const [isUpdating2FA, setIsUpdating2FA] = useState(false);
@@ -185,6 +186,10 @@ function DashboardContent() {
 
   const handleToggle2FA = async (enabled: boolean) => {
     if (!user || !firestore) return;
+    if (enabled && twoFactorPin.length < 6) {
+        toast({ variant: "destructive", title: "Incomplete PIN", description: "Please set a 6-digit secure PIN." });
+        return;
+    }
     setIsUpdating2FA(true);
     try {
       const userRef = doc(firestore, "users", user.uid);
@@ -194,6 +199,7 @@ function DashboardContent() {
       });
       setIs2FAEnabled(enabled);
       toast({ title: "Success", description: t.dashboard2FAUpdateSuccess });
+      if (!enabled) setTwoFactorPin("");
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
@@ -539,7 +545,7 @@ function DashboardContent() {
                     ) : filteredDonations.length > 0 ? (
                       <div className="divide-y">
                         {filteredDonations.map(d => (
-                          <div key={d.id} className="p-4 sm:p-6 flex flex-col sm:row justify-between gap-4">
+                          <div key={d.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                               <div className="p-3 bg-primary/5 rounded-full text-primary"><IndianRupee className="h-5 w-5" /></div>
                               <div>
@@ -646,16 +652,14 @@ function DashboardContent() {
                                 <p className="text-[10px] text-muted-foreground">{is2FAEnabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled}</p>
                             </div>
                             <Switch checked={is2FAEnabled} onCheckedChange={(val) => {
-                                if (val) {
-                                    // Open dialog to set pin before enabling
-                                } else {
+                                if (!val) {
                                     handleToggle2FA(false);
                                 }
                             }} disabled={isUpdating2FA} />
                         </div>
                         
-                        {is2FAEnabled && (
-                            <div className="pt-4 border-t border-black/5 space-y-3">
+                        {!is2FAEnabled && (
+                            <div className="pt-4 border-t border-black/5 space-y-3 animate-in fade-in duration-300">
                                 <Label className="text-[10px] font-black uppercase">{t.dashboard2FASetPin}</Label>
                                 <div className="flex gap-2">
                                     <Input 
@@ -672,6 +676,13 @@ function DashboardContent() {
                                 </div>
                             </div>
                         )}
+
+                        {is2FAEnabled && (
+                          <p className="text-[9px] text-emerald-600 font-bold italic">
+                            <CheckCircle2 className="h-3 w-3 inline mr-1" />
+                            {language === 'hi' ? 'आपका खाता २-स्टेप सत्यापन द्वारा सुरक्षित है।' : 'Your account is protected by 2-step verification.'}
+                          </p>
+                        )}
                     </div>
 
                     {isPasswordUser && (
@@ -686,7 +697,7 @@ function DashboardContent() {
                           <DialogContent className="w-[95%] max-w-md">
                             <DialogHeader>
                               <DialogTitle>{t.dashboardChangePassword}</DialogTitle>
-                              <DialogDescription>{language === 'hi' ? 'अपना पासवर्ड अपडेट करने के लिए विवरण भरें।' : 'Fill in the details to update your password.'}</DialogDescription>
+                              <DialogDescription>{language === 'hi' ? 'अपना पासवर्ड अपडेट करने के लिए विवरण भरें। ' : 'Fill in the details to update your password.'}</DialogDescription>
                             </DialogHeader>
                             <form onSubmit={handleChangePassword} className="space-y-4 py-4">
                               <div className="space-y-2">
