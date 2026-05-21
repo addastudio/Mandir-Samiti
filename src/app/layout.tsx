@@ -1,5 +1,4 @@
-
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Toaster } from '@/components/ui/toaster';
@@ -14,17 +13,39 @@ const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-poppins',
+  display: 'swap',
 });
 
 const mukta = Mukta({
   subsets: ['devanagari', 'latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-mukta',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: 'Surya Mandir Bahpura | सूर्य मंदिर बहपुरा',
-  description: 'Welcome to Mandir Samiti Bahpura. Preserve Faith, Serve Community.',
+  description: 'Official portal for Mandir Samiti Bahpura. Preserving faith and serving the community since decades. Join us for Darshan, Aarti, and Community Service.',
+  keywords: 'Surya Mandir, Bahpura, Mandir Samiti, Bihta Temple, Patna Temples, Hindu Devotion, Temple Donations, Prayer Requests',
+  openGraph: {
+    title: 'Surya Mandir Bahpura | सूर्य मंदिर बहपुरा',
+    description: 'Preserve Faith, Serve Community.',
+    url: 'https://www.suryamandir.online',
+    siteName: 'Mandir Samiti Bahpura',
+    locale: 'hi_IN',
+    type: 'website',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#d97706',
 };
 
 export default function RootLayout({
@@ -33,14 +54,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn(poppins.variable, mukta.variable)}>
       <body
-        className={cn(
-          'font-body antialiased',
-          poppins.variable,
-          mukta.variable
-        )}
-        suppressHydrationWarning={true}
+        className="font-body antialiased bg-background text-foreground"
+        suppressHydrationWarning
       >
         <FirebaseClientProvider>
           <LanguageProvider>
@@ -49,7 +66,7 @@ export default function RootLayout({
               strategy="afterInteractive" 
             />
             
-            <a href="#main-content" className="skip-link">Skip to main content</a>
+            <a href="#main-content" className="skip-link" aria-label="Skip to main content">Skip to main content</a>
             {children}
             <BackToTop />
             <Toaster />

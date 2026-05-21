@@ -77,16 +77,19 @@ export async function getRecaptchaStatus() {
 
 /**
  * Verifies a reCAPTCHA token with Google's API.
+ * Hardened for production safety.
  */
 async function verifyRecaptcha(token: string | null) {
   if (!token) return false;
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
   
   if (!secretKey) {
+    // SECURITY: Only allow simulation/bypass in non-production environments
     if (process.env.NODE_ENV === 'production') {
-      console.warn("CRITICAL: RECAPTCHA_SECRET_KEY is missing in production. Falling back to true (Simulation) to avoid lockout.");
+      console.error("SECURITY ALERT: RECAPTCHA_SECRET_KEY is missing in production. Blocking request.");
+      return false;
     }
-    return true;
+    return true; 
   }
 
   try {
@@ -96,7 +99,7 @@ async function verifyRecaptcha(token: string | null) {
     const data = await response.json();
     return data.success;
   } catch (error) {
-    console.error("reCAPTCHA Fetch Error:", error);
+    console.error("reCAPTCHA Verification Error:", error);
     return false;
   }
 }
@@ -172,17 +175,23 @@ export async function sendVerificationOtp(email: string, otp: string, language: 
 
 /**
  * Sends a broadcast or manual email to specific devotees.
- * Updated to send individually to improve deliverability and ensure privacy.
+ * Optimized for deliverability and strict recipient privacy.
  */
 export async function sendManualEmail(emails: string[], subject: string, message: string, language: 'hi' | 'en' = 'hi') {
   if (!resendContact) return { success: false, message: "Email service not configured" };
   if (emails.length === 0) return { success: false, message: "No recipients selected" };
+  
+  // Anti-abuse: Limit total recipients in a single broadcast call
+  if (emails.length > 500) {
+    return { success: false, message: "Broadcast limit exceeded (Max 500 recipients per execution)" };
+  }
 
   let successCount = 0;
   let failCount = 0;
 
   try {
-    // Process sending in individual calls to ensure private delivery (BCC style) and avoid Resend batch limits
+    // Process sending in individual calls to ensure private delivery (BCC style) 
+    // and avoid Resend batch limits or single-address failures halting the entire job.
     for (const email of emails) {
       try {
         await resendContact.emails.send({
@@ -197,13 +206,13 @@ export async function sendManualEmail(emails: string[], subject: string, message
         });
         successCount++;
       } catch (e) {
-        console.error(`Failed to send to ${email}:`, e);
+        console.error(`Broadcast individual delivery failure for ${email}:`, e);
         failCount++;
       }
     }
 
     if (successCount === 0 && failCount > 0) {
-      throw new Error("All email deliveries failed. Check your Resend configuration.");
+      throw new Error("All email deliveries failed. Please verify your Resend configuration.");
     }
 
     return { 
@@ -211,8 +220,8 @@ export async function sendManualEmail(emails: string[], subject: string, message
       message: `Successfully delivered to ${successCount} devotees.${failCount > 0 ? ` ${failCount} failed.` : ''}` 
     };
   } catch (error: any) {
-    console.error("Resend Manual Email Error:", error);
-    return { success: false, message: error.message || "Failed to send broadcast" };
+    console.error("Resend Broadcast Execution Error:", error);
+    return { success: false, message: error.message || "Failed to execute broadcast" };
   }
 }
 
@@ -238,5 +247,6 @@ export async function createStripeCheckoutSession(amount: number, userEmail?: st
 
 export async function createCashfreeOrder(amount: number, userEmail?: string, userId?: string) {
   if (!process.env.CASHFREE_APP_ID) return { success: false };
-  return { success: false, message: "Service under maintenance" };
+  // Placeholder for Cashfree production integration
+  return { success: false, message: "Domestic payment bridge is currently under scheduled maintenance." };
 }

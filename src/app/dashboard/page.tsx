@@ -41,6 +41,9 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+/**
+ * Devotee Dashboard Root
+ */
 function DashboardContent() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -95,11 +98,6 @@ function DashboardContent() {
     return query(collection(firestore, "prayer_requests"), where("userId", "==", user.uid));
   }, [firestore, user]);
 
-  const eventsRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return collection(firestore, "events");
-  }, [firestore]);
-
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return doc(firestore, "users", user.uid);
@@ -112,7 +110,6 @@ function DashboardContent() {
 
   const { data: donations, isLoading: isDonationsLoading } = useCollection(donationsRef);
   const { data: userRequests, isLoading: isRequestsLoading } = useCollection(requestsQuery);
-  const { data: events, isLoading: isEventsLoading } = useCollection(eventsRef);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
   const { data: adminDoc } = useDoc(adminRoleRef);
 
@@ -258,6 +255,36 @@ function DashboardContent() {
   }
 
   if (!user) return null;
+
+  // SECURITY GUARD: Verification Required
+  if (userProfile && userProfile.isVerified === false) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-secondary/30">
+        <Card className="w-full max-w-md shadow-xl border-primary/20">
+          <CardHeader className="text-center">
+            <div className="mx-auto h-16 w-16 bg-amber-100 rounded-full flex items-center justify-center mb-4 border border-amber-200">
+              <AlertCircle className="h-8 w-8 text-amber-600" />
+            </div>
+            <CardTitle className={cn("text-2xl font-bold", language === 'hi' ? 'font-hindi' : 'font-headline')}>
+              {t.dashboardVerifyRequiredTitle}
+            </CardTitle>
+            <CardDescription className={cn(language === 'hi' ? 'font-hindi' : '')}>
+              {t.dashboardVerifyRequiredDesc}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={handleRefreshStatus} className="w-full h-12 gap-2" disabled={isRefreshing}>
+              {isRefreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {t.dashboardVerifyRefresh}
+            </Button>
+            <Button variant="ghost" onClick={handleLogout} className="w-full h-12 text-destructive">
+              <LogOut className="h-4 w-4 mr-2" /> {t.dashboardLogout}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
   

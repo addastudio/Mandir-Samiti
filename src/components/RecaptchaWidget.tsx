@@ -1,17 +1,14 @@
-
 "use client";
 
 import ReCAPTCHA from "react-google-recaptcha";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ShieldCheck, AlertCircle } from "lucide-react";
+import { ShieldCheck, AlertCircle, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import React from "react";
 
 /**
- * Reusable reCAPTCHA component that handles language and standard keys.
- * Featuring a professional, theme-integrated "Glassmorphism" design.
- * 
- * IMPORTANT: This component requires reCAPTCHA v2 ("I'm not a robot" Checkbox).
+ * Reusable reCAPTCHA component with hardened security UI.
+ * Integrates with standard Google keys or environment-defined keys.
  */
 export function RecaptchaWidget({ onChange, className }: { onChange: (token: string | null) => void, className?: string }) {
   const { language } = useLanguage();
@@ -19,13 +16,13 @@ export function RecaptchaWidget({ onChange, className }: { onChange: (token: str
   // Use the official Google testing key as a fallback if the env var isn't set.
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
   const isSimulation = siteKey === "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+  const isProd = process.env.NODE_ENV === 'production';
 
   return (
     <div className={cn(
       "relative bg-secondary/40 border border-primary/10 rounded-2xl p-4 sm:p-6 transition-all hover:border-primary/20 hover:bg-secondary/60 shadow-sm overflow-hidden",
       className
     )}>
-      {/* Decorative background element */}
       <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-24 h-24 bg-primary/5 rounded-full blur-2xl -z-10" />
       
       <div className="flex items-center justify-between gap-3 mb-4">
@@ -44,9 +41,14 @@ export function RecaptchaWidget({ onChange, className }: { onChange: (token: str
         </div>
         
         {isSimulation && (
-          <div className="flex items-center gap-1 px-2 py-1 rounded bg-amber-100 border border-amber-200 animate-pulse">
-            <AlertCircle className="h-3 w-3 text-amber-700" />
-            <span className="text-[8px] font-black text-amber-800 uppercase tracking-tighter">Simulation Mode</span>
+          <div className={cn(
+            "flex items-center gap-1 px-2 py-1 rounded border animate-pulse",
+            isProd ? "bg-red-100 border-red-200" : "bg-amber-100 border-amber-200"
+          )}>
+            {isProd ? <AlertTriangle className="h-3 w-3 text-red-700" /> : <AlertCircle className="h-3 w-3 text-amber-700" />}
+            <span className={cn("text-[8px] font-black uppercase tracking-tighter", isProd ? "text-red-800" : "text-amber-800")}>
+              {isProd ? 'Security Config Error' : 'Simulation Mode'}
+            </span>
           </div>
         )}
       </div>
