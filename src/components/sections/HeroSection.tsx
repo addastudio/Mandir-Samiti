@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -11,6 +10,10 @@ import { ArrowDown, LayoutDashboard, UserPlus } from "lucide-react";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 
+/**
+ * High-performance Hero Section with video background and fallback imagery.
+ * Utilizes camelCase for Firestore data and handles potential CMS snake_case mappings.
+ */
 export function HeroSection() {
   const { t, language } = useLanguage();
   const { user } = useUser();
@@ -22,7 +25,7 @@ export function HeroSection() {
   }, [firestore]);
 
   const { data: liveHero } = useDoc(heroContentRef);
-  const heroImage = PlaceHolderImages.find((img) => img.id === "hero-background");
+  const heroPlaceholder = PlaceHolderImages.find((img) => img.id === "hero-background");
 
   const headline = language === 'hi' 
     ? (liveHero?.headlineHi || t.heroHeadline)
@@ -32,23 +35,25 @@ export function HeroSection() {
     ? (liveHero?.subtitleHi || t.heroSubtitle)
     : (liveHero?.subtitleEn || t.heroSubtitle);
 
-  const videoUrl = liveHero?.videoUrl || "https://assets.mixkit.co/videos/preview/kit-top-view-of-a-temple-complex-in-india-40000-large.mp4";
-  const bgImage = liveHero?.fallbackImage || heroImage?.imageUrl;
+  // Standardized video and fallback images
+  const videoUrl = liveHero?.videoUrl || "https://assets.mixkit.co/videos/preview/mixkit-top-view-of-a-temple-complex-in-india-40000-large.mp4";
+  const bgImage = liveHero?.fallbackImage || heroPlaceholder?.imageUrl;
 
   return (
     <section
       id="home"
       className="relative flex min-h-[100dvh] w-full items-center justify-center text-center text-white overflow-hidden"
     >
-      {/* Layer 1: Fallback Image */}
+      {/* Layer 1: Fallback Image (LCP Optimized) */}
       {bgImage && (
         <div className="absolute inset-0 z-0">
           <Image
             src={bgImage}
-            alt="Hero Background"
+            alt="Temple Background"
             fill
             className="object-cover"
             priority
+            data-ai-hint={heroPlaceholder?.imageHint}
           />
         </div>
       )}
@@ -64,7 +69,7 @@ export function HeroSection() {
         <source src={videoUrl} type="video/mp4" />
       </video>
 
-      {/* Layer 3: Dark Overlays */}
+      {/* Layer 3: Contrast Overlays */}
       <div className="absolute inset-0 bg-black/40 z-[2]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20 z-[3]" />
       

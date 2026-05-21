@@ -4,13 +4,13 @@
       "id": "hero-background",
       "description": "Serene background image of a temple in morning light.",
       "imageUrl": "https://picsum.photos/seed/101/1920/1080",
-      "imageHint": "serene temple saffron"
+      "imageHint": "serene temple"
     },
     {
       "id": "event-navratri",
       "description": "Devotees celebrating Navratri with traditional dance.",
       "imageUrl": "https://picsum.photos/seed/102/400/300",
-      "imageHint": "navratri celebration garba"
+      "imageHint": "navratri celebration"
     },
     {
       "id": "event-janmashtami",

@@ -29,8 +29,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { Suspense } from "react";
 
-export default function GalleryPage() {
+function GalleryPageContent() {
   const { language, t } = useLanguage();
   const firestore = useFirestore();
   const { user } = useUser();
@@ -77,16 +78,19 @@ export default function GalleryPage() {
     );
   };
 
+  const getYoutubeEmbedUrl = (url: string) => {
+    if (!url) return "";
+    if (url.includes('youtube.com/embed/')) return url;
+    const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+  };
+
   const filteredMedia = React.useMemo(() => {
     if (filter === 'all') return allMediaRaw;
-    if (filter === 'image') return allMediaRaw.filter(m => !isVideo(itemToUrl(m)));
-    if (filter === 'video') return allMediaRaw.filter(m => isVideo(itemToUrl(m)));
+    if (filter === 'image') return allMediaRaw.filter(m => !isVideo(m.imageURL));
+    if (filter === 'video') return allMediaRaw.filter(m => isVideo(m.imageURL));
     return allMediaRaw;
   }, [allMediaRaw, filter]);
-
-  function itemToUrl(item: any) {
-    return item.imageURL || "";
-  }
 
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
@@ -117,22 +121,21 @@ export default function GalleryPage() {
 
   const renderMedia = (url: string, title?: string) => {
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
       return (
         <iframe
           width="100%"
           height="100%"
-          src={`https://www.youtube.com/embed/${videoId}`}
+          src={getYoutubeEmbedUrl(url)}
           title={title || "Video player"}
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-          className="border-0 w-full h-full"
+          className="border-0 w-full h-full rounded-lg"
         ></iframe>
       );
     }
     if (isVideo(url)) {
-      return <video src={url} controls autoPlay className="max-w-full max-h-full mx-auto rounded-lg" />;
+      return <video src={url} controls autoPlay className="max-w-full max-h-full mx-auto rounded-lg shadow-2xl" />;
     }
     return (
       <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
@@ -207,7 +210,7 @@ export default function GalleryPage() {
                 </Button>
               </div>
               {adminDoc && (
-                <Link href="/management">
+                <Link href="/management?tab=gallery">
                   <Button variant="outline" size="sm" className="h-8 text-xs border-primary/30 text-primary hover:bg-primary/5 gap-2">
                     <ShieldCheck className="h-3 w-3" />
                     {t.galleryAddMedia}
@@ -225,7 +228,7 @@ export default function GalleryPage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
               {filteredMedia.map((item, index) => {
-                const url = itemToUrl(item);
+                const url = item.imageURL;
                 const isVid = isVideo(url);
                 return (
                   <div 
@@ -300,11 +303,10 @@ export default function GalleryPage() {
               </Button>
             </div>
 
-            {/* Added padding and z-index safety */}
             <div className="flex-1 flex items-center justify-center p-6 sm:p-12 overflow-hidden z-10">
               {currentItem && (
                 <div className="relative w-full h-full animate-in fade-in zoom-in-95 duration-300 flex items-center justify-center">
-                  {renderMedia(itemToUrl(currentItem), currentItem.caption)}
+                  {renderMedia(currentItem.imageURL, currentItem.caption)}
                 </div>
               )}
             </div>
@@ -369,5 +371,17 @@ export default function GalleryPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function GalleryPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <GalleryPageContent />
+    </Suspense>
   );
 }

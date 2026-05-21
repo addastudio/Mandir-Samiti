@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -8,18 +7,23 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { collection, query, orderBy } from "firebase/firestore";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
+/**
+ * Public Events Section
+ * Lists upcoming festivals and daily puja timings.
+ */
 export function EventsSection() {
   const { t, language } = useLanguage();
   const firestore = useFirestore();
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
 
+  // Query events sorted by date to ensure the most upcoming ones appear first
   const eventsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, "events");
+    return query(collection(firestore, "events"), orderBy("date", "asc"));
   }, [firestore]);
 
   const { data: firebaseEvents, isLoading } = useCollection(eventsQuery);
@@ -83,6 +87,7 @@ export function EventsSection() {
               </ul>
             </CardContent>
           </Card>
+          
           <Card className="shadow-lg border-primary/10">
              <CardHeader className="p-5 sm:p-6">
                 <CardTitle

@@ -90,10 +90,16 @@ export default {
             height: '0',
           },
         },
+        'ring-bell': {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '10%, 30%, 50%, 70%, 90%': { transform: 'rotate(10deg)' },
+          '20%, 40%, 60%, 80%': { transform: 'rotate(-10deg)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'ring': 'ring-bell 2s ease-in-out infinite',
       },
     },
   },

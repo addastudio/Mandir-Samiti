@@ -19,7 +19,7 @@ let firestoreInstance: Firestore | undefined;
  * initialization is not available (e.g. Vercel, Local Development).
  */
 export function initializeFirebase() {
-  // Ensure this only runs on the client side
+  // Ensure this only runs on the client side to prevent hydration mismatches
   if (typeof window === 'undefined') {
     return {} as any;
   }
@@ -42,6 +42,7 @@ export function initializeFirebase() {
     try {
       // initializeFirestore is used to apply experimental connectivity settings
       // We use a singleton here to avoid "Firestore already initialized" errors
+      // forcing long polling avoids issues with restrictive corporate proxies
       firestoreInstance = initializeFirestore(appInstance, {
         experimentalForceLongPolling: true,
         experimentalAutoDetectLongPolling: false,
