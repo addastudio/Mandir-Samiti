@@ -83,7 +83,7 @@ import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, YAxis } fro
 import Link from "next/link";
 import { generateTempleContent } from "@/ai/flows/admin-ai-flow";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus, sendManualEmail } from "@/app/actions";
+import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceStatus, getRecaptchaStatus, sendManualEmail, uploadToPCloudAction } from "@/app/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -645,7 +645,8 @@ function ManagementPageContent() {
                     { label: apiStatus.backend.firebase.label, active: apiStatus.backend.firebase.active, icon: Globe },
                     { label: "Stripe Gateway", active: apiStatus.payments.stripe, icon: HandCoins },
                     { label: "Cashfree Gateway", active: apiStatus.payments.cashfree, icon: Zap },
-                    { label: "Resend Email", active: apiStatus.email.isLive, icon: MessageSquare }
+                    { label: "Resend Email", active: apiStatus.email.isLive, icon: MessageSquare },
+                    { label: "pCloud Storage", active: apiStatus.backend.pcloud.active, icon: CloudUpload }
                   ].map((api, idx) => (
                     <div key={idx} className="p-4 rounded-xl border bg-white flex items-center justify-between">
                       <div className="flex items-center gap-3"><api.icon className="h-4 w-4" /><span className="text-xs font-bold">{api.label}</span></div>
@@ -898,52 +899,68 @@ function GalleryFormDialog({ onSave }: any) {
   const [caption, setCaption] = useState("");
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setUrl(reader.result as string);
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await uploadToPCloudAction(formData);
+      
+      if (res.success && res.url) {
+        setUrl(res.url);
+        toast({ title: "Upload Success", description: "File securely stored in pCloud." });
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Upload Failed", description: err.message });
+    } finally {
       setUploading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button className="gap-2"><ImagePlus className="h-4 w-4" />Add Media</Button></DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Upload Media</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Upload Media to pCloud</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
            <div className="space-y-2">
              <Label>Media Source</Label>
              <div className="grid grid-cols-1 gap-4">
                <div className="flex items-center gap-2">
-                 <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="Enter URL (YouTube or Image)..." className="flex-1" />
+                 <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="Enter manual URL..." className="flex-1" />
                </div>
                <div className="relative">
                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or Local Upload</span></div>
+                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">pCloud Secure Upload</span></div>
                </div>
-               <div className="flex items-center justify-center border-2 border-dashed rounded-xl p-6 hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => document.getElementById('gal-upload')?.click()}>
+               <div className="flex items-center justify-center border-2 border-dashed rounded-xl p-6 hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => !uploading && document.getElementById('gal-upload')?.click()}>
                  <div className="text-center space-y-2">
                    {uploading ? <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /> : <Upload className="h-8 w-8 mx-auto text-muted-foreground" />}
-                   <p className="text-xs font-bold">Click to select photo</p>
+                   <p className="text-xs font-bold">{uploading ? "Uploading to Cloud..." : "Click to select photo or video"}</p>
                  </div>
-                 <input id="gal-upload" type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                 <input id="gal-upload" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileUpload} disabled={uploading} />
                </div>
              </div>
            </div>
            {url && (
              <div className="aspect-video rounded-lg overflow-hidden border bg-black flex items-center justify-center">
-               <img src={url} className="max-h-full max-w-full object-contain" alt="Preview" />
+               {url.includes('.mp4') || url.includes('.webm') ? (
+                 <video src={url} className="max-h-full max-w-full" controls />
+               ) : (
+                 <img src={url} className="max-h-full max-w-full object-contain" alt="Preview" />
+               )}
              </div>
            )}
            <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={e => setCaption(e.target.value)} required /></div>
         </div>
-        <DialogFooter><Button onClick={() => { onSave({ imageURL: url, caption }); setOpen(false); setUrl(""); setCaption(""); }}>Add to Library</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => { onSave({ imageURL: url, caption }); setOpen(false); setUrl(""); setCaption(""); }} disabled={uploading || !url}>Add to Library</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

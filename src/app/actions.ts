@@ -1,4 +1,3 @@
-
 "use server";
 
 import { z } from "zod";
@@ -7,6 +6,7 @@ import Stripe from 'stripe';
 import { headers } from 'next/headers';
 import { getContentfulStatus } from '@/lib/contentful';
 import { getOtpEmailHtml, getBroadcastEmailHtml } from '@/lib/email-templates';
+import { uploadToPCloud } from '@/lib/pcloud';
 
 // Initialize distinct Resend clients for separate operational routes
 const resendOtp = process.env.RESEND_OTP_API_KEY 
@@ -34,8 +34,28 @@ export async function getBackendConnectionStatus() {
     contentful: {
       active: contentful.active,
       label: contentful.label
+    },
+    pcloud: {
+      active: !!process.env.PCLOUD_ACCESS_TOKEN,
+      label: "pCloud Storage"
     }
   };
+}
+
+/**
+ * Upload a file to pCloud Storage.
+ */
+export async function uploadToPCloudAction(formData: FormData) {
+  const file = formData.get("file") as File;
+  if (!file) return { success: false, message: "No file provided" };
+
+  try {
+    const url = await uploadToPCloud(file, file.name);
+    return { success: true, url };
+  } catch (error: any) {
+    console.error("pCloud Action Error:", error);
+    return { success: false, message: error.message || "Storage upload failed" };
+  }
 }
 
 /**

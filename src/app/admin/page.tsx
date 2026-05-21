@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -25,16 +24,19 @@ import {
   ArrowLeft,
   Tv,
   Palette,
-  FileText
+  FileText,
+  Upload,
+  CloudUpload
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { uploadToPCloudAction } from "@/app/actions";
 
 /**
- * Tiny CMS Root Content Component
+ * Tiny CMS Root Content Component with pCloud Storage
  */
 function AdminCMSContent() {
   const { user, isUserLoading } = useUser();
@@ -44,9 +46,9 @@ function AdminCMSContent() {
   const { language, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState<string | null>(null);
 
   // Access the TinyMCE API Key from environment variables
-  // Checking both common names and the user-specified TINA_TOKEN
   const tinyApiKey = process.env.NEXT_PUBLIC_TINA_TOKEN || process.env.NEXT_PUBLIC_TINYMCE_API_KEY || "";
 
   // TinyMCE Content States
@@ -88,6 +90,32 @@ function AdminCMSContent() {
       else if (!adminDoc) router.push("/dashboard");
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
+
+  const handlePCloudUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetFieldId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(targetFieldId);
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await uploadToPCloudAction(formData);
+      
+      if (res.success && res.url) {
+        const input = document.getElementById(targetFieldId) as HTMLInputElement;
+        if (input) {
+          input.value = res.url;
+          toast({ title: "Cloud Upload Success", description: "Image stored in pCloud." });
+        }
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Upload Failed", description: err.message });
+    } finally {
+      setIsUploading(null);
+    }
+  };
 
   const handleSaveHero = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -154,8 +182,6 @@ function AdminCMSContent() {
       { value: 'Email', title: 'Email' },
     ],
     tinymceai_token_provider: async () => {
-      // Note: In production, you'd want to use your actual token service.
-      // This is a demo endpoint provided by Tiny.
       await fetch(`https://demo.api.tiny.cloud/1/jdufhga52csjp4vaqivcwaa029sbkc1d17pjqg8ro54ws7qg/auth/random`, { method: "POST", credentials: "include" });
       return { token: await fetch(`https://demo.api.tiny.cloud/1/jdufhga52csjp4vaqivcwaa029sbkc1d17pjqg8ro54ws7qg/jwt/tinymceai`, { credentials: "include" }).then(r => r.text()) };
     },
@@ -244,8 +270,16 @@ function AdminCMSContent() {
                         <Input name="videoUrl" defaultValue={heroData?.videoUrl} placeholder="https://assets.mixkit.co/..." />
                      </div>
                      <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase opacity-60">Fallback Image URL</Label>
-                        <Input name="fallbackImage" defaultValue={heroData?.fallbackImage} placeholder="https://picsum.photos/..." />
+                        <Label className="text-xs font-bold uppercase opacity-60 flex items-center justify-between">
+                          Fallback Image URL
+                          <div className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors" onClick={() => document.getElementById('hero-upload')?.click()}>
+                            <CloudUpload className="h-3 w-3" />
+                            <span className="text-[10px]">Cloud Upload</span>
+                          </div>
+                        </Label>
+                        <Input id="hero-fallback-url" name="fallbackImage" defaultValue={heroData?.fallbackImage} placeholder="https://picsum.photos/..." />
+                        <input id="hero-upload" type="file" className="hidden" accept="image/*" onChange={(e) => handlePCloudUpload(e, 'hero-fallback-url')} />
+                        {isUploading === 'hero-fallback-url' && <p className="text-[10px] text-primary animate-pulse italic">Uploading to Cloud Storage...</p>}
                      </div>
                    </div>
                    <Button type="submit" className="w-full h-12 font-bold" disabled={isSaving}>
@@ -330,8 +364,16 @@ function AdminCMSContent() {
                     <Input name="liveAartiUrl" defaultValue={siteSettings?.liveAartiUrl} placeholder="https://www.youtube.com/watch?v=..." />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase opacity-60">Favicon / Logo URL</Label>
-                    <Input name="favicon" defaultValue={siteSettings?.favicon} placeholder="/uploads/logo.svg" />
+                    <Label className="text-xs font-bold uppercase opacity-60 flex items-center justify-between">
+                      Favicon / Logo URL
+                      <div className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors" onClick={() => document.getElementById('logo-upload')?.click()}>
+                        <CloudUpload className="h-3 w-3" />
+                        <span className="text-[10px]">Cloud Upload</span>
+                      </div>
+                    </Label>
+                    <Input id="site-logo-url" name="favicon" defaultValue={siteSettings?.favicon} placeholder="/uploads/logo.svg" />
+                    <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={(e) => handlePCloudUpload(e, 'site-logo-url')} />
+                    {isUploading === 'site-logo-url' && <p className="text-[10px] text-primary animate-pulse italic">Uploading Branding to Cloud...</p>}
                   </div>
                   <Button type="submit" className="w-fit px-10 h-12 font-bold" disabled={isSaving}>
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Save Global Settings"}
