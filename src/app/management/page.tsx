@@ -23,7 +23,7 @@ import {
   MessageSquare, 
   BarChart3, 
   HandCoins, 
-  Image as ImageIcon,
+  ImageIcon,
   ShieldCheck,
   Wand2,
   Clock,
@@ -89,9 +89,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-/**
- * Memoized Trend Chart to prevent lagging during management panel interactions.
- */
 const OverviewTrendChart = memo(({ data }: { data: any[] }) => {
   return (
     <ChartContainer 
@@ -134,9 +131,6 @@ const OverviewTrendChart = memo(({ data }: { data: any[] }) => {
 
 OverviewTrendChart.displayName = "OverviewTrendChart";
 
-/**
- * Management Panel Content Component
- */
 function ManagementPageContent() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -168,7 +162,6 @@ function ManagementPageContent() {
   }, [firestore, user]);
   const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
 
-  // Operations
   const noticesRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "notices"), orderBy("createdAt", "desc")), [firestore, adminDoc]);
   const eventsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "events"), orderBy("date", "desc")), [firestore, adminDoc]);
   const membersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "mandir_samiti_members"), orderBy("displayOrder", "asc")), [firestore, adminDoc]);
@@ -274,14 +267,12 @@ function ManagementPageContent() {
     }
   };
 
-  // Optimized Chart Data Calculation
   const chartData = React.useMemo(() => {
     if (!allDonations) return [];
     const daysCount = parseInt(chartPeriod);
     const result = [];
     const now = new Date();
     
-    // Create map for efficient lookup
     const dataMap = new Map();
     allDonations.forEach((d: any) => {
       const dateKey = new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -487,7 +478,7 @@ function ManagementPageContent() {
              </div>
              <Card>
                <Table>
-                 <TableHeader><TableRow><TableHead>Devotee</TableHead><TableHead>Amount</TableHead><TableHead>Mode</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead></TableHeader>
+                 <TableHeader><TableRow><TableHead>Devotee</TableHead><TableHead>Amount</TableHead><TableHead>Mode</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
                  <TableBody>
                    {allDonations?.map((d: any) => (
                      <TableRow key={d.id}>
@@ -642,17 +633,21 @@ function ManagementPageContent() {
               <CardHeader className="bg-secondary/30 border-b"><CardTitle className="text-lg flex items-center gap-2"><Zap className="h-5 w-5 text-primary" />Service Health Dashboard</CardTitle></CardHeader>
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {apiStatus ? ([
-                    { label: apiStatus.backend.firebase.label, active: apiStatus.backend.firebase.active, icon: Globe },
-                    { label: "Stripe Gateway", active: apiStatus.payments.stripe, icon: HandCoins },
-                    { label: "Cashfree Gateway", active: apiStatus.payments.cashfree, icon: Zap },
-                    { label: "Resend Email", active: apiStatus.email.isLive, icon: MessageSquare }
-                  ].map((api, idx) => (
-                    <div key={idx} className="p-4 rounded-xl border bg-white flex items-center justify-between">
-                      <div className="flex items-center gap-3"><api.icon className="h-4 w-4" /><span className="text-xs font-bold">{api.label}</span></div>
-                      <Badge variant={api.active ? "default" : "destructive"}>{api.active ? "LIVE" : "OFFLINE"}</Badge>
-                    </div>
-                  ))) : (<div className="col-span-full py-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>)}
+                  {apiStatus ? (
+                    [
+                      { label: apiStatus.backend.firebase.label, active: apiStatus.backend.firebase.active, icon: Globe },
+                      { label: "Stripe Gateway", active: apiStatus.payments.stripe, icon: HandCoins },
+                      { label: "Cashfree Gateway", active: apiStatus.payments.cashfree, icon: Zap },
+                      { label: "Resend Email", active: apiStatus.email.isLive, icon: MessageSquare }
+                    ].map((api, idx) => (
+                      <div key={idx} className="p-4 rounded-xl border bg-white flex items-center justify-between">
+                        <div className="flex items-center gap-3"><api.icon className="h-4 w-4" /><span className="text-xs font-bold">{api.label}</span></div>
+                        <Badge variant={api.active ? "default" : "destructive"}>{api.active ? "LIVE" : "OFFLINE"}</Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -668,7 +663,7 @@ function BroadcastForm({ allUsers }: { allUsers: any[] }) {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedUids, setSelectedUids] = useState<Set<string>>(new Set(allUsers.map(u => u.id)));
+  const [selectedUids, setSelectedUids] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { language } = useLanguage();
 
@@ -905,7 +900,7 @@ function GalleryFormDialog({ onSave }: any) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 1024) { // 1MB limit for base64 storage
+    if (file.size > 1024 * 1024) { 
       toast({ variant: "destructive", title: "File too large", description: "Base64 storage requires images smaller than 1MB." });
       return;
     }
