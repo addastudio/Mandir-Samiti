@@ -58,6 +58,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -142,6 +153,14 @@ function ManagementPageContent() {
   const [isAIGenerating, setIsAIGenerating] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<"7" | "30">("7");
 
+  // Deletion States
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ coll: string, id: string, title: string } | null>(null);
+
+  // Role Toggle States
+  const [roleConfirmOpen, setRoleConfirmOpen] = useState(false);
+  const [roleTarget, setRoleConfirmTarget] = useState<{ id: string, name: string, isAdmin: boolean } | null>(null);
+
   useEffect(() => {
     setMounted(true);
     Promise.all([
@@ -201,37 +220,49 @@ function ManagementPageContent() {
     });
   };
 
-  const handleDelete = (coll: string, id: string, title: string) => {
-    if (!firestore || !confirm("Are you sure you want to permanently delete this item?")) return;
-    const docRef = doc(firestore, coll, id);
-    deleteDocumentNonBlocking(docRef);
-    logAction("DELETE", coll.toUpperCase(), title);
-    toast({ title: "Deletion initiated", description: `${title} is being removed.` });
+  const triggerDelete = (coll: string, id: string, title: string) => {
+    setItemToDelete({ coll, id, title });
+    setDeleteConfirmOpen(true);
   };
 
-  const handleToggleAdmin = async (targetUserId: string, targetName: string, currentlyAdmin: boolean) => {
-    if (!firestore || !user) return;
-    if (targetUserId === user.uid) {
+  const executeDelete = () => {
+    if (!firestore || !itemToDelete) return;
+    const docRef = doc(firestore, itemToDelete.coll, itemToDelete.id);
+    deleteDocumentNonBlocking(docRef);
+    logAction("DELETE", itemToDelete.coll.toUpperCase(), itemToDelete.title);
+    toast({ title: "Deletion initiated", description: `${itemToDelete.title} is being removed.` });
+    setItemToDelete(null);
+    setDeleteConfirmOpen(false);
+  };
+
+  const triggerToggleAdmin = (targetUserId: string, targetName: string, currentlyAdmin: boolean) => {
+    if (targetUserId === user?.uid) {
       toast({ variant: "destructive", title: "Action Forbidden", description: "You cannot remove your own admin access." });
       return;
     }
+    setRoleConfirmTarget({ id: targetUserId, name: targetName, isAdmin: currentlyAdmin });
+    setRoleConfirmOpen(true);
+  };
 
-    const action = currentlyAdmin ? "REMOVE_ADMIN" : "GRANT_ADMIN";
-    if (!confirm(`Are you sure you want to ${currentlyAdmin ? 'revoke' : 'grant'} admin access for ${targetName}?`)) return;
-
+  const executeToggleAdmin = async () => {
+    if (!firestore || !user || !roleTarget) return;
+    const action = roleTarget.isAdmin ? "REMOVE_ADMIN" : "GRANT_ADMIN";
     try {
-      if (currentlyAdmin) {
-        await deleteDoc(doc(firestore, "roles_admin", targetUserId));
+      if (roleTarget.isAdmin) {
+        await deleteDoc(doc(firestore, "roles_admin", roleTarget.id));
       } else {
-        await setDoc(doc(firestore, "roles_admin", targetUserId), {
+        await setDoc(doc(firestore, "roles_admin", roleTarget.id), {
           assignedAt: new Date().toISOString(),
           assignedBy: user.uid
         });
       }
-      logAction(action, "ROLE", targetName);
+      logAction(action, "ROLE", roleTarget.name);
       toast({ title: "Administrative status updated" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
+    } finally {
+      setRoleConfirmOpen(false);
+      setRoleConfirmTarget(null);
     }
   };
 
@@ -411,7 +442,7 @@ function ManagementPageContent() {
                         <TableCell className="font-bold">{n.title}</TableCell>
                         <TableCell><Badge variant={n.importance === 'urgent' ? 'destructive' : 'outline'}>{n.importance}</Badge></TableCell>
                         <TableCell className="text-xs text-muted-foreground">{new Date(n.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete("notices", n.id, n.title)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                        <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => triggerDelete("notices", n.id, n.title)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
                      </TableRow>
                    ))}
                  </TableBody>
@@ -432,7 +463,7 @@ function ManagementPageContent() {
                      <TableRow key={e.id}>
                         <TableCell className="font-bold">{e.title}</TableCell>
                         <TableCell className="text-xs">{new Date(e.date).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete("events", e.id, e.title)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                        <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => triggerDelete("events", e.id, e.title)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
                      </TableRow>
                    ))}
                  </TableBody>
@@ -449,14 +480,14 @@ function ManagementPageContent() {
                 {galleryItems?.map((item: any) => (
                   <Card key={item.id} className="relative group overflow-hidden aspect-square border-primary/10 shadow-sm">
                     <img src={item.imageURL} className="w-full h-full object-cover" alt="" />
-                    <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center p-3 z-10 pointer-events-none group-hover:pointer-events-auto">
+                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-3 z-10 transition-all opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto">
                        <p className="text-[10px] text-white text-center mb-3 line-clamp-2 font-medium leading-tight">{item.caption}</p>
                        <Button 
                         type="button"
                         variant="destructive" 
                         size="icon" 
-                        className="h-8 w-8 shadow-lg hover:scale-110 active:scale-95 transition-transform" 
-                        onClick={(e) => { e.stopPropagation(); handleDelete("gallery", item.id, item.caption || "Media"); }}
+                        className="h-8 w-8 shadow-lg hover:scale-110 active:scale-95 transition-transform pointer-events-auto" 
+                        onClick={(e) => { e.stopPropagation(); triggerDelete("gallery", item.id, item.caption || "Media"); }}
                        >
                          <Trash2 className="h-4 w-4" />
                        </Button>
@@ -535,7 +566,7 @@ function ManagementPageContent() {
                         <TableCell className="w-12"><Input className="h-8 w-12 text-center text-xs" defaultValue={m.displayOrder} onBlur={(e) => updateDoc(doc(firestore!, "mandir_samiti_members", m.id), { displayOrder: parseInt(e.target.value) || 0 })} /></TableCell>
                         <TableCell className="font-bold">{m.name}</TableCell>
                         <TableCell><Badge variant="secondary">{m.role}</Badge></TableCell>
-                        <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete("mandir_samiti_members", m.id, m.name)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                        <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => triggerDelete("mandir_samiti_members", m.id, m.name)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
                       </TableRow>
                     ))}
                  </TableBody>
@@ -579,7 +610,7 @@ function ManagementPageContent() {
                                 variant={isAdmin ? "destructive" : "outline"} 
                                 size="sm" 
                                 className="h-7 text-[10px] px-3 font-bold uppercase tracking-tighter"
-                                onClick={() => handleToggleAdmin(u.id, u.name, !!isAdmin)}
+                                onClick={() => triggerToggleAdmin(u.id, u.name, !!isAdmin)}
                                 disabled={u.id === user.uid}
                               >
                                 {isAdmin ? "Revoke Admin" : "Grant Admin"}
@@ -633,17 +664,24 @@ function ManagementPageContent() {
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {apiStatus ? (
-                    [
-                      { label: apiStatus.backend.firebase.label, active: apiStatus.backend.firebase.active, icon: Globe },
-                      { label: "Stripe Gateway", active: apiStatus.payments.stripe, icon: HandCoins },
-                      { label: "Cashfree Gateway", active: apiStatus.payments.cashfree, icon: Zap },
-                      { label: "Resend Email", active: apiStatus.email.isLive, icon: MessageSquare }
-                    ].map((api, idx) => (
-                      <div key={idx} className="p-4 rounded-xl border bg-white flex items-center justify-between">
-                        <div className="flex items-center gap-3"><api.icon className="h-4 w-4" /><span className="text-xs font-bold">{api.label}</span></div>
-                        <Badge variant={api.active ? "default" : "destructive"}>{api.active ? "LIVE" : "OFFLINE"}</Badge>
+                    <>
+                      <div className="p-4 rounded-xl border bg-white flex items-center justify-between">
+                        <div className="flex items-center gap-3"><Globe className="h-4 w-4" /><span className="text-xs font-bold">{apiStatus.backend.firebase.label}</span></div>
+                        <Badge variant={apiStatus.backend.firebase.active ? "default" : "destructive"}>LIVE</Badge>
                       </div>
-                    ))
+                      <div className="p-4 rounded-xl border bg-white flex items-center justify-between">
+                        <div className="flex items-center gap-3"><HandCoins className="h-4 w-4" /><span className="text-xs font-bold">Stripe Gateway</span></div>
+                        <Badge variant={apiStatus.payments.stripe ? "default" : "destructive"}>{apiStatus.payments.stripe ? "LIVE" : "OFFLINE"}</Badge>
+                      </div>
+                      <div className="p-4 rounded-xl border bg-white flex items-center justify-between">
+                        <div className="flex items-center gap-3"><Zap className="h-4 w-4" /><span className="text-xs font-bold">Cashfree Gateway</span></div>
+                        <Badge variant={apiStatus.payments.cashfree ? "default" : "destructive"}>{apiStatus.payments.cashfree ? "LIVE" : "OFFLINE"}</Badge>
+                      </div>
+                      <div className="p-4 rounded-xl border bg-white flex items-center justify-between">
+                        <div className="flex items-center gap-3"><MessageSquare className="h-4 w-4" /><span className="text-xs font-bold">Resend Email</span></div>
+                        <Badge variant={apiStatus.email.isLive ? "default" : "destructive"}>{apiStatus.email.isLive ? "LIVE" : "OFFLINE"}</Badge>
+                      </div>
+                    </>
                   ) : (
                     <div className="col-span-full py-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
                   )}
@@ -652,6 +690,48 @@ function ManagementPageContent() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Global Confirmation Dialogs */}
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent className="w-[95%] max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-destructive" />
+                Are you absolutely sure?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete <strong>{itemToDelete?.title}</strong> from the database.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-4 gap-2 flex-col sm:flex-row">
+              <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={executeDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete Permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={roleConfirmOpen} onOpenChange={setRoleConfirmOpen}>
+          <AlertDialogContent className="w-[95%] max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-primary" />
+                Confirm Admin Status Toggle
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to {roleTarget?.isAdmin ? 'revoke' : 'grant'} administrative access for <strong>{roleTarget?.name}</strong>?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-4 gap-2 flex-col sm:flex-row">
+              <AlertDialogCancel onClick={() => setRoleConfirmTarget(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={executeToggleAdmin} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Confirm Update
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </main>
     </div>
   );
