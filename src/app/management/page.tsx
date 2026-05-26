@@ -922,39 +922,41 @@ function GalleryFormDialog({ onSave }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button className="gap-2"><ImagePlus className="h-4 w-4" />Add Media</Button></DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Add Media to Gallery</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-4">
-           <div className="space-y-2">
-             <Label>Media Source</Label>
-             <div className="grid grid-cols-1 gap-4">
-               <div className="flex items-center gap-2">
-                 <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="Enter external URL..." className="flex-1" />
-               </div>
-               <div className="relative">
-                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Local Base64 Upload</span></div>
-               </div>
-               <div className="flex items-center justify-center border-2 border-dashed rounded-xl p-6 hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => !uploading && document.getElementById('gal-upload')?.click()}>
-                 <div className="text-center space-y-2">
-                   {uploading ? <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /> : <Upload className="h-8 w-8 mx-auto text-muted-foreground" />}
-                   <p className="text-xs font-bold">{uploading ? "Processing..." : "Select photo (Max 1MB)"}</p>
+        <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="space-y-4 py-4">
+             <div className="space-y-2">
+               <Label>Media Source</Label>
+               <div className="grid grid-cols-1 gap-4">
+                 <div className="flex items-center gap-2">
+                   <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="Enter external URL..." className="flex-1" />
                  </div>
-                 <input id="gal-upload" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileUpload} disabled={uploading} />
+                 <div className="relative">
+                   <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                   <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Local Base64 Upload</span></div>
+                 </div>
+                 <div className="flex items-center justify-center border-2 border-dashed rounded-xl p-6 hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => !uploading && document.getElementById('gal-upload')?.click()}>
+                   <div className="text-center space-y-2">
+                     {uploading ? <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /> : <Upload className="h-8 w-8 mx-auto text-muted-foreground" />}
+                     <p className="text-xs font-bold">{uploading ? "Processing..." : "Select photo (Max 1MB)"}</p>
+                   </div>
+                   <input id="gal-upload" type="file" className="hidden" accept="image/*,video/*" onChange={handleFileUpload} disabled={uploading} />
+                 </div>
                </div>
              </div>
-           </div>
-           {url && (
-             <div className="aspect-video rounded-lg overflow-hidden border bg-black flex items-center justify-center">
-               {url.includes('.mp4') || url.includes('.webm') || url.startsWith('data:video') ? (
-                 <video src={url} className="max-h-full max-w-full" controls />
-               ) : (
-                 <img src={url} className="max-h-full max-w-full object-contain" alt="Preview" />
-               )}
-             </div>
-           )}
-           <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={e => setCaption(e.target.value)} required /></div>
-        </div>
+             {url && (
+               <div className="aspect-video rounded-lg overflow-hidden border bg-black flex items-center justify-center">
+                 {url.includes('.mp4') || url.includes('.webm') || url.startsWith('data:video') ? (
+                   <video src={url} className="max-h-full max-w-full" controls />
+                 ) : (
+                   <img src={url} className="max-h-full max-w-full object-contain" alt="Preview" />
+                 )}
+               </div>
+             )}
+             <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={e => setCaption(e.target.value)} required /></div>
+          </div>
+        </ScrollArea>
         <DialogFooter><Button onClick={() => { onSave({ imageURL: url, caption }); setOpen(false); setUrl(""); setCaption(""); }} disabled={uploading || !url}>Add to Library</Button></DialogFooter>
       </DialogContent>
     </Dialog>
