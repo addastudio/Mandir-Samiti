@@ -33,10 +33,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { uploadToPCloudAction } from "@/app/actions";
 
 /**
- * Tiny CMS Root Content Component with pCloud Storage
+ * Tiny CMS Root Content Component with Base64 Storage
  */
 function AdminCMSContent() {
   const { user, isUserLoading } = useUser();
@@ -91,30 +90,30 @@ function AdminCMSContent() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
 
-  const handlePCloudUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetFieldId: string) => {
+  const handleBase64Upload = async (e: React.ChangeEvent<HTMLInputElement>, targetFieldId: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsUploading(targetFieldId);
     
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await uploadToPCloudAction(formData);
-      
-      if (res.success && res.url) {
-        const input = document.getElementById(targetFieldId) as HTMLInputElement;
-        if (input) {
-          input.value = res.url;
-          toast({ title: "Cloud Upload Success", description: "Image stored in pCloud." });
-        }
-      } else {
-        throw new Error(res.message);
-      }
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Upload Failed", description: err.message });
-    } finally {
-      setIsUploading(null);
+    if (file.size > 1024 * 1024) {
+      toast({ variant: "destructive", title: "File too large", description: "Please use images smaller than 1MB." });
+      return;
     }
+
+    setIsUploading(targetFieldId);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const input = document.getElementById(targetFieldId) as HTMLInputElement;
+      if (input) {
+        input.value = reader.result as string;
+        toast({ title: "Image Processed", description: "Base64 generated successfully." });
+      }
+      setIsUploading(null);
+    };
+    reader.onerror = () => {
+      setIsUploading(null);
+      toast({ variant: "destructive", title: "Processing Error" });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSaveHero = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -271,15 +270,15 @@ function AdminCMSContent() {
                      </div>
                      <div className="space-y-2">
                         <Label className="text-xs font-bold uppercase opacity-60 flex items-center justify-between">
-                          Fallback Image URL
+                          Fallback Image
                           <div className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors" onClick={() => document.getElementById('hero-upload')?.click()}>
-                            <CloudUpload className="h-3 w-3" />
-                            <span className="text-[10px]">Cloud Upload</span>
+                            <Upload className="h-3 w-3" />
+                            <span className="text-[10px]">Local Upload</span>
                           </div>
                         </Label>
-                        <Input id="hero-fallback-url" name="fallbackImage" defaultValue={heroData?.fallbackImage} placeholder="https://picsum.photos/..." />
-                        <input id="hero-upload" type="file" className="hidden" accept="image/*" onChange={(e) => handlePCloudUpload(e, 'hero-fallback-url')} />
-                        {isUploading === 'hero-fallback-url' && <p className="text-[10px] text-primary animate-pulse italic">Uploading to Cloud Storage...</p>}
+                        <Input id="hero-fallback-url" name="fallbackImage" defaultValue={heroData?.fallbackImage} placeholder="Paste URL or upload locally" />
+                        <input id="hero-upload" type="file" className="hidden" accept="image/*" onChange={(e) => handleBase64Upload(e, 'hero-fallback-url')} />
+                        {isUploading === 'hero-fallback-url' && <p className="text-[10px] text-primary animate-pulse italic">Processing Base64...</p>}
                      </div>
                    </div>
                    <Button type="submit" className="w-full h-12 font-bold" disabled={isSaving}>
@@ -365,15 +364,15 @@ function AdminCMSContent() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-bold uppercase opacity-60 flex items-center justify-between">
-                      Favicon / Logo URL
+                      Favicon / Logo
                       <div className="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors" onClick={() => document.getElementById('logo-upload')?.click()}>
-                        <CloudUpload className="h-3 w-3" />
-                        <span className="text-[10px]">Cloud Upload</span>
+                        <Upload className="h-3 w-3" />
+                        <span className="text-[10px]">Local Upload</span>
                       </div>
                     </Label>
                     <Input id="site-logo-url" name="favicon" defaultValue={siteSettings?.favicon} placeholder="/uploads/logo.svg" />
-                    <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={(e) => handlePCloudUpload(e, 'site-logo-url')} />
-                    {isUploading === 'site-logo-url' && <p className="text-[10px] text-primary animate-pulse italic">Uploading Branding to Cloud...</p>}
+                    <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={(e) => handleBase64Upload(e, 'site-logo-url')} />
+                    {isUploading === 'site-logo-url' && <p className="text-[10px] text-primary animate-pulse italic">Processing Logo...</p>}
                   </div>
                   <Button type="submit" className="w-fit px-10 h-12 font-bold" disabled={isSaving}>
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Save Global Settings"}
