@@ -26,26 +26,23 @@ import {
   ImageIcon,
   ShieldCheck,
   Wand2,
-  Clock,
+  History,
   LayoutDashboard,
   Search,
-  History,
   Palette,
   Mail,
   Camera,
   ImagePlus,
   Lock,
-  UserCog,
   Upload,
   TrendingUp,
-  UserCheck,
-  Shield,
+  Crown,
+  CloudUpload,
   Zap,
   Banknote,
   CheckCircle2,
-  Check,
-  Crown,
-  CloudUpload
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -88,6 +85,7 @@ import { getBackendConnectionStatus, getPaymentGatewayStatus, getEmailServiceSta
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 const OverviewTrendChart = memo(({ data }: { data: any[] }) => {
   return (
@@ -191,29 +189,24 @@ function ManagementPageContent() {
     }
   }, [user, isUserLoading, adminDoc, isAdminLoading, router, mounted]);
 
-  const logAction = async (action: string, type: string, title: string) => {
+  const logAction = (action: string, type: string, title: string) => {
     if (!firestore || !user) return;
-    try {
-      await addDoc(collection(firestore, "admin_activity_logs"), {
-        adminId: user.uid,
-        adminName: user.displayName || user.email,
-        actionType: action,
-        entityType: type,
-        entityTitle: title,
-        timestamp: new Date().toISOString()
-      });
-    } catch (e) { console.error("Logging failed", e); }
+    addDocumentNonBlocking(collection(firestore, "admin_activity_logs"), {
+      adminId: user.uid,
+      adminName: user.displayName || user.email,
+      actionType: action,
+      entityType: type,
+      entityTitle: title,
+      timestamp: new Date().toISOString()
+    });
   };
 
-  const handleDelete = async (coll: string, id: string, title: string) => {
-    if (!firestore || !confirm("Are you sure?")) return;
-    try {
-      await deleteDoc(doc(firestore, coll, id));
-      await logAction("DELETE", coll.toUpperCase(), title);
-      toast({ title: "Successfully Deleted" });
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message });
-    }
+  const handleDelete = (coll: string, id: string, title: string) => {
+    if (!firestore || !confirm("Are you sure you want to permanently delete this item?")) return;
+    const docRef = doc(firestore, coll, id);
+    deleteDocumentNonBlocking(docRef);
+    logAction("DELETE", coll.toUpperCase(), title);
+    toast({ title: "Deletion initiated", description: `${title} is being removed.` });
   };
 
   const handleToggleAdmin = async (targetUserId: string, targetName: string, currentlyAdmin: boolean) => {
@@ -235,7 +228,7 @@ function ManagementPageContent() {
           assignedBy: user.uid
         });
       }
-      await logAction(action, "ROLE", targetName);
+      logAction(action, "ROLE", targetName);
       toast({ title: "Administrative status updated" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
@@ -246,7 +239,7 @@ function ManagementPageContent() {
     if (!firestore) return;
     try {
       await updateDoc(doc(firestore, "users", targetUserId), { role: newRole });
-      await logAction("UPDATE_ROLE", "USER", `${targetName} -> ${newRole}`);
+      logAction("UPDATE_ROLE", "USER", `${targetName} -> ${newRole}`);
       toast({ title: "User role updated successfully" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message });
@@ -407,7 +400,7 @@ function ManagementPageContent() {
           <TabsContent value="notices" className="space-y-6">
              <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Temple Announcements</h2>
-                <NoticeFormDialog onSave={async (d: any) => { await addDoc(collection(firestore!, "notices"), {...d, createdAt: new Date().toISOString()}); await logAction("CREATE", "NOTICE", d.title); }} isAIGenerating={isAIGenerating} onAIGenerate={handleAIGenerate} />
+                <NoticeFormDialog onSave={(d: any) => { addDocumentNonBlocking(collection(firestore!, "notices"), {...d, createdAt: new Date().toISOString()}); logAction("CREATE", "NOTICE", d.title); }} isAIGenerating={isAIGenerating} onAIGenerate={handleAIGenerate} />
              </div>
              <Card>
                <Table>
@@ -429,7 +422,7 @@ function ManagementPageContent() {
           <TabsContent value="events" className="space-y-6">
              <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Event Calendar</h2>
-                <EventFormDialog onSave={async (d: any) => { await addDoc(collection(firestore!, "events"), d); await logAction("CREATE", "EVENT", d.title); }} isAIGenerating={isAIGenerating} onAIGenerate={handleAIGenerate} />
+                <EventFormDialog onSave={(d: any) => { addDocumentNonBlocking(collection(firestore!, "events"), d); logAction("CREATE", "EVENT", d.title); }} isAIGenerating={isAIGenerating} onAIGenerate={handleAIGenerate} />
              </div>
              <Card>
                <Table>
@@ -450,15 +443,21 @@ function ManagementPageContent() {
           <TabsContent value="gallery" className="space-y-6">
              <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Media Library</h2>
-                <GalleryFormDialog onSave={async (d: any) => { await addDoc(collection(firestore!, "gallery"), d); await logAction("CREATE", "GALLERY", d.caption || "Media Item"); }} />
+                <GalleryFormDialog onSave={(d: any) => { addDocumentNonBlocking(collection(firestore!, "gallery"), d); logAction("CREATE", "GALLERY", d.caption || "Media Item"); }} />
              </div>
              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {galleryItems?.map((item: any) => (
-                  <Card key={item.id} className="relative group overflow-hidden aspect-square">
+                  <Card key={item.id} className="relative group overflow-hidden aspect-square border-primary/10 shadow-sm">
                     <img src={item.imageURL} className="w-full h-full object-cover" alt="" />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2">
-                       <p className="text-[10px] text-white text-center mb-2 line-clamp-2">{item.caption}</p>
-                       <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete("gallery", item.id, item.caption || "Media")}>
+                    <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center p-3 z-10 pointer-events-none group-hover:pointer-events-auto">
+                       <p className="text-[10px] text-white text-center mb-3 line-clamp-2 font-medium leading-tight">{item.caption}</p>
+                       <Button 
+                        type="button"
+                        variant="destructive" 
+                        size="icon" 
+                        className="h-8 w-8 shadow-lg hover:scale-110 active:scale-95 transition-transform" 
+                        onClick={(e) => { e.stopPropagation(); handleDelete("gallery", item.id, item.caption || "Media"); }}
+                       >
                          <Trash2 className="h-4 w-4" />
                        </Button>
                     </div>
@@ -470,9 +469,9 @@ function ManagementPageContent() {
           <TabsContent value="donations" className="space-y-6">
              <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Global Donation Records</h2>
-                <ManualDonationFormDialog onSave={async (d: any) => { 
-                  await addDoc(collection(firestore!, "donations"), d); 
-                  await logAction("CREATE", "DONATION", `Manual: ${d.devoteeName} - ₹${d.amount}`); 
+                <ManualDonationFormDialog onSave={(d: any) => { 
+                  addDocumentNonBlocking(collection(firestore!, "donations"), d); 
+                  logAction("CREATE", "DONATION", `Manual: ${d.devoteeName} - ₹${d.amount}`); 
                   toast({ title: "Manual record saved successfully." });
                 }} />
              </div>
@@ -501,7 +500,7 @@ function ManagementPageContent() {
                   <Card key={r.id} className="border-l-4 border-l-primary">
                     <CardHeader className="flex flex-row justify-between items-start pb-2">
                        <div><CardTitle className="text-base">{r.name}</CardTitle><CardDescription>{r.email || r.phone}</CardDescription></div>
-                       <Select defaultValue={r.status} onValueChange={async (val) => await updateDoc(doc(firestore!, "prayer_requests", r.id), { status: val })}>
+                       <Select defaultValue={r.status} onValueChange={(val) => updateDoc(doc(firestore!, "prayer_requests", r.id), { status: val })}>
                           <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
                              <SelectItem value="pending">Pending</SelectItem>
@@ -525,7 +524,7 @@ function ManagementPageContent() {
           <TabsContent value="members" className="space-y-6">
              <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Committee Structure</h2>
-                <MemberFormDialog onSave={async (d: any) => { await addDoc(collection(firestore!, "mandir_samiti_members"), d); await logAction("CREATE", "MEMBER", d.name); }} />
+                <MemberFormDialog onSave={(d: any) => { addDocumentNonBlocking(collection(firestore!, "mandir_samiti_members"), d); logAction("CREATE", "MEMBER", d.name); }} />
              </div>
              <Card>
                <Table>
@@ -533,7 +532,7 @@ function ManagementPageContent() {
                  <TableBody>
                     {members?.map((m: any) => (
                       <TableRow key={m.id}>
-                        <TableCell className="w-12"><Input className="h-8 w-12 text-center text-xs" defaultValue={m.displayOrder} onBlur={async (e) => await updateDoc(doc(firestore!, "mandir_samiti_members", m.id), { displayOrder: parseInt(e.target.value) || 0 })} /></TableCell>
+                        <TableCell className="w-12"><Input className="h-8 w-12 text-center text-xs" defaultValue={m.displayOrder} onBlur={(e) => updateDoc(doc(firestore!, "mandir_samiti_members", m.id), { displayOrder: parseInt(e.target.value) || 0 })} /></TableCell>
                         <TableCell className="font-bold">{m.name}</TableCell>
                         <TableCell><Badge variant="secondary">{m.role}</Badge></TableCell>
                         <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete("mandir_samiti_members", m.id, m.name)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
@@ -573,7 +572,7 @@ function ManagementPageContent() {
                           <TableCell>
                             <div className="flex items-center gap-3">
                                <Badge variant={isAdmin ? "default" : "outline"} className={cn("gap-1", isAdmin ? "bg-primary" : "opacity-50")}>
-                                 {isAdmin ? <ShieldCheck className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+                                 {isAdmin ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
                                  {isAdmin ? "Admin" : "Standard"}
                                </Badge>
                                <Button 
