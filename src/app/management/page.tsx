@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, doc, addDoc, updateDoc, deleteDoc, query, orderBy, setDoc, collectionGroup, where, limit } from "firebase/firestore";
+import { collection, doc, updateDoc, deleteDoc, query, orderBy, setDoc, collectionGroup, limit } from "firebase/firestore";
 import { 
   Loader2, 
   Plus, 
@@ -23,7 +23,7 @@ import {
   MessageSquare, 
   BarChart3, 
   HandCoins, 
-  ImageIcon,
+  Camera,
   ShieldCheck,
   Wand2,
   History,
@@ -31,18 +31,14 @@ import {
   Search,
   Palette,
   Mail,
-  Camera,
   ImagePlus,
   Lock,
   Upload,
   TrendingUp,
   Crown,
-  CloudUpload,
   Zap,
   Banknote,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp
+  CheckCircle2
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -183,8 +179,8 @@ function ManagementPageContent() {
   const membersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "mandir_samiti_members"), orderBy("displayOrder", "asc")), [firestore, adminDoc]);
   const requestsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "prayer_requests"), orderBy("createdAt", "desc")), [firestore, adminDoc]);
   const donationsGroupRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collectionGroup(firestore, "donations"), orderBy("date", "desc")), [firestore, adminDoc]);
-  const logsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "admin_activity_logs"), orderBy("timestamp", "desc")), [firestore, adminDoc]);
   const recentLogsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "admin_activity_logs"), orderBy("timestamp", "desc"), limit(10)), [firestore, adminDoc]);
+  const logsRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : query(collection(firestore, "admin_activity_logs"), orderBy("timestamp", "desc")), [firestore, adminDoc]);
   const galleryRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "gallery"), [firestore, adminDoc]);
   const usersRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "users"), [firestore, adminDoc]);
   const rolesAdminRef = useMemoFirebase(() => (!firestore || !adminDoc) ? null : collection(firestore, "roles_admin"), [firestore, adminDoc]);
@@ -194,8 +190,8 @@ function ManagementPageContent() {
   const { data: members } = useCollection(membersRef);
   const { data: requests } = useCollection(requestsRef);
   const { data: allDonations } = useCollection(donationsGroupRef);
-  const { data: logs } = useCollection(logsRef);
   const { data: recentLogs } = useCollection(recentLogsRef);
+  const { data: logs } = useCollection(logsRef);
   const { data: galleryItems } = useCollection(galleryRef);
   const { data: allUsers } = useCollection(usersRef);
   const { data: adminRoles } = useCollection(rolesAdminRef);
@@ -894,9 +890,9 @@ function MemberFormDialog({ onSave }: any) {
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Add Committee Member</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
-           <div className="space-y-2"><Label>Full Name</Label><Input value={name} onChange={e => setName(e.target.value)} required /></div>
-           <div className="space-y-2"><Label>Role / Designation</Label><Input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. President, Secretary" required /></div>
-           <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={order} onChange={e => setOrder(e.target.value)} /></div>
+           <div className="space-y-2"><Label>Full Name</Label><Input value={name} onChange={setName} required /></div>
+           <div className="space-y-2"><Label>Role / Designation</Label><Input value={role} onChange={setRole} placeholder="e.g. President, Secretary" required /></div>
+           <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={order} onChange={setOrder} /></div>
         </div>
         <DialogFooter><Button onClick={() => { onSave({ name, role, displayOrder: parseInt(order) || 0 }); setOpen(false); setName(""); setRole(""); }}>Save Member</Button></DialogFooter>
       </DialogContent>
@@ -923,14 +919,14 @@ function NoticeFormDialog({ onSave, isAIGenerating, onAIGenerate }: any) {
                  {isAIGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               </Button>
            </div>
-           <div className="space-y-2"><Label>Headline</Label><Input value={title} onChange={e => setTitle(e.target.value)} required /></div>
+           <div className="space-y-2"><Label>Headline</Label><Input value={title} onChange={setTitle} required /></div>
            <div className="space-y-2"><Label>Priority</Label>
               <Select value={importance} onValueChange={setImportance}>
                  <SelectTrigger><SelectValue /></SelectTrigger>
                  <SelectContent><SelectItem value="normal">Normal</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent>
               </Select>
            </div>
-           <div className="space-y-2"><Label>Content</Label><Textarea rows={4} value={content} onChange={e => setContent(e.target.value)} required /></div>
+           <div className="space-y-2"><Label>Content</Label><Textarea rows={4} value={content} onChange={setContent} required /></div>
         </div>
         <DialogFooter><Button onClick={() => { onSave({ title, content, importance }); setOpen(false); }}>Publish Notice</Button></DialogFooter>
       </DialogContent>
@@ -957,9 +953,9 @@ function EventFormDialog({ onSave, isAIGenerating, onAIGenerate }: any) {
                  {isAIGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               </Button>
            </div>
-           <div className="space-y-2"><Label>Title</Label><Input value={title} onChange={e => setTitle(e.target.value)} required /></div>
-           <div className="space-y-2"><Label>Date</Label><Input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} required /></div>
-           <div className="space-y-2"><Label>Description</Label><Textarea rows={4} value={desc} onChange={e => setDesc(e.target.value)} required /></div>
+           <div className="space-y-2"><Label>Title</Label><Input value={title} onChange={setTitle} required /></div>
+           <div className="space-y-2"><Label>Date</Label><Input type="datetime-local" value={date} onChange={setDate} required /></div>
+           <div className="space-y-2"><Label>Description</Label><Textarea rows={4} value={desc} onChange={setDesc} required /></div>
         </div>
         <DialogFooter><Button onClick={() => { onSave({ title, description: desc, date }); setOpen(false); }}>Save Event</Button></DialogFooter>
       </DialogContent>
@@ -1008,7 +1004,7 @@ function GalleryFormDialog({ onSave }: any) {
                <Label>Media Source</Label>
                <div className="grid grid-cols-1 gap-4">
                  <div className="flex items-center gap-2">
-                   <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="Enter external URL..." className="flex-1" />
+                   <Input value={url} onChange={setUrl} placeholder="Enter external URL..." className="flex-1" />
                  </div>
                  <div className="relative">
                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
@@ -1032,7 +1028,7 @@ function GalleryFormDialog({ onSave }: any) {
                  )}
                </div>
              )}
-             <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={e => setCaption(e.target.value)} required /></div>
+             <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={setCaption} required /></div>
           </div>
         </ScrollArea>
         <DialogFooter><Button onClick={() => { onSave({ imageURL: url, caption }); setOpen(false); setUrl(""); setCaption(""); }} disabled={uploading || !url}>Add to Library</Button></DialogFooter>
@@ -1067,11 +1063,11 @@ function ManualDonationFormDialog({ onSave }: any) {
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Devotee Name</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Rahul Sharma" required />
+            <Input value={name} onChange={setName} placeholder="e.g. Rahul Sharma" required />
           </div>
           <div className="space-y-2">
             <Label>Amount (₹)</Label>
-            <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" required />
+            <Input type="number" value={amount} onChange={setAmount} placeholder="0.00" required />
           </div>
           <div className="space-y-2">
             <Label>Payment Mode</Label>
@@ -1087,7 +1083,7 @@ function ManualDonationFormDialog({ onSave }: any) {
           </div>
           <div className="space-y-2">
             <Label>Date & Time</Label>
-            <Input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} required />
+            <Input type="datetime-local" value={date} onChange={setDate} required />
           </div>
         </div>
         <DialogFooter>

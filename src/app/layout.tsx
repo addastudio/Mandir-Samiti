@@ -25,8 +25,8 @@ const mukta = Mukta({
 
 /**
  * Global Metadata Configuration
- * Updated to allow the LanguageProvider (CMS) to dynamically manage icons 
- * without being shadowed by hardcoded defaults.
+ * Icons are now exclusively managed by the LanguageProvider (CMS Driven) 
+ * to prevent synchronization conflicts with Firestore settings.
  */
 export const metadata: Metadata = {
   title: 'Surya Mandir Bahpura | सूर्य मंदिर बहपुरा',

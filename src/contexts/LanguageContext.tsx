@@ -67,32 +67,29 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, [firestoreSettings, localSettings]);
 
   // Dynamically update Favicon and Apple Touch Icon in the document head
-  // This overrides any default browser/host icons (e.g. Firebase logo)
+  // This logic runs safely after hydration to prevent Next.js metadata conflicts.
   useEffect(() => {
-    if (settings?.favicon) {
-      // 1. Update/Inject standard favicon
-      let iconLink: HTMLLinkElement | null = document.querySelector("link[rel='icon']");
-      if (!iconLink) {
-        iconLink = document.createElement('link');
-        iconLink.rel = 'icon';
-        document.head.appendChild(iconLink);
-      }
-      iconLink.href = settings.favicon;
+    if (typeof window === 'undefined' || !settings?.favicon) return;
 
-      // 2. Update/Inject Apple Touch Icon
-      let appleLink: HTMLLinkElement | null = document.querySelector("link[rel='apple-touch-icon']");
-      if (!appleLink) {
-        appleLink = document.createElement('link');
-        appleLink.rel = 'apple-touch-icon';
-        document.head.appendChild(appleLink);
+    const updateLinkTag = (rel: string, href: string) => {
+      let link: HTMLLinkElement | null = document.querySelector(`link[rel='${rel}']`);
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = rel;
+        document.head.appendChild(link);
       }
-      appleLink.href = settings.favicon;
+      link.href = href;
+    };
 
-      // 3. Update Title dynamically if needed
-      const siteTitle = language === 'hi' ? settings.site_title_hi : settings.site_title_en;
-      if (siteTitle) {
-        document.title = siteTitle;
-      }
+    // Update standard favicon
+    updateLinkTag('icon', settings.favicon);
+    // Update Apple Touch Icon
+    updateLinkTag('apple-touch-icon', settings.favicon);
+
+    // Update Title dynamically if provided
+    const siteTitle = language === 'hi' ? settings.site_title_hi : settings.site_title_en;
+    if (siteTitle) {
+      document.title = siteTitle;
     }
   }, [settings, language]);
 
