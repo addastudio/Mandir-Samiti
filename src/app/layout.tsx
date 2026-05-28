@@ -23,20 +23,16 @@ const mukta = Mukta({
   display: 'swap',
 });
 
+/**
+ * Global Metadata Configuration
+ * Updated to allow the LanguageProvider (CMS) to dynamically manage icons 
+ * without being shadowed by hardcoded defaults.
+ */
 export const metadata: Metadata = {
   title: 'Surya Mandir Bahpura | सूर्य मंदिर बहपुरा',
-  description: 'Official portal for Mandir Samiti Bahpura. Preserving faith and serving the community since decades. Join us for Darshan, Aarti, and Community Service.',
-  keywords: 'Surya Mandir, Bahpura, Mandir Samiti, Bihta Temple, Patna Temples, Hindu Devotion, Temple Donations, Prayer Requests, Bihar Temples',
+  description: 'Official portal for Mandir Samiti Bahpura. Preserving faith and serving the community since decades.',
+  keywords: 'Surya Mandir, Bahpura, Mandir Samiti, Bihta Temple, Patna Temples',
   metadataBase: new URL('https://www.suryamandir.online'),
-  icons: {
-    icon: [
-      { url: '/favicon.ico' },
-      { url: '/uploads/suryamandir.svg', type: 'image/svg+xml' }
-    ],
-    apple: [
-      { url: '/uploads/suryamandir.svg' }
-    ]
-  },
   alternates: {
     canonical: '/',
     languages: {
@@ -46,7 +42,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Surya Mandir Bahpura | सूर्य मंदिर बहपुरा',
-    description: 'Preserve Faith, Serve Community. Join the Mandir Samiti Bahpura in devotion and service.',
+    description: 'Preserve Faith, Serve Community.',
     url: 'https://www.suryamandir.online',
     siteName: 'Mandir Samiti Bahpura',
     locale: 'hi_IN',
@@ -57,17 +53,9 @@ export const metadata: Metadata = {
     title: 'Surya Mandir Bahpura',
     description: 'Preserve Faith, Serve Community.',
   },
-  manifest: '/manifest.json',
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
   },
 };
 
@@ -81,7 +69,7 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: {
-  children: React.Node;
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={cn(poppins.variable, mukta.variable)}>

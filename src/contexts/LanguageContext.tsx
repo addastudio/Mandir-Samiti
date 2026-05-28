@@ -66,30 +66,35 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [firestoreSettings, localSettings]);
 
-  // Dynamically update Favicon in the document head
+  // Dynamically update Favicon and Apple Touch Icon in the document head
+  // This overrides any default browser/host icons (e.g. Firebase logo)
   useEffect(() => {
     if (settings?.favicon) {
-      // Find existing favicon links
-      let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-      
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.getElementsByTagName('head')[0].appendChild(link);
+      // 1. Update/Inject standard favicon
+      let iconLink: HTMLLinkElement | null = document.querySelector("link[rel='icon']");
+      if (!iconLink) {
+        iconLink = document.createElement('link');
+        iconLink.rel = 'icon';
+        document.head.appendChild(iconLink);
       }
-      
-      link.href = settings.favicon;
+      iconLink.href = settings.favicon;
 
-      // Update Apple Touch Icon as well
+      // 2. Update/Inject Apple Touch Icon
       let appleLink: HTMLLinkElement | null = document.querySelector("link[rel='apple-touch-icon']");
       if (!appleLink) {
         appleLink = document.createElement('link');
         appleLink.rel = 'apple-touch-icon';
-        document.getElementsByTagName('head')[0].appendChild(appleLink);
+        document.head.appendChild(appleLink);
       }
       appleLink.href = settings.favicon;
+
+      // 3. Update Title dynamically if needed
+      const siteTitle = language === 'hi' ? settings.site_title_hi : settings.site_title_en;
+      if (siteTitle) {
+        document.title = siteTitle;
+      }
     }
-  }, [settings?.favicon]);
+  }, [settings, language]);
 
   useEffect(() => {
     const storedLang = localStorage.getItem("language") as Language | null;
