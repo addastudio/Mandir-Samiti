@@ -272,7 +272,7 @@ export const translations: { [key: string]: TranslationKeys } = {
     navSignUp: 'साइन अप',
     navLogin: 'लॉगिन',
     languageSwitcher: 'भाषा',
-    heroHeadline: 'सूर्य मंदिर बहपुरा में आपका स्वागत है',
+    heroHeadline: 'सूर्य मंदिर बहपुरा में आपका स्वागत है|',
     heroSubtitle: 'आस्था का संरक्षण, समुदाय की सेवा।',
     heroBtnDonate: 'दान करें',
     heroBtnLearnMore: 'अधिक जानें',
