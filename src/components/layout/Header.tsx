@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -242,12 +241,13 @@ export function Header() {
               <LanguageSwitcher />
               <AdminButton />
               <AuthButtons />
-              <Link href="/donate">
+              {/* Donation button muted per user request */}
+              {/* <Link href="/donate">
                 <Button size="sm" className="bg-accent text-accent-foreground font-black h-10 px-5 shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all">
                   <Heart className="h-4 w-4 mr-2 fill-current" />
                   {t.navDonate}
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           </div>
 
@@ -291,11 +291,12 @@ export function Header() {
                   </div>
                 </div>
                 <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">
-                  <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>
+                  {/* Donation button muted in mobile per user request */}
+                  {/* <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button className="w-full h-14 bg-accent text-accent-foreground font-black text-lg shadow-xl shadow-accent/10 rounded-2xl">
                       <Heart className="h-6 w-6 mr-2 fill-current" /> {t.navDonate}
                     </Button>
-                  </Link>
+                  </Link> */}
                 </div>
               </SheetContent>
             </Sheet>

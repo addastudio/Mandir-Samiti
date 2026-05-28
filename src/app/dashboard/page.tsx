@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -51,7 +50,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /**
  * Devotee Dashboard Root
- * Hardened for production with full security and data management features.
  */
 function DashboardContent() {
   const { user, isUserLoading } = useUser();
@@ -89,18 +87,6 @@ function DashboardContent() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (mounted && searchParams.get('success') === 'true') {
-      toast({
-        title: language === 'hi' ? "दान सफल!" : "Donation Successful!",
-        description: language === 'hi' 
-          ? "आपके उदार योगदान के लिए धन्यवाद।" 
-          : "Thank you for your generous contribution.",
-      });
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, [mounted, searchParams, toast, language]);
 
   const donationsRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -207,47 +193,6 @@ function DashboardContent() {
     }
   };
 
-  const handleSendResetEmail = async () => {
-    if (!auth || !user?.email) return;
-    setIsResettingPassword(true);
-    try {
-      await sendPasswordResetEmail(auth, user.email);
-      toast({ title: "Success", description: t.dashboardResetEmailSent });
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message });
-    } finally {
-      setIsResettingPassword(false);
-    }
-  };
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!auth || !user || !changePwdCurrent || !changePwdNew) return;
-    
-    if (changePwdNew !== changePwdConfirm) {
-      toast({ variant: "destructive", title: "Error", description: t.dashboardPasswordMismatch });
-      return;
-    }
-
-    setIsUpdatingPassword(true);
-    try {
-      const credential = EmailAuthProvider.credential(user.email!, changePwdCurrent);
-      await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, changePwdNew);
-      toast({ title: "Success", description: t.dashboardPasswordUpdateSuccess });
-      setShowChangePasswordDialog(false);
-      setChangePwdCurrent("");
-      setChangePwdNew("");
-      setChangePwdConfirm("");
-    } catch (err: any) {
-      let msg = err.message;
-      if (err.code === 'auth/wrong-password') msg = t.authErrorWrongPassword;
-      toast({ variant: "destructive", title: "Error", description: msg });
-    } finally {
-      setIsUpdatingPassword(false);
-    }
-  };
-
   const handleDeleteAccount = async () => {
     if (!user || !firestore) return;
     
@@ -327,83 +272,15 @@ function DashboardContent() {
   const totalDonated = donations?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
   
   const getTierInfo = (amount: number) => {
-    if (amount >= 100000) {
-      return { 
-        label: t.dashboardTierGrandPatron, 
-        badge: 'bg-indigo-600 text-white', 
-        icon: Crown,
-        progress: 100,
-        nextTier: null,
-        needed: 0,
-        barColor: 'bg-indigo-600',
-        textColor: 'text-indigo-900',
-        bgTheme: 'bg-indigo-50/50'
-      };
-    }
-    if (amount >= 10000) {
-      return { 
-        label: t.dashboardTierGuardian, 
-        badge: 'bg-emerald-600 text-white', 
-        icon: Shield,
-        progress: ((amount - 10000) / (100000 - 10000)) * 100,
-        nextTier: t.dashboardTierGrandPatron,
-        needed: 100000 - amount,
-        barColor: 'bg-emerald-600',
-        textColor: 'text-emerald-900',
-        bgTheme: 'bg-emerald-50/30'
-      };
-    }
-    if (amount >= 5000) {
-      return { 
-        label: t.dashboardTierPatron, 
-        badge: 'bg-primary text-primary-foreground', 
-        icon: Sparkles,
-        progress: ((amount - 5000) / (10000 - 5000)) * 100,
-        nextTier: t.dashboardTierGuardian,
-        needed: 10000 - amount,
-        barColor: 'bg-primary',
-        textColor: 'text-primary',
-        bgTheme: 'bg-primary/5'
-      };
-    }
-    if (amount >= 1000) {
-      return { 
-        label: t.dashboardTierPillar, 
-        badge: 'bg-amber-100 text-amber-700 border-amber-200', 
-        icon: Star,
-        progress: ((amount - 1000) / (5000 - 1000)) * 100,
-        nextTier: t.dashboardTierPatron,
-        needed: 5000 - amount,
-        barColor: 'bg-amber-500',
-        textColor: 'text-amber-800',
-        bgTheme: 'bg-amber-50/20'
-      };
-    }
-    return { 
-      label: t.dashboardTierSupporter, 
-      badge: 'bg-secondary text-secondary-foreground', 
-      icon: Heart,
-      progress: Math.min((amount / 1000) * 100, 100),
-      nextTier: t.dashboardTierPillar,
-      needed: 1000 - amount,
-      barColor: 'bg-muted-foreground/40',
-      textColor: 'text-muted-foreground',
-      bgTheme: 'bg-transparent'
-    };
+    if (amount >= 100000) return { label: t.dashboardTierGrandPatron, badge: 'bg-indigo-600 text-white', icon: Crown, bgTheme: 'bg-indigo-50/50' };
+    if (amount >= 10000) return { label: t.dashboardTierGuardian, badge: 'bg-emerald-600 text-white', icon: Shield, bgTheme: 'bg-emerald-50/30' };
+    if (amount >= 5000) return { label: t.dashboardTierPatron, badge: 'bg-primary text-primary-foreground', icon: Sparkles, bgTheme: 'bg-primary/5' };
+    if (amount >= 1000) return { label: t.dashboardTierPillar, badge: 'bg-amber-100 text-amber-700 border-amber-200', icon: Star, bgTheme: 'bg-amber-50/20' };
+    return { label: t.dashboardTierSupporter, badge: 'bg-secondary text-secondary-foreground', icon: Heart, bgTheme: 'bg-transparent' };
   };
 
   const tier = getTierInfo(totalDonated);
   const TierIcon = tier.icon;
-
-  const filteredDonations = donations 
-    ? [...donations]
-        .filter(d => 
-          d.amount?.toString().includes(historySearch) || 
-          d.mode?.toLowerCase().includes(historySearch.toLowerCase()) ||
-          new Date(d.date).toLocaleDateString().includes(historySearch)
-        )
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    : [];
 
   const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
 
@@ -451,18 +328,6 @@ function DashboardContent() {
                       <TierIcon className="h-3 w-3" /> {tier.label}
                     </Badge>
                   </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-end">
-                      <p className={cn("text-[10px] font-bold uppercase", tier.textColor)}>
-                        {tier.nextTier ? `Target: ${tier.nextTier}` : 'Peak Recognition'}
-                      </p>
-                      {tier.nextTier && <span className="text-[10px] font-black text-primary">₹{totalDonated} / ₹{tier.needed + totalDonated}</span>}
-                    </div>
-                    <div className="h-2.5 w-full bg-black/5 rounded-full overflow-hidden">
-                      <div className={cn("h-full transition-all duration-1000", tier.barColor)} style={{ width: `${tier.progress}%` }} />
-                    </div>
-                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-black/5 space-y-4">
@@ -478,16 +343,14 @@ function DashboardContent() {
               </CardContent>
             </Card>
 
-            <Card className="border-accent/20 bg-gradient-to-br from-white to-accent/5 p-5 shadow-sm relative overflow-hidden">
+            {/* Donation Summary Card muted per user request */}
+            {/* <Card className="border-accent/20 bg-gradient-to-br from-white to-accent/5 p-5 shadow-sm relative overflow-hidden">
               <Trophy className="absolute -right-4 -bottom-4 h-24 w-24 text-accent/10 rotate-12" />
               <CardDescription className="text-xs font-bold uppercase tracking-widest">{t.dashboardTotalContribution}</CardDescription>
               <CardTitle className="text-3xl font-bold flex items-center gap-1 text-primary mt-1">
                 <IndianRupee className="h-7 w-7" />{totalDonated}
               </CardTitle>
-              <div className="mt-4 pt-4 border-t border-accent/10">
-                <Link href="/donate"><Button variant="secondary" className="w-full h-10 text-xs font-bold uppercase" size="sm">{t.navDonate}</Button></Link>
-              </div>
-            </Card>
+            </Card> */}
             
             <Card className="shadow-md border-primary/10 overflow-hidden">
                 <CardHeader className="bg-secondary/40 py-4">
@@ -522,50 +385,16 @@ function DashboardContent() {
 
           <div className="lg:col-span-8">
             <Card className="border-primary/20 shadow-md h-full overflow-hidden flex flex-col">
-              <Tabs defaultValue="donations" className="w-full flex-grow">
+              <Tabs defaultValue="requests" className="w-full flex-grow">
                 <div className="border-b bg-white overflow-x-auto touch-scroll">
                   <TabsList className="flex w-max min-w-full justify-start h-12 bg-transparent p-0">
-                    <TabsTrigger value="donations" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger>
                     <TabsTrigger value="requests" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><MessageSquare className="h-4 w-4 mr-2" />{t.dashboardMyRequests}</TabsTrigger>
+                    {/* Donation tab muted per user request */}
+                    {/* <TabsTrigger value="donations" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><History className="h-4 w-4 mr-2" />{t.dashboardDonationHistory}</TabsTrigger> */}
                     <TabsTrigger value="profile" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><UserIcon className="h-4 w-4 mr-2" />{t.dashboardProfileTab}</TabsTrigger>
                     <TabsTrigger value="settings" className="h-full px-6 font-bold rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"><Settings className="h-4 w-4 mr-2" />{t.dashboardSettingsTab}</TabsTrigger>
                   </TabsList>
                 </div>
-
-                <TabsContent value="donations" className="m-0">
-                  <div className="p-4 border-b bg-muted/10">
-                    <div className="relative max-w-sm">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder={t.dashboardHistorySearch} className="pl-10 h-9" value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} />
-                    </div>
-                  </div>
-                  <CardContent className="p-0">
-                    {isDonationsLoading ? (
-                      <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-                    ) : filteredDonations.length > 0 ? (
-                      <div className="divide-y">
-                        {filteredDonations.map(d => (
-                          <div key={d.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                              <div className="p-3 bg-primary/5 rounded-full text-primary"><IndianRupee className="h-5 w-5" /></div>
-                              <div>
-                                <p className="font-bold text-lg">₹{d.amount}</p>
-                                <p className="text-xs text-muted-foreground">{new Date(d.date).toLocaleString()}</p>
-                                <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{d.mode}</p>
-                              </div>
-                            </div>
-                            <Badge className={d.status === 'completed' ? "bg-emerald-500" : "bg-amber-500"}>{d.status}</Badge>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-20 text-center text-muted-foreground px-4">
-                        <History className="h-12 w-12 mx-auto opacity-20 mb-4" />
-                        <p>{t.dashboardNoDonations}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </TabsContent>
 
                 <TabsContent value="requests" className="m-0">
                   <CardContent className="p-6">
@@ -652,9 +481,7 @@ function DashboardContent() {
                                 <p className="text-[10px] text-muted-foreground">{is2FAEnabled ? t.dashboard2FAEnabled : t.dashboard2FADisabled}</p>
                             </div>
                             <Switch checked={is2FAEnabled} onCheckedChange={(val) => {
-                                if (!val) {
-                                    handleToggle2FA(false);
-                                }
+                                if (!val) handleToggle2FA(false);
                             }} disabled={isUpdating2FA} />
                         </div>
                         
@@ -676,94 +503,7 @@ function DashboardContent() {
                                 </div>
                             </div>
                         )}
-
-                        {is2FAEnabled && (
-                          <p className="text-[9px] text-emerald-600 font-bold italic">
-                            <CheckCircle2 className="h-3 w-3 inline mr-1" />
-                            {language === 'hi' ? 'आपका खाता २-स्टेप सत्यापन द्वारा सुरक्षित है।' : 'Your account is protected by 2-step verification.'}
-                          </p>
-                        )}
                     </div>
-
-                    {isPasswordUser && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full h-12 justify-start gap-2">
-                              <RefreshCw className="h-4 w-4" />
-                              {t.dashboardChangePassword}
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="w-[95%] max-w-md">
-                            <DialogHeader>
-                              <DialogTitle>{t.dashboardChangePassword}</DialogTitle>
-                              <DialogDescription>{language === 'hi' ? 'अपना पासवर्ड अपडेट करने के लिए विवरण भरें। ' : 'Fill in the details to update your password.'}</DialogDescription>
-                            </DialogHeader>
-                            <form onSubmit={handleChangePassword} className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label>{t.dashboardCurrentPassword}</Label>
-                                <Input type="password" value={changePwdCurrent} onChange={(e) => setChangePwdCurrent(e.target.value)} required />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>{t.dashboardNewPassword}</Label>
-                                <Input type="password" value={changePwdNew} onChange={(e) => setChangePwdNew(e.target.value)} required minLength={6} />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>{t.dashboardConfirmPassword}</Label>
-                                <Input type="password" value={changePwdConfirm} onChange={(e) => setChangePwdConfirm(e.target.value)} required minLength={6} />
-                              </div>
-                              <DialogFooter>
-                                <Button type="submit" className="w-full h-12" disabled={isUpdatingPassword}>
-                                  {isUpdatingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                                  {t.dashboardUpdateBtn}
-                                </Button>
-                              </DialogFooter>
-                            </form>
-                          </DialogContent>
-                        </Dialog>
-
-                        <Button 
-                          variant="outline" 
-                          className="w-full h-12 justify-start gap-2" 
-                          onClick={handleSendResetEmail}
-                          disabled={isResettingPassword}
-                        >
-                          {isResettingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <MailCheck className="h-4 w-4" />}
-                          {t.dashboardForgotPassword}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-4 pt-8 border-t">
-                    <h3 className="font-bold text-sm uppercase tracking-widest text-destructive">Danger Zone</h3>
-                    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="w-full justify-start h-12"><Trash2 className="h-4 w-4 mr-2" />{t.dashboardDeleteAccount}</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="w-[95%] max-w-md">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t.dashboardDeleteConfirmTitle}</AlertDialogTitle>
-                          <AlertDialogDescription>{t.dashboardDeleteConfirmDesc}</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        {isPasswordUser && (
-                          <div className="space-y-4 py-4">
-                            <Label>{t.dashboardDeletePasswordLabel}</Label>
-                            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t.dashboardDeletePasswordPlaceholder} />
-                          </div>
-                        )}
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleDeleteAccount} 
-                            className="bg-destructive text-white" 
-                            disabled={isDeleting || (isPasswordUser && !confirmPassword)}
-                          >
-                            {isDeleting ? 'Deleting...' : 'Delete Permanently'}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   </div>
                 </TabsContent>
               </Tabs>

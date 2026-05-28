@@ -65,7 +65,8 @@ export function Footer() {
             <ul className="space-y-4">
               <li><a href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t.navAbout}</a></li>
               <li><a href="/gallery" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t.navGallery}</a></li>
-              <li><a href="/donate" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t.navDonate}</a></li>
+              {/* Donation link muted per user request */}
+              {/* <li><a href="/donate" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t.navDonate}</a></li> */}
               <li><a href="/#contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">{t.navContact}</a></li>
             </ul>
           </div>

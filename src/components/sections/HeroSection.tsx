@@ -12,7 +12,6 @@ import { doc } from "firebase/firestore";
 
 /**
  * High-performance Hero Section with video background and fallback imagery.
- * Utilizes camelCase for Firestore data and handles potential CMS snake_case mappings.
  */
 export function HeroSection() {
   const { t, language } = useLanguage();
@@ -35,7 +34,6 @@ export function HeroSection() {
     ? (liveHero?.subtitleHi || t.heroSubtitle)
     : (liveHero?.subtitleEn || t.heroSubtitle);
 
-  // Standardized video and fallback images
   const videoUrl = liveHero?.videoUrl || "https://assets.mixkit.co/videos/preview/mixkit-top-view-of-a-temple-complex-in-india-40000-large.mp4";
   const bgImage = liveHero?.fallbackImage || heroPlaceholder?.imageUrl;
 
@@ -44,7 +42,7 @@ export function HeroSection() {
       id="home"
       className="relative flex min-h-[100dvh] w-full items-center justify-center text-center text-white overflow-hidden"
     >
-      {/* Layer 1: Fallback Image (LCP Optimized) */}
+      {/* Layer 1: Fallback Image */}
       {bgImage && (
         <div className="absolute inset-0 z-0">
           <Image
@@ -108,7 +106,8 @@ export function HeroSection() {
                 </Button>
               </Link>
             )}
-            <Link href="/donate" className="w-full sm:w-auto">
+            {/* Donation button muted per user request */}
+            {/* <Link href="/donate" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 className={cn(
@@ -118,7 +117,7 @@ export function HeroSection() {
               >
                 {t.heroBtnDonate}
               </Button>
-            </Link>
+            </Link> */}
             <Link href="/about" className="w-full sm:w-auto">
               <Button
                 size="lg"
