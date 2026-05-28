@@ -28,6 +28,15 @@ export const metadata: Metadata = {
   description: 'Official portal for Mandir Samiti Bahpura. Preserving faith and serving the community since decades. Join us for Darshan, Aarti, and Community Service.',
   keywords: 'Surya Mandir, Bahpura, Mandir Samiti, Bihta Temple, Patna Temples, Hindu Devotion, Temple Donations, Prayer Requests, Bihar Temples',
   metadataBase: new URL('https://www.suryamandir.online'),
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/uploads/suryamandir.svg', type: 'image/svg+xml' }
+    ],
+    apple: [
+      { url: '/uploads/suryamandir.svg' }
+    ]
+  },
   alternates: {
     canonical: '/',
     languages: {
