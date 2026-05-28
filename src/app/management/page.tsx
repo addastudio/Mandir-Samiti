@@ -38,7 +38,8 @@ import {
   Crown,
   Zap,
   Banknote,
-  CheckCircle2
+  CheckCircle2,
+  CloudUpload
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -890,9 +891,9 @@ function MemberFormDialog({ onSave }: any) {
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Add Committee Member</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
-           <div className="space-y-2"><Label>Full Name</Label><Input value={name} onChange={setName} required /></div>
-           <div className="space-y-2"><Label>Role / Designation</Label><Input value={role} onChange={setRole} placeholder="e.g. President, Secretary" required /></div>
-           <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={order} onChange={setOrder} /></div>
+           <div className="space-y-2"><Label>Full Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
+           <div className="space-y-2"><Label>Role / Designation</Label><Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. President, Secretary" required /></div>
+           <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={order} onChange={(e) => setOrder(e.target.value)} /></div>
         </div>
         <DialogFooter><Button onClick={() => { onSave({ name, role, displayOrder: parseInt(order) || 0 }); setOpen(false); setName(""); setRole(""); }}>Save Member</Button></DialogFooter>
       </DialogContent>
@@ -919,14 +920,14 @@ function NoticeFormDialog({ onSave, isAIGenerating, onAIGenerate }: any) {
                  {isAIGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               </Button>
            </div>
-           <div className="space-y-2"><Label>Headline</Label><Input value={title} onChange={setTitle} required /></div>
+           <div className="space-y-2"><Label>Headline</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} required /></div>
            <div className="space-y-2"><Label>Priority</Label>
               <Select value={importance} onValueChange={setImportance}>
                  <SelectTrigger><SelectValue /></SelectTrigger>
                  <SelectContent><SelectItem value="normal">Normal</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent>
               </Select>
            </div>
-           <div className="space-y-2"><Label>Content</Label><Textarea rows={4} value={content} onChange={setContent} required /></div>
+           <div className="space-y-2"><Label>Content</Label><Textarea rows={4} value={content} onChange={(e) => setContent(e.target.value)} required /></div>
         </div>
         <DialogFooter><Button onClick={() => { onSave({ title, content, importance }); setOpen(false); }}>Publish Notice</Button></DialogFooter>
       </DialogContent>
@@ -953,9 +954,9 @@ function EventFormDialog({ onSave, isAIGenerating, onAIGenerate }: any) {
                  {isAIGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
               </Button>
            </div>
-           <div className="space-y-2"><Label>Title</Label><Input value={title} onChange={setTitle} required /></div>
-           <div className="space-y-2"><Label>Date</Label><Input type="datetime-local" value={date} onChange={setDate} required /></div>
-           <div className="space-y-2"><Label>Description</Label><Textarea rows={4} value={desc} onChange={setDesc} required /></div>
+           <div className="space-y-2"><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} required /></div>
+           <div className="space-y-2"><Label>Date</Label><Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required /></div>
+           <div className="space-y-2"><Label>Description</Label><Textarea rows={4} value={desc} onChange={(e) => setDesc(e.target.value)} required /></div>
         </div>
         <DialogFooter><Button onClick={() => { onSave({ title, description: desc, date }); setOpen(false); }}>Save Event</Button></DialogFooter>
       </DialogContent>
@@ -1004,7 +1005,7 @@ function GalleryFormDialog({ onSave }: any) {
                <Label>Media Source</Label>
                <div className="grid grid-cols-1 gap-4">
                  <div className="flex items-center gap-2">
-                   <Input value={url} onChange={setUrl} placeholder="Enter external URL..." className="flex-1" />
+                   <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Enter external URL..." className="flex-1" />
                  </div>
                  <div className="relative">
                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
@@ -1028,7 +1029,7 @@ function GalleryFormDialog({ onSave }: any) {
                  )}
                </div>
              )}
-             <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={setCaption} required /></div>
+             <div className="space-y-2"><Label>Caption</Label><Input value={caption} onChange={(e) => setCaption(e.target.value)} required /></div>
           </div>
         </ScrollArea>
         <DialogFooter><Button onClick={() => { onSave({ imageURL: url, caption }); setOpen(false); setUrl(""); setCaption(""); }} disabled={uploading || !url}>Add to Library</Button></DialogFooter>
@@ -1063,11 +1064,11 @@ function ManualDonationFormDialog({ onSave }: any) {
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Devotee Name</Label>
-            <Input value={name} onChange={setName} placeholder="e.g. Rahul Sharma" required />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Rahul Sharma" required />
           </div>
           <div className="space-y-2">
             <Label>Amount (₹)</Label>
-            <Input type="number" value={amount} onChange={setAmount} placeholder="0.00" required />
+            <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" required />
           </div>
           <div className="space-y-2">
             <Label>Payment Mode</Label>
@@ -1083,7 +1084,7 @@ function ManualDonationFormDialog({ onSave }: any) {
           </div>
           <div className="space-y-2">
             <Label>Date & Time</Label>
-            <Input type="datetime-local" value={date} onChange={setDate} required />
+            <Input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required />
           </div>
         </div>
         <DialogFooter>
