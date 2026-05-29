@@ -28,3 +28,5 @@ const TempleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <circle cx="12" cy="7" r="1" />
   </svg>
 );
+
+export default TempleIcon;
