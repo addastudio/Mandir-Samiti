@@ -31,7 +31,7 @@ const mukta = Mukta({
 export const metadata: Metadata = {
   title: 'Surya Mandir Bahpura | सूर्य मंदिर बहपुरा',
   description: 'Official portal for Mandir Samiti Bahpura. Preserving faith and serving the community since decades.',
-  keywords: 'Surya Mandir, Bahpura, Mandir Samiti, Bihta Temple, Patna Temples',
+  keywords: 'Surya Mandir, Bahpura, Mandir Samiti, Bihta Temple, Patna Temples, Gori Shankar Mandir, Bahpura, Gori Shankar',
   metadataBase: new URL('https://www.suryamandir.online'),
   alternates: {
     canonical: '/',

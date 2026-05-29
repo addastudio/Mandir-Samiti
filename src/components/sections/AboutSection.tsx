@@ -71,7 +71,7 @@ export function AboutSection() {
             
             <div className="relative overflow-hidden rounded-[1.5rem] shadow-2xl border-4 border-white aspect-[4/3] z-10">
               <Image 
-                  src={liveAbout?.featuredImage || galleryImage?.imageUrl || "https://picsum.photos/seed/about-main/800/600"}
+                  src={liveAbout?.featuredImage || galleryImage?.imageUrl || "https://filedn.com/ljUbXp96NSmmBn0bn70nVnf/IMG_20260428_181916.jpg"}
                   alt="Temple Heritage"
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
