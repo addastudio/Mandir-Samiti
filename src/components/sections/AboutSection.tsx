@@ -84,7 +84,7 @@ export function AboutSection() {
               </div>
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{language === 'hi' ? 'स्थापित' : 'Established'}</p>
-                <p className="text-base sm:text-lg font-bold text-foreground">1970s</p>
+                <p className="text-base sm:text-lg font-bold text-foreground">2015s</p>
               </div>
             </div>
           </div>
