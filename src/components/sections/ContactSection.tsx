@@ -87,7 +87,7 @@ export function ContactSection() {
 
   const phone = cmsContent?.phone || t.contactPhone;
   const email = cmsContent?.email || t.contactEmail;
-  const mapUrl = cmsContent?.mapUrl || "https://www.google.com/maps/place/Surya+Mandir/@25.620098,84.8993538,17z/data=!3m1!4b1!4m6!3m5!1s0x3992aafe387ec7bb:0xba2c47973b924a80!8m2!3d25.620098!4d84.9019287!16s%2Fg%2F11fyxdgx6s?entry=ttu&g_ep=EgoyMDI2MDUyNi4wIKXMDSoASAFQAw%3D%3D";
+  const mapUrl = cmsContent?.mapUrl || "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d28780.343966846638!2d84.8658798!3d25.620098!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3992aafe387ec7bb%3A0xba2c47973b924a80!2sSurya%20Mandir!5e0!3m2!1sen!2sin!4v1780037596525!5m2!1sen!2sin";
 
   return (
     <section id="contact" className="py-16 sm:py-20 md:py-28">
