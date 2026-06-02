@@ -25,14 +25,23 @@ const mukta = Mukta({
 
 /**
  * Global Metadata Configuration
- * We leave icons empty here so the LanguageProvider can dynamically inject
- * the CMS-provided logo without conflicts or persistence of the Firebase default.
+ * Configured for Search Console optimization and bilingual discovery.
  */
 export const metadata: Metadata = {
   title: 'Surya Mandir Bahpura | सूर्य मंदिर बहपुरा',
   description: 'Official portal for Mandir Samiti Bahpura. Preserving faith and serving the community since decades.',
   keywords: 'Surya Mandir, Bahpura, Mandir Samiti, Bihta Temple, Patna Temples, Gori Shankar Mandir, Bahpura, Gori Shankar',
   metadataBase: new URL('https://www.suryamandir.online'),
+  icons: {
+    icon: [
+      { url: '/uploads/suryamandir.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+    apple: [
+      { url: '/uploads/suryamandir.svg', type: 'image/svg+xml' }
+    ]
+  },
+  manifest: '/manifest.json',
   alternates: {
     canonical: '/',
     languages: {

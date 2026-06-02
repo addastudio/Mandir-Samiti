@@ -92,7 +92,7 @@ function AboutPageContent() {
             </div>
             <div className="flex gap-4">
               <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-white border-4 border-primary/10 flex flex-col items-center justify-center shadow-xl">
-                <span className="text-xl sm:text-2xl font-black text-primary">50+</span>
+                <span className="text-xl sm:text-2xl font-black text-primary">15+</span>
                 <span className="text-[8px] uppercase font-bold text-muted-foreground">Years</span>
               </div>
               <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-white border-4 border-accent/10 flex flex-col items-center justify-center shadow-xl">
