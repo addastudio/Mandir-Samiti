@@ -21,7 +21,7 @@ import { usePathname } from "next/navigation";
 
 /**
  * Global Header Component
- * Optimized for performance and responsive branding.
+ * Optimized for performance and responsive branding with smooth transitions.
  */
 export function Header() {
   const { t, language, settings } = useLanguage();
@@ -60,11 +60,12 @@ export function Header() {
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     
+    // Improved IntersectionObserver settings for smoother triggers
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsScrolled(!entry.isIntersecting);
       },
-      { threshold: [1.0], rootMargin: '0px 0px 0px 0px' }
+      { threshold: [0], rootMargin: '-40px 0px 0px 0px' }
     );
 
     if (sentinelRef.current) {
@@ -168,14 +169,14 @@ export function Header() {
     <>
       <div ref={sentinelRef} className="absolute top-0 h-1 w-full pointer-events-none z-[-1]" />
       <header className={cn(
-        "fixed top-0 z-50 w-full transition-all duration-300",
-        isScrolled || pathname !== '/' ? "border-b bg-background/95 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-4"
+        "fixed top-0 z-50 w-full transition-all duration-500 ease-in-out",
+        isScrolled || pathname !== '/' ? "border-b bg-background/95 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-5"
       )}>
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           
           <Link href="/" className="flex items-center min-w-0 group shrink-0">
             <div className={cn(
-              "flex items-center gap-2 lg:gap-4 rounded-2xl px-2 py-1.5 transition-all duration-300 max-w-[180px] xs:max-w-none",
+              "flex items-center gap-2 lg:gap-4 rounded-2xl px-2 py-1.5 transition-all duration-500 max-w-[180px] xs:max-w-none",
               isTransparent 
                 ? "bg-white/10 backdrop-blur-md border border-white/20 shadow-none hover:bg-white/20" 
                 : "bg-white/40 md:bg-amber-50/80 shadow-sm border border-primary/10 hover:bg-white/60"
@@ -241,13 +242,6 @@ export function Header() {
               <LanguageSwitcher />
               <AdminButton />
               <AuthButtons />
-              {/* Donation button muted per user request */}
-              {/* <Link href="/donate">
-                <Button size="sm" className="bg-accent text-accent-foreground font-black h-10 px-5 shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all">
-                  <Heart className="h-4 w-4 mr-2 fill-current" />
-                  {t.navDonate}
-                </Button>
-              </Link> */}
             </div>
           </div>
 
@@ -291,12 +285,6 @@ export function Header() {
                   </div>
                 </div>
                 <div className="p-6 border-t bg-secondary/30 flex flex-col gap-3">
-                  {/* Donation button muted in mobile per user request */}
-                  {/* <Link href="/donate" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full h-14 bg-accent text-accent-foreground font-black text-lg shadow-xl shadow-accent/10 rounded-2xl">
-                      <Heart className="h-6 w-6 mr-2 fill-current" /> {t.navDonate}
-                    </Button>
-                  </Link> */}
                 </div>
               </SheetContent>
             </Sheet>
