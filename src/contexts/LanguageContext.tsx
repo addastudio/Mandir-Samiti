@@ -72,19 +72,26 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window === 'undefined' || !settings?.favicon) return;
 
     const updateLinkTag = (rel: string, href: string) => {
-      let link: HTMLLinkElement | null = document.querySelector(`link[rel='${rel}']`);
-      if (!link) {
-        link = document.createElement('link');
+      // Find all tags that match the rel (handles both 'icon' and 'shortcut icon')
+      let links: NodeListOf<HTMLLinkElement> = document.querySelectorAll(`link[rel*='${rel}']`);
+      
+      if (links.length > 0) {
+        links.forEach(link => {
+          link.href = href;
+        });
+      } else {
+        // Create a new link if none exists
+        const link = document.createElement('link');
         link.rel = rel;
+        link.href = href;
         document.head.appendChild(link);
       }
-      link.href = href;
     };
 
-    // Update standard favicon
+    // Aggressively update all common icon types
     updateLinkTag('icon', settings.favicon);
-    // Update Apple Touch Icon
     updateLinkTag('apple-touch-icon', settings.favicon);
+    updateLinkTag('shortcut icon', settings.favicon);
 
     // Update Title dynamically if provided
     const siteTitle = language === 'hi' ? settings.site_title_hi : settings.site_title_en;
@@ -100,8 +107,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setShowLangPopup(true);
     }
-    setIsLangLoading(false);
-  }, []);
+    isLangLoading && setIsLangLoading(false);
+  }, [isLangLoading]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
