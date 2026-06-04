@@ -1,3 +1,4 @@
+
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -34,14 +35,13 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.suryamandir.online'),
   icons: {
     icon: [
-      { url: '/uploads/suryamandir.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' }
+      { url: '/uploads/suryamandir.svg', type: 'image/svg+xml' }
     ],
     apple: [
       { url: '/uploads/suryamandir.svg', type: 'image/svg+xml' }
     ]
   },
-  manifest: '/manifest.json',
+  manifest: '/manifest',
   alternates: {
     canonical: '/',
     languages: {

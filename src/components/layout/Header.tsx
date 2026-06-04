@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -60,7 +61,6 @@ export function Header() {
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    // Improved IntersectionObserver settings for smoother triggers
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsScrolled(!entry.isIntersecting);
@@ -212,7 +212,6 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-6">
             <nav className="flex items-center gap-1">
               {navItems.map((item) => {
@@ -245,7 +244,6 @@ export function Header() {
             </div>
           </div>
 
-          {/* Mobile Controls */}
           <div className="flex lg:hidden items-center gap-1.5 sm:gap-3 shrink-0 ml-2">
             <div className="hidden xs:block">
               <LanguageSwitcher />
